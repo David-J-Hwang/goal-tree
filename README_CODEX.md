@@ -1075,6 +1075,19 @@ TODO 체크는 mock state로만 동작한다.
 TODO 링크는 /workspace로 이동하지만 아직 Goal / Plan / Task 선택 상태 복원은 연결되지 않았다.
 ```
 
+What I've Done mock UI:
+
+```txt
+/whativedone은 src/app/whativedone/what-ive-done-board.tsx에 구현되어 있다.
+완료한 Task 기록을 보는 기록장 페이지로 만들었다.
+Day / Month / Year segmented control로 완료 기록 그룹을 전환한다.
+완료 Task 카드에는 완료일, 카테고리, Goal / Plan breadcrumb, 메모를 표시한다.
+완료 카드 클릭 시 /workspace로 이동한다.
+오른쪽에는 Goal Contribution과 Plan Contribution 패널을 배치했다.
+Contribution 패널은 완료한 일이 어떤 Goal / Plan에 쌓였는지 비율과 개수로 보여주는 보조 요약이다.
+현재는 mock 데이터 기반이며 /workspace 선택 상태 복원은 아직 연결되지 않았다.
+```
+
 검증:
 
 ```txt

@@ -403,12 +403,13 @@ type UserSettings = {
 
 ### 8. /whativedone
 
-- [ ] 완료한 Task 목록 표시
-- [ ] 날짜별 완료 기록 표시
-- [ ] 월별 완료 기록 표시
-- [ ] 연별 완료 기록 표시
-- [ ] 완료 기록에서 연결된 Goal / Plan 표시
-- [ ] 완료 기록 클릭 시 `/workspace`로 이동
+- [x] 테스트용 완료한 Task 목록 표시
+- [x] 날짜별 완료 기록 표시
+- [x] 월별 완료 기록 표시
+- [x] 연별 완료 기록 표시
+- [x] 완료 기록에서 연결된 Goal / Plan 표시
+- [x] 테스트용 Goal / Plan Contribution 표시
+- [x] 완료 기록 클릭 시 `/workspace`로 이동
 
 ### 9. /timeline
 
