@@ -9,6 +9,7 @@ const navItems = [
   { href: "/workspace", label: "Workspace" },
   { href: "/whativedone", label: "Done" },
   { href: "/timeline", label: "Timeline" },
+  { href: "/trash", label: "Trash" },
 ];
 
 export function AppBar() {

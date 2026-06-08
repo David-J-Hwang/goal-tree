@@ -1104,6 +1104,20 @@ Upcoming 모드는 plannedStartDate / plannedEndDate를 사용한다.
 현재는 mock 데이터 기반이며 /workspace 선택 상태 복원은 아직 연결되지 않았다.
 ```
 
+Trash mock UI:
+
+```txt
+/trash는 src/app/trash/trash-board.tsx에 구현되어 있다.
+상단 앱바에 Trash 링크를 추가했다.
+All / Goal / Plan / Task 필터로 휴지통 항목을 볼 수 있다.
+각 항목에는 type, status, 원래 Goal / Plan breadcrumb, trashedAt을 표시한다.
+Restore 버튼과 Delete 버튼을 표시한다.
+상위 Goal 또는 Plan이 휴지통에 있는 하위 항목은 Restore 버튼을 disabled 처리한다.
+복원 제한 이유는 카드 안의 안내 박스로 보여준다.
+오른쪽에는 Restore Rules와 Permanent Delete 안내 패널을 배치했다.
+현재는 mock 데이터 기반이며 실제 복원 / 영구 삭제 기능은 아직 연결되지 않았다.
+```
+
 검증:
 
 ```txt
