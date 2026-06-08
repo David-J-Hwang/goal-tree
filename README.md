@@ -391,14 +391,15 @@ type UserSettings = {
 
 ### 7. /dashboard
 
-- [ ] 오늘의 TODO 목록 표시
+- [x] 테스트용 오늘의 TODO 목록 표시
 - [ ] 오늘의 TODO 정렬
-- [ ] 오늘의 TODO 완료 처리
-- [ ] TODO 클릭 시 `/workspace`로 이동
+- [x] 테스트용 오늘의 TODO 완료 처리
+- [x] TODO 클릭 시 `/workspace`로 이동
 - [ ] TODO 클릭 시 해당 Goal / Plan / Task 선택 상태 복원
-- [ ] 막힌 Task 요약
-- [ ] 최근 완료한 Task 요약
-- [ ] 이번 주 핵심 항목 요약
+- [x] 테스트용 막힌 Task 요약
+- [x] 테스트용 최근 완료한 Task 요약
+- [x] 테스트용 이번 주 핵심 항목 요약
+- [x] 선택 컴포넌트 제거하기 쉽게 분리
 
 ### 8. /whativedone
 

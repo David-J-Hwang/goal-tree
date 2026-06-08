@@ -1063,6 +1063,18 @@ Plan 카테고리 표시
 검색 입력은 아직 placeholder다.
 ```
 
+Dashboard mock UI:
+
+```txt
+/dashboard는 src/app/dashboard/dashboard-board.tsx에 구현되어 있다.
+Today TODO를 가장 큰 패널로 배치했다.
+This Week Focus를 핵심 보조 패널로 배치했다.
+Blocked / Recent Done은 OptionalDashboardPanels 컴포넌트로 분리했다.
+showOptionalPanels 값을 통해 선택 패널을 쉽게 숨길 수 있다.
+TODO 체크는 mock state로만 동작한다.
+TODO 링크는 /workspace로 이동하지만 아직 Goal / Plan / Task 선택 상태 복원은 연결되지 않았다.
+```
+
 검증:
 
 ```txt
