@@ -5,12 +5,19 @@ node_modules/
 .next/
 out/
 
+# cache
+.turbo/
+.eslintcache
+
 # production
 build/
 dist/
 
 # testing
 coverage/
+
+# typescript
+*.tsbuildinfo
 
 # environment variables
 .env
