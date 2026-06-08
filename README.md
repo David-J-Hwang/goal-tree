@@ -15,6 +15,7 @@ Frontend/Fullstack: Next.js
 Language: TypeScript
 Styling: Tailwind CSS
 UI Components: shadcn/ui
+Icons: Heroicons
 Database: Supabase PostgreSQL
 Auth: Supabase Auth
 Deployment: Vercel
@@ -142,6 +143,7 @@ Task 상세:
 - 별도 설정 페이지는 MVP 초반에 만들지 않는다.
 - 상단 앱바에서 설정 모달을 여는 방향으로 시작한다.
 - 상태 변경 시 실제 진행기간 자동입력 기능은 기본 ON으로 둔다.
+- 라이트모드 / 다크모드 토글은 상단 앱바에서 제공한다.
 
 ---
 
@@ -283,10 +285,12 @@ type UserSettings = {
 
 ---
 
-## 향후 개발방향
+## ❗️향후 개발방향
 
 - Google 로그인 추가
-
+- 프로젝트 테마 goaltree에 맞게 나무 느낌의 초록색을 프로젝트의 primary color로 설정하기
+- 프로젝트 테마 goaltree에 맞게 trunk 느낌의 갈색을 프로젝트의 secondary color로 설정해도 괜찮을지 물어보기
+- 페이지에 나타나는 프로젝트의 이름이 "Goaltree"로 나타나도록 바꾸기
 ---
 
 ## 개발 체크리스트
@@ -316,7 +320,10 @@ type UserSettings = {
 - [x] 기본 shadcn/ui 컴포넌트 추가
 - [x] 기본 라우팅 구조 생성
 - [x] 공통 레이아웃 생성
-- [ ] 네비게이션 구성
+- [x] 상단 앱바 생성
+- [x] 네비게이션 구성
+- [x] 라이트모드 / 다크모드 토글 구현
+- [x] Heroicons 설치
 - [x] 기본 스타일 시스템 구성
 
 ### 2. 인증 / 사용자 데이터
@@ -330,45 +337,53 @@ type UserSettings = {
 
 ### 3. 데이터 모델
 
-- [ ] Node 모델 구현
-- [ ] PlanCategory 모델 구현
-- [ ] TodayTodo 모델 구현
-- [ ] 상태값 구현: 시작전 / 진행중 / 막힘 / 완료 / 보류
-- [ ] 예정기간 필드 구현
-- [ ] 실제 진행기간 필드 구현
-- [ ] 휴지통 이동 시간 필드 구현
-- [ ] `sortOrder` 기반 정렬 구현
-- [ ] UserSettings 모델 구현
+- [x] Node TypeScript 타입 초안 구현
+- [x] PlanCategory TypeScript 타입 초안 구현
+- [x] TodayTodo TypeScript 타입 초안 구현
+- [x] UserSettings TypeScript 타입 초안 구현
+- [x] 상태값 타입 구현: 시작전 / 진행중 / 막힘 / 완료 / 보류
+- [x] 예정기간 필드 타입 구현
+- [x] 실제 진행기간 필드 타입 구현
+- [x] 휴지통 이동 시간 필드 타입 구현
+- [x] `sortOrder` 필드 타입 구현
+- [ ] Supabase DB 테이블 구현
+- [ ] Supabase DB 관계 / 제약 설정
 
 ### 4. /workspace
 
-- [ ] Goal 카드 섹션 구현
-- [ ] Plan 카드 섹션 구현
-- [ ] Task 카드 섹션 구현
-- [ ] Goal 클릭 시 연결된 Plan 표시
-- [ ] Plan 클릭 시 연결된 Task 표시
-- [ ] 선택된 카드 UI 표시
-- [ ] 같은 섹션 안에서 카드 드래그 정렬 구현
-- [ ] 다른 섹션으로 카드 이동 금지
+- [x] 테스트용 Goal 카드 섹션 구현
+- [x] 테스트용 Plan 카드 섹션 구현
+- [x] 테스트용 Task 카드 섹션 구현
+- [x] Goal 클릭 시 연결된 Plan 표시
+- [x] Plan 클릭 시 연결된 Task 표시
+- [x] 선택된 카드 UI 표시
+- [x] 같은 섹션 안에서 카드 드래그 정렬 구현
+- [x] 다른 섹션으로 카드 이동 금지
+- [x] 드래그 핸들 방식 적용
+- [x] 드래그 카드 좌우 이동 제한
+- [x] 드래그 카드 상하 경계 제한
+- [x] 드래그 경계 soft clamp 적용
+- [x] 목록 카드 기간 텍스트 제거
 - [ ] Goal 생성 / 수정 / 삭제 구현
 - [ ] Plan 생성 / 수정 / 삭제 구현
 - [ ] Task 생성 / 수정 / 삭제 구현
+- [ ] Supabase 데이터 연동
 - [ ] `/workspace` 검색 기능 구현
 
 ### 5. Detail Panel
 
-- [ ] Goal 상세패널 구현
-- [ ] Plan 상세패널 구현
-- [ ] Task 상세패널 구현
-- [ ] Goal 진행률 표시
-- [ ] Plan 진행률 표시
+- [x] 테스트용 Goal 상세패널 구현
+- [x] 테스트용 Plan 상세패널 구현
+- [x] 테스트용 Task 상세패널 구현
+- [x] Goal 진행률 표시
+- [x] Plan 진행률 표시
 - [ ] Task 상태 변경 기능 구현
 - [ ] Task를 오늘의 TODO에 추가 / 제거
 - [ ] 메모 입력 / 수정 기능 구현
 
 ### 6. Plan 카테고리
 
-- [ ] 기본 카테고리 표시
+- [x] 테스트용 기본 카테고리 표시
 - [ ] 유저 직접 카테고리 추가
 - [ ] 카테고리 수정 / 삭제
 - [ ] Plan에 카테고리 연결

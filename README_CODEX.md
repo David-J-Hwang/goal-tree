@@ -155,6 +155,7 @@ Frontend/Fullstack: Next.js
 Language: TypeScript
 Styling: Tailwind CSS
 UI Components: shadcn/ui
+Icons: Heroicons
 Database: Supabase PostgreSQL
 Auth: Supabase Auth
 Deployment: Vercel
@@ -231,6 +232,20 @@ dnd-kit은 드래그 UI를 도와주는 라이브러리다.
 /whativedone의 날짜별 / 월별 / 연별 그룹화
 /timeline의 기간 표시
 ```
+
+### 5.4 Heroicons
+
+Heroicons는 상단 앱바의 라이트모드 / 다크모드 토글처럼 명확한 UI 아이콘이 필요한 곳에 사용한다.
+
+현재 구현된 사용처:
+
+```txt
+상단 앱바 테마 토글
+-> light mode: Moon icon
+-> dark mode: Sun icon
+```
+
+lucide-react도 기존 `/workspace` mock UI에서 일부 사용 중이다. 새 아이콘은 사용 목적에 따라 정하되, 사용자가 Heroicons를 명시한 공통 앱 UI에는 Heroicons를 우선 사용한다.
 
 ---
 
@@ -643,12 +658,24 @@ MVP에서는 trashedAt을 휴지통 이동 여부로 사용한다.
 
 ```txt
 상태 변경 시 실제 진행기간 자동입력 ON / OFF
+라이트모드 / 다크모드 토글
 ```
 
 기본값:
 
 ```txt
 autoFillActualDatesOnStatusChange = true
+```
+
+현재 구현:
+
+```txt
+전역 상단 앱바를 만들었다.
+앱바 오른쪽에 Heroicons 기반 라이트모드 / 다크모드 토글을 배치했다.
+테마 선택은 localStorage의 goal-tree-theme에 저장한다.
+저장된 테마가 없으면 시스템 prefers-color-scheme 값을 따른다.
+Tailwind darkMode는 class 전략을 사용한다.
+html.dark 클래스와 CSS 변수 토큰으로 전체 색상을 전환한다.
 ```
 
 ---
@@ -988,7 +1015,52 @@ README_CODEX.md
 
 ---
 
-## 22. 현재 결정 요약
+## 22. 현재 구현 상태
+
+현재 저장소에는 Next.js 기반 초기 앱과 `/workspace` 테스트 UI가 구현되어 있다.
+
+구현된 것:
+
+```txt
+루트 페이지(/) -> /dashboard 리디렉션
+기본 라우트 생성: /login, /dashboard, /workspace, /whativedone, /timeline, /trash
+공통 상단 앱바
+앱바 내 라이트모드 / 다크모드 토글
+Goal / Plan / Task TypeScript 타입 초안
+PlanCategory, TodayTodo, UserSettings TypeScript 타입 초안
+/workspace mock 데이터 기반 3단 카드 UI
+Goal 선택 시 Plan 필터링
+Plan 선택 시 Task 필터링
+오른쪽 Detail Panel
+Goal / Plan / Task 진행률 표시
+Plan 카테고리 표시
+같은 섹션 안에서만 카드 드래그 정렬
+드래그 핸들 방식 적용
+드래그 카드 좌우 이동 제한
+드래그 카드 상하 경계 제한
+드래그 경계 soft clamp 적용
+목록 카드의 기간 텍스트 제거
+```
+
+아직 mock 단계인 것:
+
+```txt
+/workspace 데이터는 Supabase에 연결되지 않았다.
+카드 생성 / 수정 / 삭제는 아직 없다.
+상세패널 입력과 상태 변경은 아직 동작하지 않는다.
+오늘 TODO 추가 / 제거 버튼은 아직 실제 기능과 연결되지 않았다.
+검색 입력은 아직 placeholder다.
+```
+
+검증:
+
+```txt
+npm run typecheck 통과
+```
+
+---
+
+## 23. 현재 결정 요약
 
 확정:
 
@@ -1007,6 +1079,7 @@ Supabase PostgreSQL / Supabase Auth 채택
 Vercel 배포 채택
 dnd-kit 채택
 date-fns 채택
+Heroicons 채택
 Plan 사용자 정의 카테고리 추가
 Task에 blocked 상태 추가
 Goal / Plan / Task 카드 드래그 정렬
@@ -1017,6 +1090,7 @@ Goal / Plan / Task 카드 드래그 정렬
 오늘 TODO 완료 시 Task 완료 처리
 상태 변경 시 실제 날짜 자동입력 기본 ON
 상단 앱바 설정 모달 방향
+상단 앱바 라이트모드 / 다크모드 토글
 ```
 
 미정:
