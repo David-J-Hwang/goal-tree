@@ -1,4 +1,4 @@
-# Goal Tree
+# Goaltree
 
 ## 프로젝트 소개
 
@@ -288,9 +288,6 @@ type UserSettings = {
 ## ❗️향후 개발방향
 
 - Google 로그인 추가
-- 프로젝트 테마 goaltree에 맞게 나무 느낌의 초록색을 프로젝트의 primary color로 설정하기
-- 프로젝트 테마 goaltree에 맞게 trunk 느낌의 갈색을 프로젝트의 secondary color로 설정해도 괜찮을지 물어보기
-- 페이지에 나타나는 프로젝트의 이름이 "Goaltree"로 나타나도록 바꾸기
 ---
 
 ## 개발 체크리스트
@@ -325,6 +322,9 @@ type UserSettings = {
 - [x] 라이트모드 / 다크모드 토글 구현
 - [x] Heroicons 설치
 - [x] 기본 스타일 시스템 구성
+- [x] 페이지 표시 이름을 `Goaltree`로 통일
+- [x] Goaltree 테마 색상 적용: 초록 primary / 나무줄기 갈색 secondary
+- [x] 다크모드 상태 배지 색상 조정
 
 ### 2. 인증 / 사용자 데이터
 

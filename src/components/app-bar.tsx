@@ -16,7 +16,7 @@ export function AppBar() {
     <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
       <div className="flex h-14 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <Link className="text-sm font-semibold tracking-normal" href="/dashboard">
-          Goal Tree
+          Goaltree
         </Link>
 
         <div className="flex items-center gap-2">

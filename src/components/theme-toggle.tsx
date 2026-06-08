@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 type Theme = "light" | "dark";
 
-const storageKey = "goal-tree-theme";
+const storageKey = "goaltree-theme";
 
 export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme | null>(null);

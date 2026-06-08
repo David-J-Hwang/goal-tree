@@ -149,11 +149,11 @@ const initialNodes: WorkspaceNode[] = [
     updatedAt: now,
   },
   {
-    id: "plan-goal-tree",
+    id: "plan-goaltree",
     userId: "demo-user",
     type: "plan",
     parentId: "goal-finance",
-    title: "Goal Tree MVP 만들기",
+    title: "Goaltree MVP 만들기",
     status: "in_progress",
     plannedStartDate: "2026-06-08",
     plannedEndDate: "2026-06-21",
@@ -237,7 +237,7 @@ const initialNodes: WorkspaceNode[] = [
     id: "task-setup",
     userId: "demo-user",
     type: "task",
-    parentId: "plan-goal-tree",
+    parentId: "plan-goaltree",
     title: "기술스택 초기 세팅하기",
     status: "done",
     plannedStartDate: "2026-06-08",
@@ -253,7 +253,7 @@ const initialNodes: WorkspaceNode[] = [
     id: "task-workspace-ui",
     userId: "demo-user",
     type: "task",
-    parentId: "plan-goal-tree",
+    parentId: "plan-goaltree",
     title: "Workspace 3단 카드 UI 만들기",
     status: "in_progress",
     plannedStartDate: "2026-06-08",
@@ -269,7 +269,7 @@ const initialNodes: WorkspaceNode[] = [
     id: "task-dnd",
     userId: "demo-user",
     type: "task",
-    parentId: "plan-goal-tree",
+    parentId: "plan-goaltree",
     title: "같은 섹션 안 카드 정렬 붙이기",
     status: "not_started",
     plannedStartDate: "2026-06-10",
@@ -285,7 +285,7 @@ const initialNodes: WorkspaceNode[] = [
     id: "task-login",
     userId: "demo-user",
     type: "task",
-    parentId: "plan-goal-tree",
+    parentId: "plan-goaltree",
     title: "이메일 로그인 화면 만들기",
     status: "blocked",
     plannedStartDate: "2026-06-12",
@@ -358,27 +358,32 @@ const statusMeta: Record<
   not_started: {
     label: "시작전",
     icon: Circle,
-    className: "border-slate-200 bg-slate-50 text-slate-600",
+    className:
+      "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700/55 dark:bg-slate-800/45 dark:text-slate-400",
   },
   in_progress: {
     label: "진행중",
     icon: Clock3,
-    className: "border-blue-200 bg-blue-50 text-blue-700",
+    className:
+      "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800/40 dark:bg-blue-950/25 dark:text-blue-300/80",
   },
   blocked: {
     label: "막힘",
     icon: Ban,
-    className: "border-red-200 bg-red-50 text-red-700",
+    className:
+      "border-red-200 bg-red-50 text-red-700 dark:border-red-800/40 dark:bg-red-950/25 dark:text-red-300/80",
   },
   done: {
     label: "완료",
     icon: CheckCircle2,
-    className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    className:
+      "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-950/25 dark:text-emerald-300/80",
   },
   paused: {
     label: "보류",
     icon: PauseCircle,
-    className: "border-amber-200 bg-amber-50 text-amber-700",
+    className:
+      "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800/40 dark:bg-amber-950/25 dark:text-amber-300/80",
   },
 };
 
@@ -391,7 +396,7 @@ const columnLabels: Record<NodeType, string> = {
 export function WorkspaceBoard() {
   const [nodes, setNodes] = useState<WorkspaceNode[]>(initialNodes);
   const [selectedGoalId, setSelectedGoalId] = useState("goal-finance");
-  const [selectedPlanId, setSelectedPlanId] = useState("plan-goal-tree");
+  const [selectedPlanId, setSelectedPlanId] = useState("");
   const [selectedNodeId, setSelectedNodeId] = useState("goal-finance");
 
   const goals = useMemo(() => getSortedChildren(nodes, "goal", null), [nodes]);
@@ -413,9 +418,7 @@ export function WorkspaceBoard() {
 
     if (node.type === "goal") {
       setSelectedGoalId(node.id);
-      const nextPlans = getSortedChildren(nodes, "plan", node.id);
-      const nextPlanId = nextPlans[0]?.id ?? "";
-      setSelectedPlanId(nextPlanId);
+      setSelectedPlanId("");
     }
 
     if (node.type === "plan") {
@@ -440,7 +443,7 @@ export function WorkspaceBoard() {
     <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8">
       <header className="flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-sm font-medium text-muted-foreground">Goal Tree</p>
+          <p className="text-sm font-medium text-muted-foreground">Goaltree</p>
           <h1 className="mt-1 text-2xl font-semibold">Workspace</h1>
         </div>
         <div className="flex w-full items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm lg:w-80">
@@ -478,6 +481,9 @@ export function WorkspaceBoard() {
           selectedId={selectedNodeId}
           onSelect={handleSelect}
           onReorder={handleReorder}
+          emptyMessage={
+            selectedPlanId ? undefined : "Select a plan card to view tasks"
+          }
           summary={selectedPlan ? selectedPlan.title : "No plan selected"}
         />
         <DetailPanel
@@ -499,6 +505,7 @@ function WorkspaceColumn({
   summary,
   nodes,
   selectedId,
+  emptyMessage,
   onSelect,
   onReorder,
 }: {
@@ -508,6 +515,7 @@ function WorkspaceColumn({
   summary: string;
   nodes: WorkspaceNode[];
   selectedId: string;
+  emptyMessage?: string;
   onSelect: (node: WorkspaceNode) => void;
   onReorder: (type: NodeType, parentId: string | null, orderedIds: string[]) => void;
 }) {
@@ -556,7 +564,7 @@ function WorkspaceColumn({
       <CardContent className="flex-1 overflow-y-auto p-3">
         {nodes.length === 0 ? (
           <div className="flex min-h-32 items-center justify-center rounded-md border border-dashed px-4 text-center text-sm text-muted-foreground">
-            No {columnLabels[type]} cards
+            {emptyMessage ?? `No ${columnLabels[type]} cards`}
           </div>
         ) : (
           <DndContext

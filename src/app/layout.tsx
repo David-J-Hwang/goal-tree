@@ -5,14 +5,14 @@ import { AppBar } from "@/components/app-bar";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Goal Tree",
+  title: "Goaltree",
   description: "Goal, plan, and task workspace for personal execution.",
 };
 
 const themeInitScript = `
   (function() {
     try {
-      var storageKey = "goal-tree-theme";
+      var storageKey = "goaltree-theme";
       var storedTheme = window.localStorage.getItem(storageKey);
       var systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
       var theme = storedTheme === "light" || storedTheme === "dark" ? storedTheme : systemTheme;

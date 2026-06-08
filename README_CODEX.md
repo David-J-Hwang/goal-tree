@@ -1,4 +1,4 @@
-# Goal Tree - Codex Context
+# Goaltree - Codex Context
 
 이 문서는 새로운 Codex 세션이 이 저장소를 처음 읽어도 프로젝트의 목적, 결정된 설계, 페이지 구조, 데이터 모델, MVP 범위를 바로 이해할 수 있도록 작성한 인수인계 문서다.
 
@@ -8,7 +8,7 @@
 
 ## 1. 프로젝트 요약
 
-Goal Tree는 개인의 큰 목표를 실행 가능한 계획과 행동으로 쪼개고, 오늘 할 일과 완료 기록, 타임라인으로 관리하는 목표 관리 웹 앱이다.
+Goaltree는 개인의 큰 목표를 실행 가능한 계획과 행동으로 쪼개고, 오늘 할 일과 완료 기록, 타임라인으로 관리하는 목표 관리 웹 앱이다.
 
 핵심 흐름:
 
@@ -672,10 +672,18 @@ autoFillActualDatesOnStatusChange = true
 ```txt
 전역 상단 앱바를 만들었다.
 앱바 오른쪽에 Heroicons 기반 라이트모드 / 다크모드 토글을 배치했다.
-테마 선택은 localStorage의 goal-tree-theme에 저장한다.
+테마 선택은 localStorage의 goaltree-theme에 저장한다.
 저장된 테마가 없으면 시스템 prefers-color-scheme 값을 따른다.
 Tailwind darkMode는 class 전략을 사용한다.
 html.dark 클래스와 CSS 변수 토큰으로 전체 색상을 전환한다.
+```
+
+브랜드 / 색상 방향:
+
+```txt
+앱에 표시되는 프로젝트 이름은 Goaltree로 통일한다.
+primary color는 성장과 나무 이미지를 주는 초록색을 사용한다.
+secondary color는 나무줄기 느낌의 갈색을 사용하되, UI가 무거워지지 않도록 muted tone으로 사용한다.
 ```
 
 ---
@@ -1026,6 +1034,9 @@ README_CODEX.md
 기본 라우트 생성: /login, /dashboard, /workspace, /whativedone, /timeline, /trash
 공통 상단 앱바
 앱바 내 라이트모드 / 다크모드 토글
+페이지 표시 이름 Goaltree 통일
+Goaltree 테마 색상 적용
+다크모드 상태 배지 색상 조정
 Goal / Plan / Task TypeScript 타입 초안
 PlanCategory, TodayTodo, UserSettings TypeScript 타입 초안
 /workspace mock 데이터 기반 3단 카드 UI
@@ -1091,6 +1102,8 @@ Goal / Plan / Task 카드 드래그 정렬
 상태 변경 시 실제 날짜 자동입력 기본 ON
 상단 앱바 설정 모달 방향
 상단 앱바 라이트모드 / 다크모드 토글
+페이지 표시 이름 Goaltree 통일
+초록 primary / 나무줄기 갈색 secondary 색상 방향
 ```
 
 미정:
