@@ -527,6 +527,8 @@ Plan은 사용자 정의 카테고리로 분류한다.
 
 초기에는 하위목표 / 프로젝트 / 전략 같은 개념적 분류를 고려했지만, 사용자가 실제 활동 유형으로 분류하는 편이 더 직관적이라고 판단했다.
 
+신규 유저에게는 기본 카테고리를 먼저 생성한다. 이후 유저가 직접 카테고리를 추가, 수정, 삭제할 수 있게 만든다.
+
 예시:
 
 ```txt
@@ -542,7 +544,9 @@ Plan은 사용자 정의 카테고리로 분류한다.
 요구사항:
 
 ```txt
+신규 유저 기본 카테고리 자동 생성
 유저가 카테고리를 직접 추가할 수 있어야 한다.
+유저가 카테고리를 수정 / 삭제할 수 있어야 한다.
 카테고리 이름과 색상을 가질 수 있다.
 Plan에 카테고리를 연결할 수 있어야 한다.
 카테고리별 Plan 필터링은 있으면 좋다.
@@ -1077,6 +1081,10 @@ Goaltree 테마 색상 적용
 Supabase browser / server client helper
 proxy.ts 기반 Supabase 세션 갱신과 보호 라우팅
 /login 실제 이메일 로그인 / 회원가입 연결
+supabase/migrations/001_initial_schema.sql 초기 DB 스키마 파일
+Supabase SQL Editor 초기 스키마 실행 완료
+Supabase DB 테이블 생성 완료: nodes, plan_categories, today_todos, user_settings
+Supabase DB 관계 / 제약 / RLS 정책 설정 완료
 Goal / Plan / Task TypeScript 타입 초안
 PlanCategory, TodayTodo, UserSettings TypeScript 타입 초안
 /workspace mock 데이터 기반 3단 카드 UI
@@ -1096,7 +1104,7 @@ Plan 카테고리 표시
 아직 mock 단계인 것:
 
 ```txt
-/workspace 데이터는 Supabase에 연결되지 않았다.
+/workspace, /dashboard, /whativedone, /timeline, /trash 데이터는 아직 Supabase에 연결되지 않았다.
 카드 생성 / 수정 / 삭제는 아직 없다.
 상세패널 입력과 상태 변경은 아직 동작하지 않는다.
 오늘 TODO 추가 / 제거 버튼은 아직 실제 기능과 연결되지 않았다.

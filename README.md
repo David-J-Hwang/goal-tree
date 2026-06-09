@@ -213,6 +213,8 @@ Task
 
 Plan은 유저가 직접 만든 카테고리로 분류한다.
 
+신규 유저에게는 기본 카테고리를 먼저 생성하고, 이후 유저가 직접 추가 / 수정 / 삭제할 수 있게 만든다.
+
 ```ts
 type PlanCategory = {
   id: string;
@@ -341,8 +343,9 @@ type UserSettings = {
 - [x] 로그인 후 `/dashboard`로 이동
 - [x] 로그아웃 기능 구현
 - [x] 인증되지 않은 사용자의 주요 페이지 접근 제한
-- [ ] 주요 데이터에 `userId` 연결
-- [ ] 유저별 데이터 접근 제한 처리
+- [x] 주요 데이터 테이블에 `user_id` 필드 구성
+- [x] Supabase RLS로 유저별 데이터 접근 제한 처리
+- [ ] 실제 앱 데이터 요청에 로그인 유저 데이터 연결
 
 ### 3. 데이터 모델
 
@@ -350,13 +353,15 @@ type UserSettings = {
 - [x] PlanCategory TypeScript 타입 초안 구현
 - [x] TodayTodo TypeScript 타입 초안 구현
 - [x] UserSettings TypeScript 타입 초안 구현
+- [x] Supabase 초기 SQL 스키마 파일 작성
 - [x] 상태값 타입 구현: 시작전 / 진행중 / 막힘 / 완료 / 보류
 - [x] 예정기간 필드 타입 구현
 - [x] 실제 진행기간 필드 타입 구현
 - [x] 휴지통 이동 시간 필드 타입 구현
 - [x] `sortOrder` 필드 타입 구현
-- [ ] Supabase DB 테이블 구현
-- [ ] Supabase DB 관계 / 제약 설정
+- [x] Supabase SQL Editor에서 초기 스키마 실행
+- [x] Supabase DB 테이블 구현
+- [x] Supabase DB 관계 / 제약 설정
 
 ### 4. /workspace
 
@@ -393,6 +398,7 @@ type UserSettings = {
 ### 6. Plan 카테고리
 
 - [x] 테스트용 기본 카테고리 표시
+- [ ] 신규 유저 기본 카테고리 자동 생성
 - [ ] 유저 직접 카테고리 추가
 - [ ] 카테고리 수정 / 삭제
 - [ ] Plan에 카테고리 연결
