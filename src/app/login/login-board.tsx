@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowRightIcon,
   EnvelopeIcon,
@@ -19,8 +20,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type AuthMode = "signin" | "signup";
+type Feedback = {
+  tone: "success" | "error";
+  message: string;
+};
 
 const authModes: Array<{ value: AuthMode; label: string }> = [
   { value: "signin", label: "Sign in" },
@@ -28,15 +34,103 @@ const authModes: Array<{ value: AuthMode; label: string }> = [
 ];
 
 export function LoginBoard() {
+  const router = useRouter();
   const [authMode, setAuthMode] = useState<AuthMode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setSubmitted(true);
+    setFeedback(null);
+    setIsSubmitting(true);
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const trimmedEmail = email.trim();
+
+      const result =
+        authMode === "signin"
+          ? await supabase.auth.signInWithPassword({
+              email: trimmedEmail,
+              password,
+            })
+          : await supabase.auth.signUp({
+              email: trimmedEmail,
+              password,
+            });
+
+      if (result.error) {
+        setFeedback({
+          tone: "error",
+          message: result.error.message,
+        });
+        return;
+      }
+
+      if (authMode === "signup" && !result.data.session) {
+        setFeedback({
+          tone: "success",
+          message: "Check your email to complete account creation.",
+        });
+        return;
+      }
+
+      router.replace("/dashboard");
+      router.refresh();
+    } catch (error) {
+      setFeedback({
+        tone: "error",
+        message:
+          error instanceof Error ? error.message : "Authentication request failed.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handlePasswordReset() {
+    setFeedback(null);
+
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      setFeedback({
+        tone: "error",
+        message: "Enter your email before requesting a password reset.",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+        redirectTo: `${window.location.origin}/login`,
+      });
+
+      setFeedback(
+        error
+          ? {
+              tone: "error",
+              message: error.message,
+            }
+          : {
+              tone: "success",
+              message: "Password reset email requested.",
+            },
+      );
+    } catch (error) {
+      setFeedback({
+        tone: "error",
+        message: error instanceof Error ? error.message : "Password reset request failed.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -68,7 +162,7 @@ export function LoginBoard() {
                   key={mode.value}
                   onClick={() => {
                     setAuthMode(mode.value);
-                    setSubmitted(false);
+                    setFeedback(null);
                   }}
                   type="button"
                 >
@@ -86,6 +180,7 @@ export function LoginBoard() {
                     className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                     onChange={(event) => setEmail(event.target.value)}
                     placeholder="Enter email"
+                    required
                     type="email"
                     value={email}
                   />
@@ -100,6 +195,7 @@ export function LoginBoard() {
                     className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                     onChange={(event) => setPassword(event.target.value)}
                     placeholder="Enter password"
+                    required
                     type={showPassword ? "text" : "password"}
                     value={password}
                   />
@@ -128,25 +224,39 @@ export function LoginBoard() {
                 </label>
                 <button
                   className="text-sm font-medium text-primary hover:underline"
+                  disabled={isSubmitting}
+                  onClick={handlePasswordReset}
                   type="button"
                 >
                   Reset password
                 </button>
               </div>
 
-              <Button className="w-full" type="submit">
-                {authMode === "signin" ? "Sign in" : "Create account"}
+              <Button className="w-full" disabled={isSubmitting} type="submit">
+                {isSubmitting
+                  ? authMode === "signin"
+                    ? "Signing in"
+                    : "Creating account"
+                  : authMode === "signin"
+                    ? "Sign in"
+                    : "Create account"}
                 <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
               </Button>
             </form>
 
-            {submitted ? (
-              <div className="mt-4 rounded-md border bg-primary/5 px-3 py-2 text-sm text-muted-foreground">
-                {authMode === "signin" ? "Sign in" : "Create account"} flow is ready for
-                Supabase Auth wiring.
+            {feedback ? (
+              <div
+                aria-live="polite"
+                className={cn(
+                  "mt-4 rounded-md border px-3 py-2 text-sm",
+                  feedback.tone === "success"
+                    ? "border-primary/25 bg-primary/5 text-primary"
+                    : "border-destructive/25 bg-destructive/5 text-destructive",
+                )}
+              >
+                {feedback.message}
               </div>
             ) : null}
-
           </CardContent>
         </Card>
       </section>

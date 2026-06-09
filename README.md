@@ -29,6 +29,12 @@ Date: date-fns
 State: 처음에는 React state 사용, 필요하면 Zustand 검토
 ```
 
+Supabase 메모:
+
+```txt
+Account: yelcrys4610@naver.com
+```
+
 ---
 
 ## 프로젝트 핵심구조
@@ -331,11 +337,12 @@ type UserSettings = {
 - [x] 로그인 provider 확정
 - [x] 테스트용 `/login` 페이지 구현
 - [x] 이메일 로그인 / 회원가입 UI 전환
-- [ ] 로그인 후 `/dashboard`로 이동
-- [ ] 로그아웃 기능 구현
+- [x] Supabase Auth 실제 연결
+- [x] 로그인 후 `/dashboard`로 이동
+- [x] 로그아웃 기능 구현
+- [x] 인증되지 않은 사용자의 주요 페이지 접근 제한
 - [ ] 주요 데이터에 `userId` 연결
 - [ ] 유저별 데이터 접근 제한 처리
-- [ ] Supabase Auth 실제 연결
 
 ### 3. 데이터 모델
 

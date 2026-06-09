@@ -1,7 +1,12 @@
-import Link from "next/link";
+"use client";
 
-import { buttonVariants } from "@/components/ui/button";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/outline";
+
+import { Button, buttonVariants } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -13,6 +18,15 @@ const navItems = [
 ];
 
 export function AppBar() {
+  const router = useRouter();
+
+  async function handleSignOut() {
+    const supabase = createSupabaseBrowserClient();
+    await supabase.auth.signOut();
+    router.replace("/login");
+    router.refresh();
+  }
+
   return (
     <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
       <div className="flex h-14 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
@@ -36,6 +50,17 @@ export function AppBar() {
             ))}
           </nav>
           <ThemeToggle />
+          <Button
+            aria-label="Sign out"
+            className="text-muted-foreground hover:text-foreground"
+            onClick={handleSignOut}
+            size="sm"
+            type="button"
+            variant="ghost"
+          >
+            <ArrowRightStartOnRectangleIcon className="h-4 w-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Sign out</span>
+          </Button>
         </div>
       </div>
     </header>

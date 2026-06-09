@@ -165,6 +165,29 @@ Date: date-fns
 
 상태 관리는 처음에는 React 기본 state로 시작하고, 전역 상태가 복잡해지면 Zustand를 검토한다.
 
+Supabase 프로젝트 메모:
+
+```txt
+Supabase account: yelcrys4610@naver.com
+Project name: goal-tree
+Recommended region if the primary user is in Korea/Asia: Northeast Asia (Seoul)
+```
+
+주의:
+
+```txt
+Supabase account email은 프로젝트 운영 메모로 남긴다.
+Database password, service role key, anon key 같은 secret은 README에 기록하지 않는다.
+환경변수는 .env.local에만 저장한다.
+```
+
+현재 사용하는 Supabase 공개 환경변수:
+
+```txt
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+```
+
 ### 5.1 shadcn/ui
 
 `shadcn/ui`는 UI 컴포넌트 기반을 빠르게 만들기 위해 채택했다.
@@ -268,6 +291,18 @@ Auth는 Supabase Auth를 사용한다.
 MVP에서는 이메일 로그인만 사용한다.
 Google 로그인은 향후 개발방향으로 남긴다.
 모든 주요 데이터에는 userId를 둔다.
+```
+
+현재 구현:
+
+```txt
+@supabase/ssr 기반 browser / server client helper를 추가했다.
+Next.js 16의 proxy.ts에서 Supabase 세션을 갱신하고 라우트를 보호한다.
+/login은 실제 Supabase 이메일 로그인 / 회원가입 submit을 호출한다.
+로그인 또는 회원가입 성공 후 /dashboard로 이동한다.
+로그인한 사용자가 /login에 접근하면 /dashboard로 이동한다.
+로그인하지 않은 사용자가 주요 페이지에 접근하면 /login으로 이동한다.
+상단 앱바의 Sign out 버튼은 Supabase signOut 후 /login으로 이동한다.
 ```
 
 ---
@@ -1033,10 +1068,15 @@ README_CODEX.md
 루트 페이지(/) -> /dashboard 리디렉션
 기본 라우트 생성: /login, /dashboard, /workspace, /whativedone, /timeline, /trash
 공통 상단 앱바
+상단 앱바 Sign out 버튼
 앱바 내 라이트모드 / 다크모드 토글
 페이지 표시 이름 Goaltree 통일
 Goaltree 테마 색상 적용
 다크모드 상태 배지 색상 조정
+@supabase/ssr 설치
+Supabase browser / server client helper
+proxy.ts 기반 Supabase 세션 갱신과 보호 라우팅
+/login 실제 이메일 로그인 / 회원가입 연결
 Goal / Plan / Task TypeScript 타입 초안
 PlanCategory, TodayTodo, UserSettings TypeScript 타입 초안
 /workspace mock 데이터 기반 3단 카드 UI
@@ -1063,14 +1103,18 @@ Plan 카테고리 표시
 검색 입력은 아직 placeholder다.
 ```
 
-Login mock UI:
+Login / Auth UI:
 
 ```txt
 /login은 src/app/login/login-board.tsx에 구현되어 있다.
 MVP 방향에 맞게 이메일 로그인만 UI에 포함했다.
 Sign in / Create account segmented control로 로그인과 회원가입 화면을 전환한다.
 Email, Password, Remember me, Reset password UI를 배치했다.
-제출 시 mock 안내만 표시하며 실제 Supabase Auth는 아직 연결되지 않았다.
+Sign in은 supabase.auth.signInWithPassword를 호출한다.
+Create account는 supabase.auth.signUp을 호출한다.
+Reset password는 이메일이 입력된 경우 Supabase password reset email 요청을 보낸다.
+성공하면 /dashboard로 이동한다.
+Remember me는 현재 별도 옵션으로 처리하지 않고 Supabase SSR 세션 쿠키 기본 동작을 사용한다.
 인증 전 주요 페이지 이동을 피하기 위해 /login에서는 상단 앱바를 숨긴다.
 ```
 
