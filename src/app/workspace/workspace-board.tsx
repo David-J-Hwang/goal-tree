@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import {
   closestCenter,
   DndContext,
@@ -52,6 +52,19 @@ type CreateNodeInput = {
   title: string;
   categoryId?: string | null;
 };
+type UpdateNodeInput = {
+  id: string;
+  title: string;
+  memo: string | null;
+  status: NodeStatus;
+  plannedStartDate: string | null;
+  plannedEndDate: string | null;
+  actualStartDate: string | null;
+  actualEndDate: string | null;
+  importanceReason: string | null;
+  successCriteriaText: string | null;
+  categoryId: string | null;
+};
 
 const sortableStackModifiers: Modifier[] = [restrictToSortableStack];
 const dragBoundaryOvershoot = 20;
@@ -102,6 +115,13 @@ const columnLabels: Record<NodeType, string> = {
   plan: "Plan",
   task: "Task",
 };
+const statusOptions: NodeStatus[] = [
+  "not_started",
+  "in_progress",
+  "blocked",
+  "done",
+  "paused",
+];
 
 export function WorkspaceBoard({
   initialCategories,
@@ -222,6 +242,52 @@ export function WorkspaceBoard({
     }
   }
 
+  async function handleUpdateNode(input: UpdateNodeInput) {
+    const currentNode = nodes.find((node) => node.id === input.id);
+
+    if (!currentNode) {
+      throw new Error("Node was not found.");
+    }
+
+    const nextDates = getDateValuesWithStatusUpdates(currentNode, input);
+    const supabase = createSupabaseBrowserClient();
+    const { data, error } = await supabase
+      .from("nodes")
+      .update({
+        title: input.title,
+        memo: input.memo,
+        status: input.status,
+        planned_start_date: input.plannedStartDate,
+        planned_end_date: input.plannedEndDate,
+        actual_start_date: nextDates.actualStartDate,
+        actual_end_date: nextDates.actualEndDate,
+        importance_reason:
+          currentNode.type === "goal" ? input.importanceReason : null,
+        success_criteria_text:
+          currentNode.type === "goal" ? input.successCriteriaText : null,
+        category_id: currentNode.type === "plan" ? input.categoryId : null,
+      })
+      .eq("id", input.id)
+      .eq("user_id", userId)
+      .select(nodeSelectColumns)
+      .single()
+      .returns<NodeRow>();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    if (!data) {
+      throw new Error("Updated node was not returned.");
+    }
+
+    const updatedNode = mapNodeRow(data);
+
+    setNodes((currentNodes) =>
+      currentNodes.map((node) => (node.id === updatedNode.id ? updatedNode : node)),
+    );
+  }
+
   return (
     <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8">
       <header className="flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
@@ -285,6 +351,7 @@ export function WorkspaceBoard({
           plan={selectedPlan}
           nodes={nodes}
           categories={planCategories}
+          onUpdateNode={handleUpdateNode}
         />
       </section>
     </main>
@@ -647,13 +714,139 @@ function DetailPanel({
   plan,
   nodes,
   categories,
+  onUpdateNode,
 }: {
   node?: WorkspaceNode;
   goal?: WorkspaceNode;
   plan?: WorkspaceNode;
   nodes: WorkspaceNode[];
   categories: PlanCategory[];
+  onUpdateNode: (input: UpdateNodeInput) => Promise<void>;
 }) {
+  const [titleValue, setTitleValue] = useState(node?.title ?? "");
+  const [memoValue, setMemoValue] = useState(node?.memo ?? "");
+  const [statusValue, setStatusValue] = useState<NodeStatus>(
+    node?.status ?? "not_started",
+  );
+  const [plannedStartDateValue, setPlannedStartDateValue] = useState(
+    node?.plannedStartDate ?? "",
+  );
+  const [plannedEndDateValue, setPlannedEndDateValue] = useState(
+    node?.plannedEndDate ?? "",
+  );
+  const [actualStartDateValue, setActualStartDateValue] = useState(
+    node?.actualStartDate ?? "",
+  );
+  const [actualEndDateValue, setActualEndDateValue] = useState(
+    node?.actualEndDate ?? "",
+  );
+  const [importanceReasonValue, setImportanceReasonValue] = useState(
+    node?.importanceReason ?? "",
+  );
+  const [successCriteriaValue, setSuccessCriteriaValue] = useState(
+    node?.successCriteriaText ?? "",
+  );
+  const [categoryIdValue, setCategoryIdValue] = useState(node?.categoryId ?? "");
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [saveMessage, setSaveMessage] = useState("");
+
+  useEffect(() => {
+    if (!node) {
+      return;
+    }
+
+    setTitleValue(node.title);
+    setMemoValue(node.memo ?? "");
+    setStatusValue(node.status);
+    setPlannedStartDateValue(node.plannedStartDate ?? "");
+    setPlannedEndDateValue(node.plannedEndDate ?? "");
+    setActualStartDateValue(node.actualStartDate ?? "");
+    setActualEndDateValue(node.actualEndDate ?? "");
+    setImportanceReasonValue(node.importanceReason ?? "");
+    setSuccessCriteriaValue(node.successCriteriaText ?? "");
+    setCategoryIdValue(node.categoryId ?? "");
+  }, [
+    node?.actualEndDate,
+    node?.actualStartDate,
+    node?.categoryId,
+    node?.id,
+    node?.importanceReason,
+    node?.memo,
+    node?.plannedEndDate,
+    node?.plannedStartDate,
+    node?.status,
+    node?.successCriteriaText,
+    node?.title,
+  ]);
+
+  useEffect(() => {
+    setSaveError("");
+    setSaveMessage("");
+  }, [node?.id]);
+
+  async function handleSave(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!node) {
+      return;
+    }
+
+    const trimmedTitle = titleValue.trim();
+    const trimmedMemo = memoValue.trim();
+    const plannedStartDate = emptyStringToNull(plannedStartDateValue);
+    const plannedEndDate = emptyStringToNull(plannedEndDateValue);
+    const actualStartDate = emptyStringToNull(actualStartDateValue);
+    const actualEndDate = emptyStringToNull(actualEndDateValue);
+    const nextInput = {
+      id: node.id,
+      title: trimmedTitle,
+      memo: trimmedMemo || null,
+      status: statusValue,
+      plannedStartDate,
+      plannedEndDate,
+      actualStartDate,
+      actualEndDate,
+      importanceReason:
+        node.type === "goal" ? emptyStringToNull(importanceReasonValue) : null,
+      successCriteriaText:
+        node.type === "goal" ? emptyStringToNull(successCriteriaValue) : null,
+      categoryId: node.type === "plan" ? categoryIdValue || null : null,
+    };
+    const nextActualDates = getDateValuesWithStatusUpdates(node, nextInput);
+
+    if (!trimmedTitle) {
+      setSaveError("Title is required.");
+      setSaveMessage("");
+      return;
+    }
+
+    if (!isValidDateRange(plannedStartDate, plannedEndDate)) {
+      setSaveError("Planned start date must be before planned end date.");
+      setSaveMessage("");
+      return;
+    }
+
+    if (!isValidDateRange(nextActualDates.actualStartDate, nextActualDates.actualEndDate)) {
+      setSaveError("Actual start date must be before actual end date.");
+      setSaveMessage("");
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError("");
+    setSaveMessage("");
+
+    try {
+      await onUpdateNode(nextInput);
+      setSaveMessage("Saved.");
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "Failed to save changes.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   if (!node) {
     return (
       <Card className="min-h-[34rem] rounded-lg shadow-none">
@@ -664,94 +857,181 @@ function DetailPanel({
     );
   }
 
-  const status = statusMeta[node.status];
+  const status = statusMeta[statusValue];
   const StatusIcon = status.icon;
   const parent = node.parentId ? nodes.find((item) => item.id === node.parentId) : undefined;
   const progress = getNodeProgress(node, nodes);
-  const category = categories.find((item) => item.id === node.categoryId);
+  const normalizedMemo = memoValue.trim();
+  const normalizedImportanceReason = importanceReasonValue.trim();
+  const normalizedSuccessCriteria = successCriteriaValue.trim();
+  const hasChanges =
+    titleValue.trim() !== node.title ||
+    normalizedMemo !== (node.memo ?? "") ||
+    statusValue !== node.status ||
+    plannedStartDateValue !== (node.plannedStartDate ?? "") ||
+    plannedEndDateValue !== (node.plannedEndDate ?? "") ||
+    actualStartDateValue !== (node.actualStartDate ?? "") ||
+    actualEndDateValue !== (node.actualEndDate ?? "") ||
+    (node.type === "goal" &&
+      (normalizedImportanceReason !== (node.importanceReason ?? "") ||
+        normalizedSuccessCriteria !== (node.successCriteriaText ?? ""))) ||
+    (node.type === "plan" && categoryIdValue !== (node.categoryId ?? ""));
 
   return (
     <Card className="min-h-[34rem] rounded-lg shadow-none">
-      <CardHeader className="border-b p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <CardDescription>{columnLabels[node.type]}</CardDescription>
-            <CardTitle className="mt-1 text-lg leading-6">{node.title}</CardTitle>
+      <form onSubmit={handleSave}>
+        <CardHeader className="border-b p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <CardDescription>{columnLabels[node.type]}</CardDescription>
+              <label className="mt-3 block">
+                <span className="sr-only">{columnLabels[node.type]} title</span>
+                <input
+                  className="h-10 w-full rounded-md border bg-background px-3 text-sm font-medium outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+                  disabled={isSaving}
+                  onChange={(event) => setTitleValue(event.target.value)}
+                  value={titleValue}
+                />
+              </label>
+            </div>
+            <span
+              className={cn(
+                "mt-6 inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium",
+                status.className,
+              )}
+            >
+              <StatusIcon className="h-3 w-3" aria-hidden="true" />
+              {status.label}
+            </span>
           </div>
-          <span
-            className={cn(
-              "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium",
-              status.className,
-            )}
-          >
-            <StatusIcon className="h-3 w-3" aria-hidden="true" />
-            {status.label}
-          </span>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-5 p-4">
-        <DetailSection title="Progress">
-          <div className="flex items-center gap-3">
-            <ProgressBar value={progress} className="flex-1" />
-            <span className="w-10 text-right text-sm font-medium">{progress}%</span>
-          </div>
-        </DetailSection>
-
-        {node.type === "goal" ? (
-          <>
-            <DetailSection title="Why it matters">
-              <p className="text-sm leading-6 text-muted-foreground">
-                {node.importanceReason ?? "No reason added."}
-              </p>
-            </DetailSection>
-            <DetailSection title="Success criteria">
-              <p className="text-sm leading-6 text-muted-foreground">
-                {node.successCriteriaText ?? "No criteria added."}
-              </p>
-            </DetailSection>
-          </>
-        ) : null}
-
-        {node.type === "plan" ? (
-          <DetailSection title="Linked Goal">
-            <DetailValue label="Goal" value={goal?.title ?? parent?.title ?? "-"} />
-            <DetailValue label="Category" value={category?.name ?? "-"} />
+        </CardHeader>
+        <CardContent className="space-y-5 p-4">
+          <DetailSection title="Status">
+            <select
+              className="h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+              disabled={isSaving}
+              onChange={(event) => setStatusValue(event.target.value as NodeStatus)}
+              value={statusValue}
+            >
+              {statusOptions.map((option) => (
+                <option key={option} value={option}>
+                  {statusMeta[option].label}
+                </option>
+              ))}
+            </select>
           </DetailSection>
-        ) : null}
 
-        {node.type === "task" ? (
-          <DetailSection title="Linked Plan">
-            <DetailValue label="Plan" value={plan?.title ?? parent?.title ?? "-"} />
-            <Button className="mt-3 w-full" variant="outline">
-              Add to Today TODO
-            </Button>
+          <DetailSection title="Progress">
+            <div className="flex items-center gap-3">
+              <ProgressBar value={progress} className="flex-1" />
+              <span className="w-10 text-right text-sm font-medium">{progress}%</span>
+            </div>
           </DetailSection>
-        ) : null}
 
-        <DetailSection title="Dates">
-          <div className="grid gap-3 text-sm">
-            <DetailValue
+          {node.type === "goal" ? (
+            <>
+              <DetailSection title="Why it matters">
+                <DetailTextArea
+                  disabled={isSaving}
+                  onChange={setImportanceReasonValue}
+                  placeholder="Add a reason"
+                  value={importanceReasonValue}
+                />
+              </DetailSection>
+              <DetailSection title="Success criteria">
+                <DetailTextArea
+                  disabled={isSaving}
+                  onChange={setSuccessCriteriaValue}
+                  placeholder="Add success criteria"
+                  value={successCriteriaValue}
+                />
+              </DetailSection>
+            </>
+          ) : null}
+
+          {node.type === "plan" ? (
+            <DetailSection title="Linked Goal">
+              <DetailValue label="Goal" value={goal?.title ?? parent?.title ?? "-"} />
+              <label className="mt-3 block">
+                <span className="text-xs font-medium text-muted-foreground">Category</span>
+                <select
+                  className="mt-1.5 h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+                  disabled={isSaving}
+                  onChange={(event) => setCategoryIdValue(event.target.value)}
+                  value={categoryIdValue}
+                >
+                  <option value="">No category</option>
+                  {categories.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </DetailSection>
+          ) : null}
+
+          {node.type === "task" ? (
+            <DetailSection title="Linked Plan">
+              <DetailValue label="Plan" value={plan?.title ?? parent?.title ?? "-"} />
+              <Button className="mt-3 w-full" type="button" variant="outline">
+                Add to Today TODO
+              </Button>
+            </DetailSection>
+          ) : null}
+
+          <DetailSection title="Dates">
+            <DateRangeFields
+              disabled={isSaving}
+              endValue={plannedEndDateValue}
               label="Planned"
-              value={formatDateRange(node.plannedStartDate, node.plannedEndDate)}
+              onEndChange={setPlannedEndDateValue}
+              onStartChange={setPlannedStartDateValue}
+              startValue={plannedStartDateValue}
             />
-            <DetailValue
+            <DateRangeFields
+              disabled={isSaving}
+              endValue={actualEndDateValue}
               label="Actual"
-              value={formatDateRange(node.actualStartDate, node.actualEndDate)}
+              onEndChange={setActualEndDateValue}
+              onStartChange={setActualStartDateValue}
+              startValue={actualStartDateValue}
             />
-          </div>
-        </DetailSection>
+          </DetailSection>
 
-        <DetailSection title="Memo">
-          <p className="text-sm leading-6 text-muted-foreground">{node.memo ?? "No memo."}</p>
-        </DetailSection>
+          <DetailSection title="Memo">
+            <DetailTextArea
+              disabled={isSaving}
+              onChange={setMemoValue}
+              placeholder="Add a memo"
+              value={memoValue}
+            />
+          </DetailSection>
 
-        <div className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <Timer className="h-3.5 w-3.5" aria-hidden="true" />
-            <span>sortOrder {node.sortOrder}</span>
+          {saveError ? (
+            <p className="rounded-md border border-destructive/25 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+              {saveError}
+            </p>
+          ) : null}
+          {saveMessage ? (
+            <p className="rounded-md border border-primary/25 bg-primary/5 px-3 py-2 text-xs text-primary">
+              {saveMessage}
+            </p>
+          ) : null}
+
+          <div className="flex items-center justify-between gap-3">
+            <div className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Timer className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>sortOrder {node.sortOrder}</span>
+              </div>
+            </div>
+            <Button disabled={isSaving || !hasChanges} type="submit">
+              {isSaving ? "Saving" : "Save changes"}
+            </Button>
           </div>
-        </div>
-      </CardContent>
+        </CardContent>
+      </form>
     </Card>
   );
 }
@@ -776,6 +1056,72 @@ function DetailValue({ label, value }: { label: string; value: string }) {
     <div className="flex items-center justify-between gap-4 rounded-md border bg-background px-3 py-2">
       <span className="text-xs text-muted-foreground">{label}</span>
       <span className="truncate text-sm font-medium">{value}</span>
+    </div>
+  );
+}
+
+function DetailTextArea({
+  disabled,
+  onChange,
+  placeholder,
+  value,
+}: {
+  disabled: boolean;
+  onChange: (value: string) => void;
+  placeholder: string;
+  value: string;
+}) {
+  return (
+    <textarea
+      className="min-h-28 w-full resize-y rounded-md border bg-background px-3 py-2 text-sm leading-6 outline-none transition placeholder:text-muted-foreground focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+      disabled={disabled}
+      onChange={(event) => onChange(event.target.value)}
+      placeholder={placeholder}
+      value={value}
+    />
+  );
+}
+
+function DateRangeFields({
+  disabled,
+  endValue,
+  label,
+  onEndChange,
+  onStartChange,
+  startValue,
+}: {
+  disabled: boolean;
+  endValue: string;
+  label: string;
+  onEndChange: (value: string) => void;
+  onStartChange: (value: string) => void;
+  startValue: string;
+}) {
+  return (
+    <div className="mb-3 rounded-md border bg-background px-3 py-2 last:mb-0">
+      <div className="mb-2 text-xs font-medium text-muted-foreground">{label}</div>
+      <div className="grid grid-cols-2 gap-2">
+        <label className="block">
+          <span className="text-xs text-muted-foreground">Start</span>
+          <input
+            className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+            disabled={disabled}
+            onChange={(event) => onStartChange(event.target.value)}
+            type="date"
+            value={startValue}
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs text-muted-foreground">End</span>
+          <input
+            className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+            disabled={disabled}
+            onChange={(event) => onEndChange(event.target.value)}
+            type="date"
+            value={endValue}
+          />
+        </label>
+      </div>
     </div>
   );
 }
@@ -843,16 +1189,53 @@ function getNodeProgress(node: WorkspaceNode, nodes: WorkspaceNode[]) {
   return Math.round((doneTasks.length / calculableTasks.length) * 100);
 }
 
-function formatDateRange(start?: string | null, end?: string | null) {
-  if (!start && !end) {
-    return "-";
+function getDateValuesWithStatusUpdates(
+  node: WorkspaceNode,
+  input: UpdateNodeInput,
+) {
+  let actualStartDate = input.actualStartDate;
+  let actualEndDate = input.actualEndDate;
+
+  if (node.status === input.status) {
+    return { actualStartDate, actualEndDate };
   }
 
-  if (start && end && start !== end) {
-    return `${start} - ${end}`;
+  const today = getLocalDateString(new Date());
+
+  if (input.status === "in_progress" && !actualStartDate) {
+    actualStartDate = today;
   }
 
-  return start ?? end ?? "-";
+  if (
+    input.status === "done" &&
+    (node.status === "in_progress" || node.status === "blocked") &&
+    !actualEndDate
+  ) {
+    actualEndDate = today;
+  }
+
+  if (node.status === "done" && input.status === "in_progress") {
+    actualEndDate = null;
+  }
+
+  return { actualStartDate, actualEndDate };
+}
+
+function emptyStringToNull(value: string) {
+  const trimmedValue = value.trim();
+  return trimmedValue ? trimmedValue : null;
+}
+
+function isValidDateRange(start: string | null, end: string | null) {
+  return !start || !end || start <= end;
+}
+
+function getLocalDateString(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }
 
 function restrictToSortableStack({

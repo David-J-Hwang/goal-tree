@@ -1091,6 +1091,11 @@ Goal / Plan / Task TypeScript 타입 초안
 PlanCategory, TodayTodo, UserSettings TypeScript 타입 초안
 /workspace Supabase 데이터 읽기 연결
 /workspace Goal / Plan / Task 카드 생성 Supabase insert 연결
+/workspace Detail Panel 제목 / 메모 / 상태 Supabase update 연결
+/workspace Detail Panel 날짜 필드 Supabase update 연결
+/workspace Goal Detail Panel 왜 중요한지 / 성공기준 Supabase update 연결
+/workspace Plan Detail Panel 카테고리 변경 Supabase update 연결
+/workspace 상태 변경 시 실제 진행기간 자동입력 규칙 연결
 /workspace 진입 시 신규 유저 user_settings 기본값 생성
 /workspace 진입 시 신규 유저 기본 Plan 카테고리 생성
 /workspace 3단 카드 UI
@@ -1112,8 +1117,8 @@ Plan 카테고리 표시
 
 ```txt
 /dashboard, /whativedone, /timeline, /trash 데이터는 아직 Supabase에 연결되지 않았다.
-카드 수정 / 삭제는 아직 없다.
-상세패널 입력과 상태 변경은 아직 동작하지 않는다.
+카드 삭제는 아직 없다.
+Plan 카테고리 자체의 추가 / 수정 / 삭제는 아직 없다.
 오늘 TODO 추가 / 제거 버튼은 아직 실제 기능과 연결되지 않았다.
 검색 입력은 아직 placeholder다.
 ```
