@@ -345,7 +345,8 @@ type UserSettings = {
 - [x] 인증되지 않은 사용자의 주요 페이지 접근 제한
 - [x] 주요 데이터 테이블에 `user_id` 필드 구성
 - [x] Supabase RLS로 유저별 데이터 접근 제한 처리
-- [ ] 실제 앱 데이터 요청에 로그인 유저 데이터 연결
+- [x] `/workspace` 데이터 요청에 로그인 유저 데이터 연결
+- [ ] 다른 주요 페이지 데이터 요청에 로그인 유저 데이터 연결
 
 ### 3. 데이터 모델
 
@@ -362,6 +363,8 @@ type UserSettings = {
 - [x] Supabase SQL Editor에서 초기 스키마 실행
 - [x] Supabase DB 테이블 구현
 - [x] Supabase DB 관계 / 제약 설정
+- [x] Supabase authenticated role 권한 grant SQL 파일 작성
+- [ ] Supabase SQL Editor에서 authenticated role 권한 grant 실행
 
 ### 4. /workspace
 
@@ -378,10 +381,13 @@ type UserSettings = {
 - [x] 드래그 카드 상하 경계 제한
 - [x] 드래그 경계 soft clamp 적용
 - [x] 목록 카드 기간 텍스트 제거
+- [x] Supabase 데이터 읽기 연동
+- [x] 빈 Goal / Plan / Task 상태 표시
 - [ ] Goal 생성 / 수정 / 삭제 구현
 - [ ] Plan 생성 / 수정 / 삭제 구현
 - [ ] Task 생성 / 수정 / 삭제 구현
-- [ ] Supabase 데이터 연동
+- [ ] Supabase 데이터 쓰기 연동
+- [ ] 드래그 정렬 결과 Supabase 저장
 - [ ] `/workspace` 검색 기능 구현
 
 ### 5. Detail Panel
@@ -398,7 +404,7 @@ type UserSettings = {
 ### 6. Plan 카테고리
 
 - [x] 테스트용 기본 카테고리 표시
-- [ ] 신규 유저 기본 카테고리 자동 생성
+- [x] 신규 유저 기본 카테고리 자동 생성
 - [ ] 유저 직접 카테고리 추가
 - [ ] 카테고리 수정 / 삭제
 - [ ] Plan에 카테고리 연결

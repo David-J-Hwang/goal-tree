@@ -45,307 +45,9 @@ type WorkspaceNode = GoalTreeNode & {
   note?: string;
 };
 
-const now = "2026-06-08T00:00:00.000Z";
 const sortableStackModifiers: Modifier[] = [restrictToSortableStack];
 const dragBoundaryOvershoot = 20;
 const dragBoundarySoftness = 54;
-
-const planCategories: PlanCategory[] = [
-  {
-    id: "cat-web",
-    userId: "demo-user",
-    name: "웹개발",
-    color: "#2563eb",
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: "cat-study",
-    userId: "demo-user",
-    name: "공부",
-    color: "#16a34a",
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: "cat-business",
-    userId: "demo-user",
-    name: "사업",
-    color: "#d97706",
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: "cat-health",
-    userId: "demo-user",
-    name: "건강",
-    color: "#dc2626",
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: "cat-outside",
-    userId: "demo-user",
-    name: "외부활동",
-    color: "#7c3aed",
-    createdAt: now,
-    updatedAt: now,
-  },
-];
-
-const initialNodes: WorkspaceNode[] = [
-  {
-    id: "goal-finance",
-    userId: "demo-user",
-    type: "goal",
-    parentId: null,
-    title: "경제적 자유",
-    status: "in_progress",
-    plannedStartDate: "2026-06-01",
-    plannedEndDate: "2026-12-31",
-    actualStartDate: "2026-06-08",
-    actualEndDate: null,
-    importanceReason: "직접 만든 서비스와 프로젝트로 지속 가능한 선택지를 늘리기 위해.",
-    successCriteriaText: "첫 유료 사용자 확보, MVP 1개 배포, 월 매출 발생",
-    memo: "올해는 작게 배포하고 직접 써보는 서비스를 먼저 완성한다.",
-    sortOrder: 1,
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: "goal-health",
-    userId: "demo-user",
-    type: "goal",
-    parentId: null,
-    title: "건강한 몸 만들기",
-    status: "not_started",
-    plannedStartDate: "2026-06-10",
-    plannedEndDate: "2026-09-30",
-    actualStartDate: null,
-    actualEndDate: null,
-    importanceReason: "오래 개발하고 생활 리듬을 유지하기 위한 기본 체력을 만들기 위해.",
-    successCriteriaText: "주 4회 운동, 체중 80kg 유지, 수면 리듬 안정화",
-    memo: "강도보다 반복 가능한 루틴을 우선한다.",
-    sortOrder: 2,
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: "goal-dev",
-    userId: "demo-user",
-    type: "goal",
-    parentId: null,
-    title: "개발자로 성장하기",
-    status: "blocked",
-    plannedStartDate: "2026-06-01",
-    plannedEndDate: "2026-12-31",
-    actualStartDate: "2026-06-05",
-    actualEndDate: null,
-    importanceReason: "아이디어를 빠르게 제품으로 만들 수 있는 실력을 쌓기 위해.",
-    successCriteriaText: "Next.js 앱 2개 완성, 실시간 기능 실험, 배포 경험 축적",
-    memo: "지금은 여러 프로젝트가 겹쳐 우선순위 정리가 필요하다.",
-    sortOrder: 3,
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: "plan-goaltree",
-    userId: "demo-user",
-    type: "plan",
-    parentId: "goal-finance",
-    title: "Goaltree MVP 만들기",
-    status: "in_progress",
-    plannedStartDate: "2026-06-08",
-    plannedEndDate: "2026-06-21",
-    actualStartDate: "2026-06-08",
-    actualEndDate: null,
-    categoryId: "cat-web",
-    memo: "직접 사용할 수 있는 목표-계획-행동 관리 화면부터 만든다.",
-    sortOrder: 1,
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: "plan-micro-saas",
-    userId: "demo-user",
-    type: "plan",
-    parentId: "goal-finance",
-    title: "작은 수익형 웹서비스 후보 정리",
-    status: "not_started",
-    plannedStartDate: "2026-06-15",
-    plannedEndDate: "2026-06-30",
-    actualStartDate: null,
-    actualEndDate: null,
-    categoryId: "cat-business",
-    memo: "너무 큰 서비스보다 빠르게 만들 수 있는 문제를 먼저 찾는다.",
-    sortOrder: 2,
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: "plan-feedback",
-    userId: "demo-user",
-    type: "plan",
-    parentId: "goal-finance",
-    title: "사용자 피드백 받기",
-    status: "paused",
-    plannedStartDate: "2026-07-01",
-    plannedEndDate: "2026-07-15",
-    actualStartDate: null,
-    actualEndDate: null,
-    categoryId: "cat-outside",
-    memo: "MVP가 손에 잡힌 뒤 다시 활성화한다.",
-    sortOrder: 3,
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: "plan-cardio",
-    userId: "demo-user",
-    type: "plan",
-    parentId: "goal-health",
-    title: "유산소 루틴 만들기",
-    status: "not_started",
-    plannedStartDate: "2026-06-10",
-    plannedEndDate: "2026-07-10",
-    actualStartDate: null,
-    actualEndDate: null,
-    categoryId: "cat-health",
-    memo: "걷기와 가벼운 러닝으로 시작한다.",
-    sortOrder: 1,
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: "plan-next-study",
-    userId: "demo-user",
-    type: "plan",
-    parentId: "goal-dev",
-    title: "Next.js App Router 복습",
-    status: "blocked",
-    plannedStartDate: "2026-06-08",
-    plannedEndDate: "2026-06-14",
-    actualStartDate: "2026-06-08",
-    actualEndDate: null,
-    categoryId: "cat-study",
-    memo: "실습 프로젝트와 같이 진행한다.",
-    sortOrder: 1,
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: "task-setup",
-    userId: "demo-user",
-    type: "task",
-    parentId: "plan-goaltree",
-    title: "기술스택 초기 세팅하기",
-    status: "done",
-    plannedStartDate: "2026-06-08",
-    plannedEndDate: "2026-06-08",
-    actualStartDate: "2026-06-08",
-    actualEndDate: "2026-06-08",
-    memo: "Next.js, Tailwind, shadcn/ui, Supabase, dnd-kit, date-fns 설치.",
-    sortOrder: 1,
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: "task-workspace-ui",
-    userId: "demo-user",
-    type: "task",
-    parentId: "plan-goaltree",
-    title: "Workspace 3단 카드 UI 만들기",
-    status: "in_progress",
-    plannedStartDate: "2026-06-08",
-    plannedEndDate: "2026-06-10",
-    actualStartDate: "2026-06-08",
-    actualEndDate: null,
-    memo: "Goal 클릭 시 Plan, Plan 클릭 시 Task가 열리는 흐름을 먼저 확인한다.",
-    sortOrder: 2,
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: "task-dnd",
-    userId: "demo-user",
-    type: "task",
-    parentId: "plan-goaltree",
-    title: "같은 섹션 안 카드 정렬 붙이기",
-    status: "not_started",
-    plannedStartDate: "2026-06-10",
-    plannedEndDate: "2026-06-11",
-    actualStartDate: null,
-    actualEndDate: null,
-    memo: "컬럼 간 이동은 금지하고 drag handle 방식으로 구현한다.",
-    sortOrder: 3,
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: "task-login",
-    userId: "demo-user",
-    type: "task",
-    parentId: "plan-goaltree",
-    title: "이메일 로그인 화면 만들기",
-    status: "blocked",
-    plannedStartDate: "2026-06-12",
-    plannedEndDate: "2026-06-13",
-    actualStartDate: null,
-    actualEndDate: null,
-    memo: "Supabase 프로젝트 생성 후 환경변수 연결이 필요하다.",
-    sortOrder: 4,
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: "task-saas-ideas",
-    userId: "demo-user",
-    type: "task",
-    parentId: "plan-micro-saas",
-    title: "서비스 아이디어 10개 적기",
-    status: "not_started",
-    plannedStartDate: "2026-06-15",
-    plannedEndDate: "2026-06-16",
-    actualStartDate: null,
-    actualEndDate: null,
-    memo: "개발자가 직접 쓸 수 있는 작은 문제부터 적는다.",
-    sortOrder: 1,
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: "task-walk",
-    userId: "demo-user",
-    type: "task",
-    parentId: "plan-cardio",
-    title: "퇴근 후 40분 걷기",
-    status: "not_started",
-    plannedStartDate: "2026-06-10",
-    plannedEndDate: "2026-06-10",
-    actualStartDate: null,
-    actualEndDate: null,
-    memo: "처음 2주는 강도보다 반복성만 확인한다.",
-    sortOrder: 1,
-    createdAt: now,
-    updatedAt: now,
-  },
-  {
-    id: "task-router",
-    userId: "demo-user",
-    type: "task",
-    parentId: "plan-next-study",
-    title: "App Router 라우팅 구조 복습",
-    status: "blocked",
-    plannedStartDate: "2026-06-08",
-    plannedEndDate: "2026-06-09",
-    actualStartDate: "2026-06-08",
-    actualEndDate: null,
-    memo: "실제 앱 구조와 함께 보면서 정리한다.",
-    sortOrder: 1,
-    createdAt: now,
-    updatedAt: now,
-  },
-];
 
 const statusMeta: Record<
   NodeStatus,
@@ -393,11 +95,22 @@ const columnLabels: Record<NodeType, string> = {
   task: "Task",
 };
 
-export function WorkspaceBoard() {
+export function WorkspaceBoard({
+  initialCategories,
+  initialNodes,
+}: {
+  initialCategories: PlanCategory[];
+  initialNodes: GoalTreeNode[];
+}) {
   const [nodes, setNodes] = useState<WorkspaceNode[]>(initialNodes);
-  const [selectedGoalId, setSelectedGoalId] = useState("goal-finance");
+  const [planCategories] = useState<PlanCategory[]>(initialCategories);
+  const initialGoalId = useMemo(
+    () => getSortedChildren(initialNodes, "goal", null)[0]?.id ?? "",
+    [initialNodes],
+  );
+  const [selectedGoalId, setSelectedGoalId] = useState(initialGoalId);
   const [selectedPlanId, setSelectedPlanId] = useState("");
-  const [selectedNodeId, setSelectedNodeId] = useState("goal-finance");
+  const [selectedNodeId, setSelectedNodeId] = useState(initialGoalId);
 
   const goals = useMemo(() => getSortedChildren(nodes, "goal", null), [nodes]);
   const plans = useMemo(
@@ -459,6 +172,8 @@ export function WorkspaceBoard() {
           title="Goals"
           nodes={goals}
           selectedId={selectedGoalId}
+          categories={planCategories}
+          emptyMessage="No Goal cards yet"
           onSelect={handleSelect}
           onReorder={handleReorder}
           summary={`${goals.length} active goals`}
@@ -469,8 +184,12 @@ export function WorkspaceBoard() {
           title="Plans"
           nodes={plans}
           selectedId={selectedPlanId}
+          categories={planCategories}
           onSelect={handleSelect}
           onReorder={handleReorder}
+          emptyMessage={
+            selectedGoalId ? "No Plan cards yet" : "Select a goal card to view plans"
+          }
           summary={selectedGoal ? selectedGoal.title : "No goal selected"}
         />
         <WorkspaceColumn
@@ -479,6 +198,7 @@ export function WorkspaceBoard() {
           title="Tasks"
           nodes={tasks}
           selectedId={selectedNodeId}
+          categories={planCategories}
           onSelect={handleSelect}
           onReorder={handleReorder}
           emptyMessage={
@@ -505,6 +225,7 @@ function WorkspaceColumn({
   summary,
   nodes,
   selectedId,
+  categories,
   emptyMessage,
   onSelect,
   onReorder,
@@ -515,6 +236,7 @@ function WorkspaceColumn({
   summary: string;
   nodes: WorkspaceNode[];
   selectedId: string;
+  categories: PlanCategory[];
   emptyMessage?: string;
   onSelect: (node: WorkspaceNode) => void;
   onReorder: (type: NodeType, parentId: string | null, orderedIds: string[]) => void;
@@ -581,7 +303,7 @@ function WorkspaceColumn({
                     key={node.id}
                     node={node}
                     selected={node.id === selectedId}
-                    category={planCategories.find((category) => category.id === node.categoryId)}
+                    category={categories.find((category) => category.id === node.categoryId)}
                     progress={getNodeProgress(node, nodes)}
                     onSelect={() => onSelect(node)}
                   />

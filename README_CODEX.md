@@ -1064,7 +1064,7 @@ README_CODEX.md
 
 ## 22. 현재 구현 상태
 
-현재 저장소에는 Next.js 기반 초기 앱과 `/workspace` 테스트 UI가 구현되어 있다.
+현재 저장소에는 Next.js 기반 초기 앱, Supabase Auth, `/workspace` Supabase 읽기 연결이 구현되어 있다.
 
 구현된 것:
 
@@ -1085,9 +1085,13 @@ supabase/migrations/001_initial_schema.sql 초기 DB 스키마 파일
 Supabase SQL Editor 초기 스키마 실행 완료
 Supabase DB 테이블 생성 완료: nodes, plan_categories, today_todos, user_settings
 Supabase DB 관계 / 제약 / RLS 정책 설정 완료
+supabase/migrations/002_grant_authenticated_permissions.sql 권한 grant 파일 작성
 Goal / Plan / Task TypeScript 타입 초안
 PlanCategory, TodayTodo, UserSettings TypeScript 타입 초안
-/workspace mock 데이터 기반 3단 카드 UI
+/workspace Supabase 데이터 읽기 연결
+/workspace 진입 시 신규 유저 user_settings 기본값 생성
+/workspace 진입 시 신규 유저 기본 Plan 카테고리 생성
+/workspace 3단 카드 UI
 Goal 선택 시 Plan 필터링
 Plan 선택 시 Task 필터링
 오른쪽 Detail Panel
@@ -1104,10 +1108,12 @@ Plan 카테고리 표시
 아직 mock 단계인 것:
 
 ```txt
-/workspace, /dashboard, /whativedone, /timeline, /trash 데이터는 아직 Supabase에 연결되지 않았다.
+/workspace 사용 전 supabase/migrations/002_grant_authenticated_permissions.sql을 Supabase SQL Editor에서 실행해야 한다.
+/dashboard, /whativedone, /timeline, /trash 데이터는 아직 Supabase에 연결되지 않았다.
 카드 생성 / 수정 / 삭제는 아직 없다.
 상세패널 입력과 상태 변경은 아직 동작하지 않는다.
 오늘 TODO 추가 / 제거 버튼은 아직 실제 기능과 연결되지 않았다.
+드래그 정렬은 화면 안에서만 반영되고 아직 Supabase에 저장되지 않는다.
 검색 입력은 아직 placeholder다.
 ```
 
