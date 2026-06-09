@@ -149,17 +149,35 @@ export function WorkspaceBoard({
     }
   }
 
-  function handleReorder(type: NodeType, parentId: string | null, orderedIds: string[]) {
-    setNodes((currentNodes) =>
-      currentNodes.map((node) => {
-        if (node.type !== type || node.parentId !== parentId) {
-          return node;
-        }
+  async function handleReorder(type: NodeType, parentId: string | null, orderedIds: string[]) {
+    const previousNodes = nodes;
+    const nextNodes = nodes.map((node) => {
+      if (node.type !== type || node.parentId !== parentId) {
+        return node;
+      }
 
-        const index = orderedIds.indexOf(node.id);
-        return index === -1 ? node : { ...node, sortOrder: index + 1 };
-      }),
+      const index = orderedIds.indexOf(node.id);
+      return index === -1 ? node : { ...node, sortOrder: index + 1 };
+    });
+
+    setNodes(nextNodes);
+
+    const supabase = createSupabaseBrowserClient();
+    const updates = orderedIds.map((id, index) =>
+      supabase
+        .from("nodes")
+        .update({ sort_order: index + 1 })
+        .eq("id", id)
+        .eq("user_id", userId),
     );
+
+    const results = await Promise.all(updates);
+    const failedResult = results.find((result) => result.error);
+
+    if (failedResult?.error) {
+      setNodes(previousNodes);
+      throw new Error(failedResult.error.message);
+    }
   }
 
   async function handleCreateNode(input: CreateNodeInput) {
@@ -296,13 +314,19 @@ function WorkspaceColumn({
   emptyMessage?: string;
   onCreate: (input: CreateNodeInput) => Promise<void>;
   onSelect: (node: WorkspaceNode) => void;
-  onReorder: (type: NodeType, parentId: string | null, orderedIds: string[]) => void;
+  onReorder: (
+    type: NodeType,
+    parentId: string | null,
+    orderedIds: string[],
+  ) => Promise<void>;
 }) {
   const [isAdding, setIsAdding] = useState(false);
   const [titleValue, setTitleValue] = useState("");
   const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isReordering, setIsReordering] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [reorderErrorMessage, setReorderErrorMessage] = useState("");
   const canAdd = type === "goal" || Boolean(parentId);
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -315,7 +339,7 @@ function WorkspaceColumn({
     }),
   );
 
-  function handleDragEnd(event: DragEndEvent) {
+  async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
 
     if (!over || active.id === over.id) {
@@ -330,7 +354,18 @@ function WorkspaceColumn({
     }
 
     const orderedIds = arrayMove(nodes, oldIndex, newIndex).map((node) => node.id);
-    onReorder(type, parentId, orderedIds);
+    setIsReordering(true);
+    setReorderErrorMessage("");
+
+    try {
+      await onReorder(type, parentId, orderedIds);
+    } catch (error) {
+      setReorderErrorMessage(
+        error instanceof Error ? error.message : "Failed to save card order.",
+      );
+    } finally {
+      setIsReordering(false);
+    }
   }
 
   async function handleCreateSubmit(event: FormEvent<HTMLFormElement>) {
@@ -383,7 +418,7 @@ function WorkspaceColumn({
             size="icon"
             variant="ghost"
             aria-label={`Add ${columnLabels[type]}`}
-            disabled={!canAdd}
+            disabled={!canAdd || isReordering}
             onClick={() => {
               setIsAdding(true);
               setErrorMessage("");
@@ -394,6 +429,11 @@ function WorkspaceColumn({
         </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto p-3">
+        {reorderErrorMessage ? (
+          <p className="mb-3 rounded-md border border-destructive/25 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+            {reorderErrorMessage}
+          </p>
+        ) : null}
         {isAdding ? (
           <AddNodeForm
             type={type}

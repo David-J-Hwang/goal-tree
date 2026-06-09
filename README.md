@@ -390,7 +390,7 @@ type UserSettings = {
 - [x] Task 생성 구현
 - [ ] Task 수정 / 삭제 구현
 - [x] Supabase 카드 생성 쓰기 연동
-- [ ] 드래그 정렬 결과 Supabase 저장
+- [x] 드래그 정렬 결과 Supabase 저장
 - [ ] `/workspace` 검색 기능 구현
 
 ### 5. Detail Panel
