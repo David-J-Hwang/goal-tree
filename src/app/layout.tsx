@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { AppBar } from "@/components/app-bar";
+import { AppShell } from "@/components/app-shell";
 
 import "./globals.css";
 
@@ -33,8 +33,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body>
-        <AppBar />
-        {children}
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

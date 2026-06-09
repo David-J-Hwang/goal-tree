@@ -1063,6 +1063,17 @@ Plan 카테고리 표시
 검색 입력은 아직 placeholder다.
 ```
 
+Login mock UI:
+
+```txt
+/login은 src/app/login/login-board.tsx에 구현되어 있다.
+MVP 방향에 맞게 이메일 로그인만 UI에 포함했다.
+Sign in / Create account segmented control로 로그인과 회원가입 화면을 전환한다.
+Email, Password, Remember me, Reset password UI를 배치했다.
+제출 시 mock 안내만 표시하며 실제 Supabase Auth는 아직 연결되지 않았다.
+인증 전 주요 페이지 이동을 피하기 위해 /login에서는 상단 앱바를 숨긴다.
+```
+
 Dashboard mock UI:
 
 ```txt
