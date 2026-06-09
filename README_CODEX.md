@@ -1096,6 +1096,11 @@ PlanCategory, TodayTodo, UserSettings TypeScript 타입 초안
 /workspace Goal Detail Panel 왜 중요한지 / 성공기준 Supabase update 연결
 /workspace Plan Detail Panel 카테고리 변경 Supabase update 연결
 /workspace 상태 변경 시 실제 진행기간 자동입력 규칙 연결
+/workspace Goal / Plan / Task 휴지통 이동 연결
+/workspace 상위 항목이 휴지통에 있을 때 하위 항목 일반 화면 숨김 처리
+/trash Supabase 데이터 읽기 연결
+/trash 실제 복원 기능 연결
+/trash 실제 영구 삭제 기능 연결
 /workspace 진입 시 신규 유저 user_settings 기본값 생성
 /workspace 진입 시 신규 유저 기본 Plan 카테고리 생성
 /workspace 3단 카드 UI
@@ -1116,8 +1121,7 @@ Plan 카테고리 표시
 아직 mock 단계인 것:
 
 ```txt
-/dashboard, /whativedone, /timeline, /trash 데이터는 아직 Supabase에 연결되지 않았다.
-카드 삭제는 아직 없다.
+/dashboard, /whativedone, /timeline 데이터는 아직 Supabase에 연결되지 않았다.
 Plan 카테고리 자체의 추가 / 수정 / 삭제는 아직 없다.
 오늘 TODO 추가 / 제거 버튼은 아직 실제 기능과 연결되지 않았다.
 검색 입력은 아직 placeholder다.
@@ -1179,7 +1183,7 @@ Upcoming 모드는 plannedStartDate / plannedEndDate를 사용한다.
 현재는 mock 데이터 기반이며 /workspace 선택 상태 복원은 아직 연결되지 않았다.
 ```
 
-Trash mock UI:
+Trash UI:
 
 ```txt
 /trash는 src/app/trash/trash-board.tsx에 구현되어 있다.
@@ -1190,7 +1194,9 @@ Restore 버튼과 Delete 버튼을 표시한다.
 상위 Goal 또는 Plan이 휴지통에 있는 하위 항목은 Restore 버튼을 disabled 처리한다.
 복원 제한 이유는 카드 안의 안내 박스로 보여준다.
 오른쪽에는 Restore Rules와 Permanent Delete 안내 패널을 배치했다.
-현재는 mock 데이터 기반이며 실제 복원 / 영구 삭제 기능은 아직 연결되지 않았다.
+현재는 Supabase nodes 데이터를 읽어서 trashedAt이 있는 항목을 표시한다.
+Restore는 trashed_at을 null로 되돌린다.
+Delete는 nodes row를 실제 삭제하며 DB cascade로 하위 Node와 연결된 TodayTodo도 함께 정리된다.
 ```
 
 검증:

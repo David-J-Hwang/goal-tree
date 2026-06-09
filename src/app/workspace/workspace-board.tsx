@@ -28,6 +28,7 @@ import {
   Plus,
   Search,
   Timer,
+  Trash2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -152,9 +153,15 @@ export function WorkspaceBoard({
     [nodes, selectedPlanId],
   );
 
-  const selectedNode = nodes.find((node) => node.id === selectedNodeId) ?? goals[0];
-  const selectedGoal = nodes.find((node) => node.id === selectedGoalId);
-  const selectedPlan = nodes.find((node) => node.id === selectedPlanId);
+  const selectedNode =
+    nodes.find((node) => node.id === selectedNodeId && isNodeVisible(node, nodes)) ??
+    goals[0];
+  const selectedGoal = nodes.find(
+    (node) => node.id === selectedGoalId && isNodeVisible(node, nodes),
+  );
+  const selectedPlan = nodes.find(
+    (node) => node.id === selectedPlanId && isNodeVisible(node, nodes),
+  );
 
   function handleSelect(node: WorkspaceNode) {
     setSelectedNodeId(node.id);
@@ -288,6 +295,43 @@ export function WorkspaceBoard({
     );
   }
 
+  async function handleMoveNodeToTrash(nodeId: string) {
+    const currentNode = nodes.find((node) => node.id === nodeId);
+
+    if (!currentNode) {
+      throw new Error("Node was not found.");
+    }
+
+    const supabase = createSupabaseBrowserClient();
+    const { data, error } = await supabase
+      .from("nodes")
+      .update({ trashed_at: new Date().toISOString() })
+      .eq("id", nodeId)
+      .eq("user_id", userId)
+      .select(nodeSelectColumns)
+      .single()
+      .returns<NodeRow>();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    if (!data) {
+      throw new Error("Trashed node was not returned.");
+    }
+
+    const trashedNode = mapNodeRow(data);
+    const nextNodes = nodes.map((node) =>
+      node.id === trashedNode.id ? trashedNode : node,
+    );
+    const nextSelection = getSelectionAfterTrash(nextNodes, trashedNode);
+
+    setNodes(nextNodes);
+    setSelectedGoalId(nextSelection.goalId);
+    setSelectedPlanId(nextSelection.planId);
+    setSelectedNodeId(nextSelection.nodeId);
+  }
+
   return (
     <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8">
       <header className="flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
@@ -351,6 +395,7 @@ export function WorkspaceBoard({
           plan={selectedPlan}
           nodes={nodes}
           categories={planCategories}
+          onMoveNodeToTrash={handleMoveNodeToTrash}
           onUpdateNode={handleUpdateNode}
         />
       </section>
@@ -714,6 +759,7 @@ function DetailPanel({
   plan,
   nodes,
   categories,
+  onMoveNodeToTrash,
   onUpdateNode,
 }: {
   node?: WorkspaceNode;
@@ -721,6 +767,7 @@ function DetailPanel({
   plan?: WorkspaceNode;
   nodes: WorkspaceNode[];
   categories: PlanCategory[];
+  onMoveNodeToTrash: (nodeId: string) => Promise<void>;
   onUpdateNode: (input: UpdateNodeInput) => Promise<void>;
 }) {
   const [titleValue, setTitleValue] = useState(node?.title ?? "");
@@ -748,6 +795,8 @@ function DetailPanel({
   );
   const [categoryIdValue, setCategoryIdValue] = useState(node?.categoryId ?? "");
   const [isSaving, setIsSaving] = useState(false);
+  const [isMovingToTrash, setIsMovingToTrash] = useState(false);
+  const [isConfirmingTrash, setIsConfirmingTrash] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
 
@@ -783,6 +832,7 @@ function DetailPanel({
   useEffect(() => {
     setSaveError("");
     setSaveMessage("");
+    setIsConfirmingTrash(false);
   }, [node?.id]);
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
@@ -844,6 +894,34 @@ function DetailPanel({
       setSaveError(error instanceof Error ? error.message : "Failed to save changes.");
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleMoveToTrash() {
+    if (!node) {
+      return;
+    }
+
+    if (!isConfirmingTrash) {
+      setIsConfirmingTrash(true);
+      setSaveError("");
+      setSaveMessage("");
+      return;
+    }
+
+    setIsMovingToTrash(true);
+    setSaveError("");
+    setSaveMessage("");
+
+    try {
+      await onMoveNodeToTrash(node.id);
+    } catch (error) {
+      setSaveError(
+        error instanceof Error ? error.message : "Failed to move card to trash.",
+      );
+      setIsConfirmingTrash(false);
+    } finally {
+      setIsMovingToTrash(false);
     }
   }
 
@@ -1019,16 +1097,32 @@ function DetailPanel({
             </p>
           ) : null}
 
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Timer className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>sortOrder {node.sortOrder}</span>
               </div>
             </div>
-            <Button disabled={isSaving || !hasChanges} type="submit">
-              {isSaving ? "Saving" : "Save changes"}
-            </Button>
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button
+                className="border-destructive/35 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                disabled={isSaving || isMovingToTrash}
+                type="button"
+                variant="outline"
+                onClick={handleMoveToTrash}
+              >
+                <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
+                {isMovingToTrash
+                  ? "Moving"
+                  : isConfirmingTrash
+                    ? "Confirm trash"
+                    : "Move to trash"}
+              </Button>
+              <Button disabled={isSaving || isMovingToTrash || !hasChanges} type="submit">
+                {isSaving ? "Saving" : "Save changes"}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </form>
@@ -1143,7 +1237,12 @@ function getSortedChildren(
   parentId: string | null,
 ) {
   return nodes
-    .filter((node) => node.type === type && node.parentId === parentId && !node.trashedAt)
+    .filter(
+      (node) =>
+        node.type === type &&
+        node.parentId === parentId &&
+        isNodeVisible(node, nodes),
+    )
     .sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
@@ -1168,9 +1267,14 @@ function getNodeProgress(node: WorkspaceNode, nodes: WorkspaceNode[]) {
 
   const tasks =
     node.type === "plan"
-      ? nodes.filter((item) => item.type === "task" && item.parentId === node.id)
+      ? nodes.filter(
+          (item) =>
+            item.type === "task" &&
+            item.parentId === node.id &&
+            isNodeVisible(item, nodes),
+        )
       : nodes.filter((item) => {
-          if (item.type !== "task") {
+          if (item.type !== "task" || !isNodeVisible(item, nodes)) {
             return false;
           }
           const parentPlan = nodes.find((plan) => plan.id === item.parentId);
@@ -1187,6 +1291,64 @@ function getNodeProgress(node: WorkspaceNode, nodes: WorkspaceNode[]) {
 
   const doneTasks = calculableTasks.filter((task) => task.status === "done");
   return Math.round((doneTasks.length / calculableTasks.length) * 100);
+}
+
+function isNodeVisible(node: WorkspaceNode, nodes: WorkspaceNode[]): boolean {
+  if (node.trashedAt) {
+    return false;
+  }
+
+  if (!node.parentId) {
+    return true;
+  }
+
+  const parent = nodes.find((item) => item.id === node.parentId);
+
+  return parent ? isNodeVisible(parent, nodes) : false;
+}
+
+function getVisibleNode(nodes: WorkspaceNode[], id?: string | null) {
+  if (!id) {
+    return undefined;
+  }
+
+  return nodes.find((node) => node.id === id && isNodeVisible(node, nodes));
+}
+
+function getSelectionAfterTrash(nodes: WorkspaceNode[], trashedNode: WorkspaceNode) {
+  const fallbackGoal = getSortedChildren(nodes, "goal", null)[0];
+
+  if (trashedNode.type === "goal") {
+    return {
+      goalId: fallbackGoal?.id ?? "",
+      planId: "",
+      nodeId: fallbackGoal?.id ?? "",
+    };
+  }
+
+  if (trashedNode.type === "plan") {
+    const parentGoal = getVisibleNode(nodes, trashedNode.parentId);
+    const goalId = parentGoal?.id ?? fallbackGoal?.id ?? "";
+    const nextPlan = goalId ? getSortedChildren(nodes, "plan", goalId)[0] : undefined;
+
+    return {
+      goalId,
+      planId: nextPlan?.id ?? "",
+      nodeId: nextPlan?.id ?? goalId,
+    };
+  }
+
+  const parentPlan = getVisibleNode(nodes, trashedNode.parentId);
+  const parentGoal = getVisibleNode(nodes, parentPlan?.parentId);
+  const nextTask = parentPlan
+    ? getSortedChildren(nodes, "task", parentPlan.id)[0]
+    : undefined;
+
+  return {
+    goalId: parentGoal?.id ?? fallbackGoal?.id ?? "",
+    planId: parentPlan?.id ?? "",
+    nodeId: nextTask?.id ?? parentPlan?.id ?? parentGoal?.id ?? fallbackGoal?.id ?? "",
+  };
 }
 
 function getDateValuesWithStatusUpdates(

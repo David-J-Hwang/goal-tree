@@ -16,85 +16,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { mapNodeRow, nodeSelectColumns, type NodeRow } from "@/lib/goaltree/node-rows";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import type { NodeType } from "@/types/domain";
+import type { GoalTreeNode, NodeStatus, NodeType } from "@/types/domain";
 
 type TrashFilter = "all" | NodeType;
 
-type TrashedItem = {
-  id: string;
-  type: NodeType;
-  title: string;
+type TrashedItem = GoalTreeNode & {
+  trashedAt: string;
   goal?: string;
   plan?: string;
-  status: "not_started" | "in_progress" | "blocked" | "done" | "paused";
-  trashedAt: string;
   parentTrashed?: {
     type: "goal" | "plan";
     title: string;
   };
 };
-
-const trashedItems: TrashedItem[] = [
-  {
-    id: "trash-goal-health",
-    type: "goal",
-    title: "건강한 몸 만들기",
-    status: "paused",
-    trashedAt: "2026-06-09 10:30",
-  },
-  {
-    id: "trash-plan-content",
-    type: "plan",
-    title: "콘텐츠 업로드 루틴 만들기",
-    goal: "경제적 자유",
-    status: "not_started",
-    trashedAt: "2026-06-08 22:10",
-  },
-  {
-    id: "trash-plan-health",
-    type: "plan",
-    title: "아침 운동 루틴",
-    goal: "건강한 몸 만들기",
-    status: "paused",
-    trashedAt: "2026-06-09 10:32",
-    parentTrashed: {
-      type: "goal",
-      title: "건강한 몸 만들기",
-    },
-  },
-  {
-    id: "trash-task-old-stack",
-    type: "task",
-    title: "이전 UI 라이브러리 비교표 만들기",
-    goal: "경제적 자유",
-    plan: "Goaltree MVP 만들기",
-    status: "done",
-    trashedAt: "2026-06-07 18:40",
-  },
-  {
-    id: "trash-task-feedback",
-    type: "task",
-    title: "피드백 설문 초안 다시 작성",
-    goal: "개발자로 성장하기",
-    plan: "사용자 피드백 받기",
-    status: "blocked",
-    trashedAt: "2026-06-08 09:15",
-  },
-  {
-    id: "trash-task-running",
-    type: "task",
-    title: "30분 러닝하기",
-    goal: "건강한 몸 만들기",
-    plan: "아침 운동 루틴",
-    status: "not_started",
-    trashedAt: "2026-06-09 10:34",
-    parentTrashed: {
-      type: "plan",
-      title: "아침 운동 루틴",
-    },
-  },
-];
 
 const filters: Array<{ value: TrashFilter; label: string }> = [
   { value: "all", label: "All" },
@@ -103,19 +40,100 @@ const filters: Array<{ value: TrashFilter; label: string }> = [
   { value: "task", label: "Task" },
 ];
 
-export function TrashBoard() {
+export function TrashBoard({
+  initialNodes,
+  userId,
+}: {
+  initialNodes: GoalTreeNode[];
+  userId: string;
+}) {
+  const [nodes, setNodes] = useState(initialNodes);
   const [filter, setFilter] = useState<TrashFilter>("all");
+  const [actionError, setActionError] = useState("");
+  const [restoringId, setRestoringId] = useState("");
+  const [deletingId, setDeletingId] = useState("");
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState("");
+
+  const trashedItems = useMemo(() => getTrashedItems(nodes), [nodes]);
 
   const visibleItems = useMemo(
     () =>
       trashedItems.filter((item) => filter === "all" || item.type === filter),
-    [filter],
+    [filter, trashedItems],
   );
 
   const goalCount = trashedItems.filter((item) => item.type === "goal").length;
   const planCount = trashedItems.filter((item) => item.type === "plan").length;
   const taskCount = trashedItems.filter((item) => item.type === "task").length;
   const blockedRestoreCount = trashedItems.filter((item) => item.parentTrashed).length;
+  const isMutating = Boolean(restoringId || deletingId);
+
+  async function handleRestore(item: TrashedItem) {
+    if (item.parentTrashed) {
+      return;
+    }
+
+    setRestoringId(item.id);
+    setActionError("");
+    setConfirmingDeleteId("");
+
+    const supabase = createSupabaseBrowserClient();
+    const { data, error } = await supabase
+      .from("nodes")
+      .update({ trashed_at: null })
+      .eq("id", item.id)
+      .eq("user_id", userId)
+      .select(nodeSelectColumns)
+      .single()
+      .returns<NodeRow>();
+
+    if (error) {
+      setActionError(error.message);
+      setRestoringId("");
+      return;
+    }
+
+    if (!data) {
+      setActionError("Restored node was not returned.");
+      setRestoringId("");
+      return;
+    }
+
+    const restoredNode = mapNodeRow(data);
+    setNodes((currentNodes) =>
+      currentNodes.map((node) => (node.id === restoredNode.id ? restoredNode : node)),
+    );
+    setRestoringId("");
+  }
+
+  async function handleDelete(item: TrashedItem) {
+    if (confirmingDeleteId !== item.id) {
+      setConfirmingDeleteId(item.id);
+      setActionError("");
+      return;
+    }
+
+    setDeletingId(item.id);
+    setActionError("");
+
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase
+      .from("nodes")
+      .delete()
+      .eq("id", item.id)
+      .eq("user_id", userId);
+
+    if (error) {
+      setActionError(error.message);
+      setDeletingId("");
+      return;
+    }
+
+    const removedIds = new Set([item.id, ...getDescendantIds(nodes, item.id)]);
+    setNodes((currentNodes) => currentNodes.filter((node) => !removedIds.has(node.id)));
+    setDeletingId("");
+    setConfirmingDeleteId("");
+  }
 
   return (
     <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8">
@@ -151,9 +169,29 @@ export function TrashBoard() {
             </div>
           </CardHeader>
           <CardContent className="space-y-3 p-4">
-            {visibleItems.map((item) => (
-              <TrashItemCard item={item} key={item.id} />
-            ))}
+            {actionError ? (
+              <p className="rounded-md border border-destructive/25 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+                {actionError}
+              </p>
+            ) : null}
+            {visibleItems.length > 0 ? (
+              visibleItems.map((item) => (
+                <TrashItemCard
+                  isConfirmingDelete={confirmingDeleteId === item.id}
+                  isDeleting={deletingId === item.id}
+                  isMutating={isMutating}
+                  isRestoring={restoringId === item.id}
+                  item={item}
+                  key={item.id}
+                  onDelete={() => handleDelete(item)}
+                  onRestore={() => handleRestore(item)}
+                />
+              ))
+            ) : (
+              <div className="flex min-h-40 items-center justify-center rounded-md border border-dashed px-4 text-center text-sm text-muted-foreground">
+                No trashed items in this view
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -216,7 +254,23 @@ function SegmentedControl<TValue extends string>({
   );
 }
 
-function TrashItemCard({ item }: { item: TrashedItem }) {
+function TrashItemCard({
+  isConfirmingDelete,
+  isDeleting,
+  isMutating,
+  isRestoring,
+  item,
+  onDelete,
+  onRestore,
+}: {
+  isConfirmingDelete: boolean;
+  isDeleting: boolean;
+  isMutating: boolean;
+  isRestoring: boolean;
+  item: TrashedItem;
+  onDelete: () => void;
+  onRestore: () => void;
+}) {
   const restoreBlocked = Boolean(item.parentTrashed);
 
   return (
@@ -231,7 +285,9 @@ function TrashItemCard({ item }: { item: TrashedItem }) {
           <p className="mt-2 truncate text-xs text-muted-foreground">
             {getBreadcrumb(item)}
           </p>
-          <p className="mt-2 text-xs text-muted-foreground">Moved to trash: {item.trashedAt}</p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Moved to trash: {formatTimestamp(item.trashedAt)}
+          </p>
 
           {restoreBlocked ? (
             <div className="mt-3 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-950/25 dark:text-amber-300/85">
@@ -246,20 +302,23 @@ function TrashItemCard({ item }: { item: TrashedItem }) {
         <div className="flex flex-wrap items-start justify-end gap-2">
           <Button
             className="border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 disabled:border-input disabled:bg-background disabled:text-muted-foreground dark:border-emerald-800/40 dark:bg-emerald-950/25 dark:text-emerald-300/85 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-200"
-            disabled={restoreBlocked}
+            disabled={restoreBlocked || isMutating}
             size="sm"
             variant="outline"
+            onClick={onRestore}
           >
             <ArrowUturnLeftIcon className="h-4 w-4" aria-hidden="true" />
-            Restore
+            {isRestoring ? "Restoring" : "Restore"}
           </Button>
           <Button
             className="border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 dark:border-red-800/40 dark:bg-red-950/25 dark:text-red-300/85 dark:hover:bg-red-950/40 dark:hover:text-red-200"
+            disabled={isMutating && !isDeleting}
             size="sm"
             variant="outline"
+            onClick={onDelete}
           >
             <TrashIcon className="h-4 w-4" aria-hidden="true" />
-            Delete
+            {isDeleting ? "Deleting" : isConfirmingDelete ? "Confirm delete" : "Delete"}
           </Button>
         </div>
       </div>
@@ -328,7 +387,7 @@ function TypeBadge({ type }: { type: NodeType }) {
   );
 }
 
-function StatusBadge({ status }: { status: TrashedItem["status"] }) {
+function StatusBadge({ status }: { status: NodeStatus }) {
   const labels = {
     not_started: "시작전",
     in_progress: "진행중",
@@ -368,4 +427,81 @@ function getBreadcrumb(item: TrashedItem) {
   }
 
   return `${item.goal ?? "Goal"} / ${item.plan ?? "Plan"}`;
+}
+
+function getTrashedItems(nodes: GoalTreeNode[]): TrashedItem[] {
+  return nodes
+    .filter((node): node is GoalTreeNode & { trashedAt: string } =>
+      Boolean(node.trashedAt),
+    )
+    .map((node) => ({
+      ...node,
+      ...getBreadcrumbParts(node, nodes),
+      parentTrashed: getParentTrashed(node, nodes),
+    }))
+    .sort((a, b) => b.trashedAt.localeCompare(a.trashedAt));
+}
+
+function getBreadcrumbParts(node: GoalTreeNode, nodes: GoalTreeNode[]) {
+  if (node.type === "goal") {
+    return {};
+  }
+
+  const parent = nodes.find((item) => item.id === node.parentId);
+
+  if (node.type === "plan") {
+    return { goal: parent?.title };
+  }
+
+  const goal = parent?.parentId
+    ? nodes.find((item) => item.id === parent.parentId)
+    : undefined;
+
+  return {
+    goal: goal?.title,
+    plan: parent?.title,
+  };
+}
+
+function getParentTrashed(node: GoalTreeNode, nodes: GoalTreeNode[]) {
+  if (node.type === "goal") {
+    return undefined;
+  }
+
+  const parent = nodes.find((item) => item.id === node.parentId);
+
+  if (parent?.trashedAt && (parent.type === "goal" || parent.type === "plan")) {
+    return {
+      type: parent.type,
+      title: parent.title,
+    };
+  }
+
+  if (node.type !== "task" || !parent?.parentId) {
+    return undefined;
+  }
+
+  const goal = nodes.find((item) => item.id === parent.parentId);
+
+  if (!goal?.trashedAt) {
+    return undefined;
+  }
+
+  return {
+    type: "goal" as const,
+    title: goal.title,
+  };
+}
+
+function getDescendantIds(nodes: GoalTreeNode[], nodeId: string): string[] {
+  const children = nodes.filter((node) => node.parentId === nodeId);
+
+  return children.flatMap((child) => [
+    child.id,
+    ...getDescendantIds(nodes, child.id),
+  ]);
+}
+
+function formatTimestamp(value: string) {
+  return value.includes("T") ? value.replace("T", " ").slice(0, 16) : value;
 }
