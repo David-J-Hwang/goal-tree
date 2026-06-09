@@ -385,13 +385,13 @@ type UserSettings = {
 - [x] 빈 Goal / Plan / Task 상태 표시
 - [x] Goal 생성 구현
 - [x] Goal 수정 구현: 제목 / 메모 / 상태 / 날짜 / 왜 중요한지 / 성공기준
-- [ ] Goal 삭제 구현
+- [ ] ❗️Goal 삭제 구현
 - [x] Plan 생성 구현
 - [x] Plan 수정 구현: 제목 / 메모 / 상태 / 날짜 / 카테고리
-- [ ] Plan 삭제 구현
+- [ ] ❗️Plan 삭제 구현
 - [x] Task 생성 구현
 - [x] Task 수정 구현: 제목 / 메모 / 상태 / 날짜
-- [ ] Task 삭제 구현
+- [ ] ❗️Task 삭제 구현
 - [x] Supabase 카드 생성 쓰기 연동
 - [x] 드래그 정렬 결과 Supabase 저장
 - [ ] `/workspace` 검색 기능 구현
@@ -410,7 +410,7 @@ type UserSettings = {
 - [x] Goal 왜 중요한지 / 성공기준 입력 / 수정 기능 구현
 - [x] Plan 카테고리 변경 기능 구현
 - [x] 상태 변경 시 실제 날짜 자동입력 구현
-- [ ] Task를 오늘의 TODO에 추가 / 제거
+- [ ] ❗️Task를 오늘의 TODO에 추가 / 제거
 
 ### 6. Plan 카테고리
 
