@@ -1086,9 +1086,11 @@ Supabase SQL Editor 초기 스키마 실행 완료
 Supabase DB 테이블 생성 완료: nodes, plan_categories, today_todos, user_settings
 Supabase DB 관계 / 제약 / RLS 정책 설정 완료
 supabase/migrations/002_grant_authenticated_permissions.sql 권한 grant 파일 작성
+Supabase SQL Editor authenticated role 권한 grant 실행 완료
 Goal / Plan / Task TypeScript 타입 초안
 PlanCategory, TodayTodo, UserSettings TypeScript 타입 초안
 /workspace Supabase 데이터 읽기 연결
+/workspace Goal / Plan / Task 카드 생성 Supabase insert 연결
 /workspace 진입 시 신규 유저 user_settings 기본값 생성
 /workspace 진입 시 신규 유저 기본 Plan 카테고리 생성
 /workspace 3단 카드 UI
@@ -1108,9 +1110,8 @@ Plan 카테고리 표시
 아직 mock 단계인 것:
 
 ```txt
-/workspace 사용 전 supabase/migrations/002_grant_authenticated_permissions.sql을 Supabase SQL Editor에서 실행해야 한다.
 /dashboard, /whativedone, /timeline, /trash 데이터는 아직 Supabase에 연결되지 않았다.
-카드 생성 / 수정 / 삭제는 아직 없다.
+카드 수정 / 삭제는 아직 없다.
 상세패널 입력과 상태 변경은 아직 동작하지 않는다.
 오늘 TODO 추가 / 제거 버튼은 아직 실제 기능과 연결되지 않았다.
 드래그 정렬은 화면 안에서만 반영되고 아직 Supabase에 저장되지 않는다.

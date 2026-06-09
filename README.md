@@ -364,7 +364,7 @@ type UserSettings = {
 - [x] Supabase DB 테이블 구현
 - [x] Supabase DB 관계 / 제약 설정
 - [x] Supabase authenticated role 권한 grant SQL 파일 작성
-- [ ] Supabase SQL Editor에서 authenticated role 권한 grant 실행
+- [x] Supabase SQL Editor에서 authenticated role 권한 grant 실행
 
 ### 4. /workspace
 
@@ -383,10 +383,13 @@ type UserSettings = {
 - [x] 목록 카드 기간 텍스트 제거
 - [x] Supabase 데이터 읽기 연동
 - [x] 빈 Goal / Plan / Task 상태 표시
-- [ ] Goal 생성 / 수정 / 삭제 구현
-- [ ] Plan 생성 / 수정 / 삭제 구현
-- [ ] Task 생성 / 수정 / 삭제 구현
-- [ ] Supabase 데이터 쓰기 연동
+- [x] Goal 생성 구현
+- [ ] Goal 수정 / 삭제 구현
+- [x] Plan 생성 구현
+- [ ] Plan 수정 / 삭제 구현
+- [x] Task 생성 구현
+- [ ] Task 수정 / 삭제 구현
+- [x] Supabase 카드 생성 쓰기 연동
 - [ ] 드래그 정렬 결과 Supabase 저장
 - [ ] `/workspace` 검색 기능 구현
 

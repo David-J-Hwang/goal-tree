@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { type FormEvent, useMemo, useState } from "react";
 import {
   closestCenter,
   DndContext,
@@ -38,11 +38,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { mapNodeRow, nodeSelectColumns, type NodeRow } from "@/lib/goaltree/node-rows";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import type { GoalTreeNode, NodeStatus, NodeType, PlanCategory } from "@/types/domain";
 
 type WorkspaceNode = GoalTreeNode & {
   note?: string;
+};
+type CreateNodeInput = {
+  type: NodeType;
+  parentId: string | null;
+  title: string;
+  categoryId?: string | null;
 };
 
 const sortableStackModifiers: Modifier[] = [restrictToSortableStack];
@@ -98,9 +106,11 @@ const columnLabels: Record<NodeType, string> = {
 export function WorkspaceBoard({
   initialCategories,
   initialNodes,
+  userId,
 }: {
   initialCategories: PlanCategory[];
   initialNodes: GoalTreeNode[];
+  userId: string;
 }) {
   const [nodes, setNodes] = useState<WorkspaceNode[]>(initialNodes);
   const [planCategories] = useState<PlanCategory[]>(initialCategories);
@@ -152,6 +162,48 @@ export function WorkspaceBoard({
     );
   }
 
+  async function handleCreateNode(input: CreateNodeInput) {
+    const sortOrder = getNextSortOrder(nodes, input.type, input.parentId);
+    const supabase = createSupabaseBrowserClient();
+
+    const { data, error } = await supabase
+      .from("nodes")
+      .insert({
+        user_id: userId,
+        type: input.type,
+        parent_id: input.parentId,
+        title: input.title,
+        category_id: input.type === "plan" ? input.categoryId ?? null : null,
+        sort_order: sortOrder,
+      })
+      .select(nodeSelectColumns)
+      .single()
+      .returns<NodeRow>();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    if (!data) {
+      throw new Error("Created node was not returned.");
+    }
+
+    const createdNode = mapNodeRow(data);
+
+    setNodes((currentNodes) => [...currentNodes, createdNode]);
+    setSelectedNodeId(createdNode.id);
+
+    if (createdNode.type === "goal") {
+      setSelectedGoalId(createdNode.id);
+      setSelectedPlanId("");
+    }
+
+    if (createdNode.type === "plan") {
+      setSelectedGoalId(createdNode.parentId ?? "");
+      setSelectedPlanId(createdNode.id);
+    }
+  }
+
   return (
     <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8">
       <header className="flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
@@ -174,6 +226,7 @@ export function WorkspaceBoard({
           selectedId={selectedGoalId}
           categories={planCategories}
           emptyMessage="No Goal cards yet"
+          onCreate={handleCreateNode}
           onSelect={handleSelect}
           onReorder={handleReorder}
           summary={`${goals.length} active goals`}
@@ -185,6 +238,7 @@ export function WorkspaceBoard({
           nodes={plans}
           selectedId={selectedPlanId}
           categories={planCategories}
+          onCreate={handleCreateNode}
           onSelect={handleSelect}
           onReorder={handleReorder}
           emptyMessage={
@@ -199,6 +253,7 @@ export function WorkspaceBoard({
           nodes={tasks}
           selectedId={selectedNodeId}
           categories={planCategories}
+          onCreate={handleCreateNode}
           onSelect={handleSelect}
           onReorder={handleReorder}
           emptyMessage={
@@ -227,6 +282,7 @@ function WorkspaceColumn({
   selectedId,
   categories,
   emptyMessage,
+  onCreate,
   onSelect,
   onReorder,
 }: {
@@ -238,9 +294,16 @@ function WorkspaceColumn({
   selectedId: string;
   categories: PlanCategory[];
   emptyMessage?: string;
+  onCreate: (input: CreateNodeInput) => Promise<void>;
   onSelect: (node: WorkspaceNode) => void;
   onReorder: (type: NodeType, parentId: string | null, orderedIds: string[]) => void;
 }) {
+  const [isAdding, setIsAdding] = useState(false);
+  const [titleValue, setTitleValue] = useState("");
+  const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const canAdd = type === "goal" || Boolean(parentId);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -270,6 +333,44 @@ function WorkspaceColumn({
     onReorder(type, parentId, orderedIds);
   }
 
+  async function handleCreateSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const trimmedTitle = titleValue.trim();
+
+    if (!trimmedTitle) {
+      setErrorMessage(`${columnLabels[type]} title is required.`);
+      return;
+    }
+
+    if (!canAdd) {
+      setErrorMessage(
+        type === "plan"
+          ? "Select a goal before adding a plan."
+          : "Select a plan before adding a task.",
+      );
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    try {
+      await onCreate({
+        type,
+        parentId,
+        title: trimmedTitle,
+        categoryId: type === "plan" ? categoryId || null : null,
+      });
+      setTitleValue("");
+      setIsAdding(false);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : `Failed to add ${columnLabels[type]}.`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <Card className="flex min-h-[34rem] flex-col overflow-hidden rounded-lg shadow-none">
       <CardHeader className="border-b p-4">
@@ -278,12 +379,39 @@ function WorkspaceColumn({
             <CardTitle className="text-base">{title}</CardTitle>
             <CardDescription className="mt-1 line-clamp-1">{summary}</CardDescription>
           </div>
-          <Button size="icon" variant="ghost" aria-label={`Add ${columnLabels[type]}`}>
+          <Button
+            size="icon"
+            variant="ghost"
+            aria-label={`Add ${columnLabels[type]}`}
+            disabled={!canAdd}
+            onClick={() => {
+              setIsAdding(true);
+              setErrorMessage("");
+            }}
+          >
             <Plus className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto p-3">
+        {isAdding ? (
+          <AddNodeForm
+            type={type}
+            titleValue={titleValue}
+            categoryId={categoryId}
+            categories={categories}
+            errorMessage={errorMessage}
+            isSubmitting={isSubmitting}
+            onCategoryChange={setCategoryId}
+            onCancel={() => {
+              setIsAdding(false);
+              setTitleValue("");
+              setErrorMessage("");
+            }}
+            onSubmit={handleCreateSubmit}
+            onTitleChange={setTitleValue}
+          />
+        ) : null}
         {nodes.length === 0 ? (
           <div className="flex min-h-32 items-center justify-center rounded-md border border-dashed px-4 text-center text-sm text-muted-foreground">
             {emptyMessage ?? `No ${columnLabels[type]} cards`}
@@ -314,6 +442,80 @@ function WorkspaceColumn({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function AddNodeForm({
+  type,
+  titleValue,
+  categoryId,
+  categories,
+  errorMessage,
+  isSubmitting,
+  onCancel,
+  onCategoryChange,
+  onSubmit,
+  onTitleChange,
+}: {
+  type: NodeType;
+  titleValue: string;
+  categoryId: string;
+  categories: PlanCategory[];
+  errorMessage: string;
+  isSubmitting: boolean;
+  onCancel: () => void;
+  onCategoryChange: (value: string) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onTitleChange: (value: string) => void;
+}) {
+  return (
+    <form className="mb-3 rounded-md border bg-muted/30 p-3" onSubmit={onSubmit}>
+      <label className="block">
+        <span className="text-xs font-medium text-muted-foreground">
+          {columnLabels[type]} title
+        </span>
+        <input
+          className="mt-1.5 h-9 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+          autoFocus
+          disabled={isSubmitting}
+          onChange={(event) => onTitleChange(event.target.value)}
+          placeholder={`New ${columnLabels[type]}`}
+          value={titleValue}
+        />
+      </label>
+
+      {type === "plan" ? (
+        <label className="mt-3 block">
+          <span className="text-xs font-medium text-muted-foreground">Category</span>
+          <select
+            className="mt-1.5 h-9 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+            disabled={isSubmitting}
+            onChange={(event) => onCategoryChange(event.target.value)}
+            value={categoryId}
+          >
+            <option value="">No category</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+
+      {errorMessage ? (
+        <p className="mt-2 text-xs text-destructive">{errorMessage}</p>
+      ) : null}
+
+      <div className="mt-3 flex justify-end gap-2">
+        <Button disabled={isSubmitting} size="sm" type="button" variant="ghost" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button disabled={isSubmitting} size="sm" type="submit">
+          {isSubmitting ? "Adding" : "Add"}
+        </Button>
+      </div>
+    </form>
   );
 }
 
@@ -557,6 +759,20 @@ function getSortedChildren(
   return nodes
     .filter((node) => node.type === type && node.parentId === parentId && !node.trashedAt)
     .sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+function getNextSortOrder(
+  nodes: WorkspaceNode[],
+  type: NodeType,
+  parentId: string | null,
+) {
+  const siblings = getSortedChildren(nodes, type, parentId);
+  const maxSortOrder = siblings.reduce(
+    (currentMax, node) => Math.max(currentMax, node.sortOrder),
+    0,
+  );
+
+  return maxSortOrder + 1;
 }
 
 function getNodeProgress(node: WorkspaceNode, nodes: WorkspaceNode[]) {
