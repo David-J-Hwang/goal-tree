@@ -28,6 +28,7 @@ import {
   Plus,
   Search,
   Timer,
+  ListTodo,
   Trash2,
 } from "lucide-react";
 
@@ -40,9 +41,20 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { mapNodeRow, nodeSelectColumns, type NodeRow } from "@/lib/goaltree/node-rows";
+import {
+  mapTodayTodoRow,
+  todayTodoSelectColumns,
+  type TodayTodoRow,
+} from "@/lib/goaltree/today-todo-rows";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import type { GoalTreeNode, NodeStatus, NodeType, PlanCategory } from "@/types/domain";
+import type {
+  GoalTreeNode,
+  NodeStatus,
+  NodeType,
+  PlanCategory,
+  TodayTodo,
+} from "@/types/domain";
 
 type WorkspaceNode = GoalTreeNode & {
   note?: string;
@@ -127,13 +139,18 @@ const statusOptions: NodeStatus[] = [
 export function WorkspaceBoard({
   initialCategories,
   initialNodes,
+  initialTodayDate,
+  initialTodayTodos,
   userId,
 }: {
   initialCategories: PlanCategory[];
   initialNodes: GoalTreeNode[];
+  initialTodayDate: string;
+  initialTodayTodos: TodayTodo[];
   userId: string;
 }) {
   const [nodes, setNodes] = useState<WorkspaceNode[]>(initialNodes);
+  const [todayTodos, setTodayTodos] = useState<TodayTodo[]>(initialTodayTodos);
   const [planCategories] = useState<PlanCategory[]>(initialCategories);
   const initialGoalId = useMemo(
     () => getSortedChildren(initialNodes, "goal", null)[0]?.id ?? "",
@@ -332,6 +349,63 @@ export function WorkspaceBoard({
     setSelectedNodeId(nextSelection.nodeId);
   }
 
+  async function handleToggleTodayTodo(taskId: string) {
+    const currentNode = nodes.find((node) => node.id === taskId);
+
+    if (!currentNode) {
+      throw new Error("Task was not found.");
+    }
+
+    if (currentNode.type !== "task") {
+      throw new Error("Only Task cards can be added to Today TODO.");
+    }
+
+    const existingTodo = todayTodos.find(
+      (todo) => todo.taskId === taskId && todo.date === initialTodayDate,
+    );
+    const supabase = createSupabaseBrowserClient();
+
+    if (existingTodo) {
+      const { error } = await supabase
+        .from("today_todos")
+        .delete()
+        .eq("id", existingTodo.id)
+        .eq("user_id", userId);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      setTodayTodos((currentTodos) =>
+        currentTodos.filter((todo) => todo.id !== existingTodo.id),
+      );
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("today_todos")
+      .insert({
+        user_id: userId,
+        task_id: taskId,
+        date: initialTodayDate,
+        sort_order: getNextTodoSortOrder(todayTodos, initialTodayDate),
+      })
+      .select(todayTodoSelectColumns)
+      .single()
+      .returns<TodayTodoRow>();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    if (!data) {
+      throw new Error("Today TODO was not returned.");
+    }
+
+    const createdTodo = mapTodayTodoRow(data);
+    setTodayTodos((currentTodos) => [...currentTodos, createdTodo]);
+  }
+
   return (
     <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8">
       <header className="flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
@@ -395,7 +469,16 @@ export function WorkspaceBoard({
           plan={selectedPlan}
           nodes={nodes}
           categories={planCategories}
+          isSelectedTaskInTodayTodo={
+            selectedNode?.type === "task" &&
+            todayTodos.some(
+              (todo) =>
+                todo.taskId === selectedNode.id &&
+                todo.date === initialTodayDate,
+            )
+          }
           onMoveNodeToTrash={handleMoveNodeToTrash}
+          onToggleTodayTodo={handleToggleTodayTodo}
           onUpdateNode={handleUpdateNode}
         />
       </section>
@@ -759,7 +842,9 @@ function DetailPanel({
   plan,
   nodes,
   categories,
+  isSelectedTaskInTodayTodo,
   onMoveNodeToTrash,
+  onToggleTodayTodo,
   onUpdateNode,
 }: {
   node?: WorkspaceNode;
@@ -767,7 +852,9 @@ function DetailPanel({
   plan?: WorkspaceNode;
   nodes: WorkspaceNode[];
   categories: PlanCategory[];
+  isSelectedTaskInTodayTodo: boolean;
   onMoveNodeToTrash: (nodeId: string) => Promise<void>;
+  onToggleTodayTodo: (taskId: string) => Promise<void>;
   onUpdateNode: (input: UpdateNodeInput) => Promise<void>;
 }) {
   const [titleValue, setTitleValue] = useState(node?.title ?? "");
@@ -796,6 +883,7 @@ function DetailPanel({
   const [categoryIdValue, setCategoryIdValue] = useState(node?.categoryId ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [isMovingToTrash, setIsMovingToTrash] = useState(false);
+  const [isUpdatingTodayTodo, setIsUpdatingTodayTodo] = useState(false);
   const [isConfirmingTrash, setIsConfirmingTrash] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
@@ -894,6 +982,31 @@ function DetailPanel({
       setSaveError(error instanceof Error ? error.message : "Failed to save changes.");
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function handleToggleTodayTodo() {
+    if (!node || node.type !== "task") {
+      return;
+    }
+
+    setIsUpdatingTodayTodo(true);
+    setSaveError("");
+    setSaveMessage("");
+
+    try {
+      await onToggleTodayTodo(node.id);
+      setSaveMessage(
+        isSelectedTaskInTodayTodo
+          ? "Removed from Today TODO."
+          : "Added to Today TODO.",
+      );
+    } catch (error) {
+      setSaveError(
+        error instanceof Error ? error.message : "Failed to update Today TODO.",
+      );
+    } finally {
+      setIsUpdatingTodayTodo(false);
     }
   }
 
@@ -1052,8 +1165,19 @@ function DetailPanel({
           {node.type === "task" ? (
             <DetailSection title="Linked Plan">
               <DetailValue label="Plan" value={plan?.title ?? parent?.title ?? "-"} />
-              <Button className="mt-3 w-full" type="button" variant="outline">
-                Add to Today TODO
+              <Button
+                className="mt-3 w-full"
+                disabled={isSaving || isMovingToTrash || isUpdatingTodayTodo}
+                type="button"
+                variant={isSelectedTaskInTodayTodo ? "secondary" : "outline"}
+                onClick={handleToggleTodayTodo}
+              >
+                <ListTodo className="mr-2 h-4 w-4" aria-hidden="true" />
+                {isUpdatingTodayTodo
+                  ? "Updating"
+                  : isSelectedTaskInTodayTodo
+                    ? "Remove from Today TODO"
+                    : "Add to Today TODO"}
               </Button>
             </DetailSection>
           ) : null}
@@ -1107,7 +1231,7 @@ function DetailPanel({
             <div className="flex flex-wrap justify-end gap-2">
               <Button
                 className="border-destructive/35 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                disabled={isSaving || isMovingToTrash}
+                disabled={isSaving || isMovingToTrash || isUpdatingTodayTodo}
                 type="button"
                 variant="outline"
                 onClick={handleMoveToTrash}
@@ -1119,7 +1243,12 @@ function DetailPanel({
                     ? "Confirm trash"
                     : "Move to trash"}
               </Button>
-              <Button disabled={isSaving || isMovingToTrash || !hasChanges} type="submit">
+              <Button
+                disabled={
+                  isSaving || isMovingToTrash || isUpdatingTodayTodo || !hasChanges
+                }
+                type="submit"
+              >
                 {isSaving ? "Saving" : "Save changes"}
               </Button>
             </div>
@@ -1256,6 +1385,14 @@ function getNextSortOrder(
     (currentMax, node) => Math.max(currentMax, node.sortOrder),
     0,
   );
+
+  return maxSortOrder + 1;
+}
+
+function getNextTodoSortOrder(todos: TodayTodo[], date: string) {
+  const maxSortOrder = todos
+    .filter((todo) => todo.date === date)
+    .reduce((currentMax, todo) => Math.max(currentMax, todo.sortOrder), 0);
 
   return maxSortOrder + 1;
 }

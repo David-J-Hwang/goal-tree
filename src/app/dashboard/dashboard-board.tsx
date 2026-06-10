@@ -19,15 +19,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { mapNodeRow, nodeSelectColumns, type NodeRow } from "@/lib/goaltree/node-rows";
+import {
+  mapTodayTodoRow,
+  todayTodoSelectColumns,
+  type TodayTodoRow,
+} from "@/lib/goaltree/today-todo-rows";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import type { GoalTreeNode, NodeStatus, TodayTodo } from "@/types/domain";
 
 type TodoItem = {
   id: string;
+  taskId: string;
   title: string;
   goal: string;
   plan: string;
-  status: "not_started" | "in_progress" | "blocked";
+  status: NodeStatus;
   done: boolean;
+  sortOrder: number;
 };
 
 type FocusItem = {
@@ -46,102 +56,30 @@ type InsightItem = {
   tone: "blocked" | "done";
 };
 
-const initialTodos: TodoItem[] = [
-  {
-    id: "todo-dashboard-wireframe",
-    title: "Dashboard mock UI 다듬기",
-    goal: "경제적 자유",
-    plan: "Goaltree MVP 만들기",
-    status: "in_progress",
-    done: false,
-  },
-  {
-    id: "todo-status-design",
-    title: "상태 배지 다크모드 확인",
-    goal: "경제적 자유",
-    plan: "Goaltree MVP 만들기",
-    status: "not_started",
-    done: false,
-  },
-  {
-    id: "todo-supabase-plan",
-    title: "Supabase 테이블 초안 정리",
-    goal: "경제적 자유",
-    plan: "작은 수익형 웹서비스 확보",
-    status: "not_started",
-    done: false,
-  },
-  {
-    id: "todo-feedback-note",
-    title: "사용자 피드백 질문 목록 만들기",
-    goal: "경제적 자유",
-    plan: "사용자 피드백 받기",
-    status: "blocked",
-    done: false,
-  },
-];
-
-const focusItems: FocusItem[] = [
-  {
-    id: "focus-dashboard",
-    title: "Dashboard 흐름 확정",
-    goal: "경제적 자유",
-    plan: "Goaltree MVP 만들기",
-    progress: 45,
-    dueLabel: "This week",
-  },
-  {
-    id: "focus-workspace",
-    title: "Workspace UX 잠금",
-    goal: "경제적 자유",
-    plan: "Goaltree MVP 만들기",
-    progress: 80,
-    dueLabel: "Nearly done",
-  },
-  {
-    id: "focus-schema",
-    title: "DB 구조 준비",
-    goal: "경제적 자유",
-    plan: "Goaltree MVP 만들기",
-    progress: 20,
-    dueLabel: "Next",
-  },
-];
-
-const blockedItems: InsightItem[] = [
-  {
-    id: "blocked-feedback",
-    title: "피드백 받을 사용자 후보 정리",
-    meta: "사용자 피드백 받기",
-    tone: "blocked",
-  },
-  {
-    id: "blocked-auth",
-    title: "이메일 로그인 플로우 세부 결정",
-    meta: "Supabase Auth",
-    tone: "blocked",
-  },
-];
-
-const completionItems: InsightItem[] = [
-  {
-    id: "done-workspace-dnd",
-    title: "Workspace 카드 드래그 UX 조정",
-    meta: "Goaltree MVP 만들기",
-    tone: "done",
-  },
-  {
-    id: "done-dark-mode",
-    title: "다크모드와 상태 배지 톤 정리",
-    meta: "공통 UI",
-    tone: "done",
-  },
-];
-
 const showOptionalPanels = true;
 
-export function DashboardBoard() {
-  const [todos, setTodos] = useState(initialTodos);
+export function DashboardBoard({
+  initialNodes,
+  initialTodayDate,
+  initialTodayTodos,
+  userId,
+}: {
+  initialNodes: GoalTreeNode[];
+  initialTodayDate: string;
+  initialTodayTodos: TodayTodo[];
+  userId: string;
+}) {
+  const [nodes, setNodes] = useState(initialNodes);
+  const [todayTodos, setTodayTodos] = useState(initialTodayTodos);
+  const [updatingTodoId, setUpdatingTodoId] = useState("");
+  const [todoError, setTodoError] = useState("");
+  const todos = useMemo(
+    () => getTodoItems(todayTodos, nodes, initialTodayDate),
+    [initialTodayDate, nodes, todayTodos],
+  );
+  const focusItems = useMemo(() => getFocusItems(nodes), [nodes]);
+  const blockedItems = useMemo(() => getBlockedItems(nodes), [nodes]);
+  const completionItems = useMemo(() => getCompletionItems(nodes), [nodes]);
 
   const completedCount = todos.filter((todo) => todo.done).length;
   const blockedCount = todos.filter((todo) => todo.status === "blocked" && !todo.done).length;
@@ -157,12 +95,75 @@ export function DashboardBoard() {
     [blockedCount, completedCount, openCount, todos.length],
   );
 
-  function handleToggleTodo(id: string) {
-    setTodos((currentTodos) =>
-      currentTodos.map((todo) =>
-        todo.id === id ? { ...todo, done: !todo.done } : todo,
+  async function handleToggleTodo(id: string) {
+    const todo = todayTodos.find((item) => item.id === id);
+    const task = todo ? nodes.find((node) => node.id === todo.taskId) : undefined;
+
+    if (!todo || !task) {
+      setTodoError("Today TODO was not found.");
+      return;
+    }
+
+    const currentDone = todo.done || task.status === "done";
+    const nextDone = !currentDone;
+    setUpdatingTodoId(id);
+    setTodoError("");
+
+    const supabase = createSupabaseBrowserClient();
+    const { data: todoRow, error: todoError } = await supabase
+      .from("today_todos")
+      .update({ done: nextDone })
+      .eq("id", id)
+      .eq("user_id", userId)
+      .select(todayTodoSelectColumns)
+      .single()
+      .returns<TodayTodoRow>();
+
+    if (todoError) {
+      setTodoError(todoError.message);
+      setUpdatingTodoId("");
+      return;
+    }
+
+    if (!todoRow) {
+      setTodoError("Updated Today TODO was not returned.");
+      setUpdatingTodoId("");
+      return;
+    }
+
+    const { data: nodeRow, error: nodeError } = await supabase
+      .from("nodes")
+      .update(getTaskStatusUpdate(task, nextDone, initialTodayDate))
+      .eq("id", task.id)
+      .eq("user_id", userId)
+      .select(nodeSelectColumns)
+      .single()
+      .returns<NodeRow>();
+
+    if (nodeError) {
+      setTodoError(nodeError.message);
+      setUpdatingTodoId("");
+      return;
+    }
+
+    if (!nodeRow) {
+      setTodoError("Updated Task was not returned.");
+      setUpdatingTodoId("");
+      return;
+    }
+
+    const updatedTodo = mapTodayTodoRow(todoRow);
+    const updatedTask = mapNodeRow(nodeRow);
+
+    setTodayTodos((currentTodos) =>
+      currentTodos.map((currentTodo) =>
+        currentTodo.id === updatedTodo.id ? updatedTodo : currentTodo,
       ),
     );
+    setNodes((currentNodes) =>
+      currentNodes.map((node) => (node.id === updatedTask.id ? updatedTask : node)),
+    );
+    setUpdatingTodoId("");
   }
 
   return (
@@ -190,7 +191,12 @@ export function DashboardBoard() {
       </section>
 
       <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.85fr)]">
-        <TodayTodoPanel todos={todos} onToggleTodo={handleToggleTodo} />
+        <TodayTodoPanel
+          errorMessage={todoError}
+          todos={todos}
+          updatingTodoId={updatingTodoId}
+          onToggleTodo={handleToggleTodo}
+        />
 
         <div className="grid gap-4">
           <ThisWeekFocusPanel items={focusItems} />
@@ -229,11 +235,15 @@ function SummaryTile({
 }
 
 function TodayTodoPanel({
+  errorMessage,
   todos,
+  updatingTodoId,
   onToggleTodo,
 }: {
+  errorMessage: string;
   todos: TodoItem[];
-  onToggleTodo: (id: string) => void;
+  updatingTodoId: string;
+  onToggleTodo: (id: string) => Promise<void>;
 }) {
   return (
     <Card className="min-h-[34rem] rounded-lg shadow-none">
@@ -255,16 +265,31 @@ function TodayTodoPanel({
       </CardHeader>
 
       <CardContent className="p-3">
-        <div className="space-y-2">
-          {todos.map((todo, index) => (
-            <TodoRow
-              index={index}
-              key={todo.id}
-              todo={todo}
-              onToggle={() => onToggleTodo(todo.id)}
-            />
-          ))}
-        </div>
+        {errorMessage ? (
+          <p className="mb-3 rounded-md border border-destructive/25 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+            {errorMessage}
+          </p>
+        ) : null}
+        {todos.length > 0 ? (
+          <div className="space-y-2">
+            {todos.map((todo, index) => (
+              <TodoRow
+                index={index}
+                isUpdating={updatingTodoId === todo.id}
+                key={todo.id}
+                todo={todo}
+                onToggle={() => onToggleTodo(todo.id)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex min-h-40 flex-col items-center justify-center rounded-md border border-dashed px-4 text-center">
+            <p className="text-sm font-medium">No Today TODO yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Add Task cards from Workspace to plan today.
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -273,10 +298,12 @@ function TodayTodoPanel({
 function TodoRow({
   todo,
   index,
+  isUpdating,
   onToggle,
 }: {
   todo: TodoItem;
   index: number;
+  isUpdating: boolean;
   onToggle: () => void;
 }) {
   return (
@@ -293,7 +320,9 @@ function TodoRow({
           todo.done
             ? "border-primary bg-primary text-primary-foreground"
             : "border-input hover:border-primary/70 hover:bg-primary/5",
+          isUpdating && "cursor-wait opacity-70",
         )}
+        disabled={isUpdating}
         onClick={onToggle}
         type="button"
       >
@@ -337,30 +366,36 @@ function ThisWeekFocusPanel({ items }: { items: FocusItem[] }) {
     <Card className="rounded-lg shadow-none">
       <CardHeader className="border-b p-4">
         <CardTitle className="text-base">This Week Focus</CardTitle>
-        <CardDescription className="mt-1">3 active priorities</CardDescription>
+        <CardDescription className="mt-1">{items.length} active priorities</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 p-4">
-        {items.map((item) => (
-          <div key={item.id} className="space-y-2">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{item.title}</p>
-                <p className="mt-1 truncate text-xs text-muted-foreground">
-                  {item.goal} / {item.plan}
-                </p>
+        {items.length > 0 ? (
+          items.map((item) => (
+            <div key={item.id} className="space-y-2">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{item.title}</p>
+                  <p className="mt-1 truncate text-xs text-muted-foreground">
+                    {item.goal} / {item.plan}
+                  </p>
+                </div>
+                <span className="shrink-0 rounded-full border bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
+                  {item.dueLabel}
+                </span>
               </div>
-              <span className="shrink-0 rounded-full border bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
-                {item.dueLabel}
-              </span>
+              <div className="h-2 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary"
+                  style={{ width: `${item.progress}%` }}
+                />
+              </div>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-primary"
-                style={{ width: `${item.progress}%` }}
-              />
-            </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <p className="rounded-md border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
+            No active focus items yet
+          </p>
+        )}
       </CardContent>
     </Card>
   );
@@ -414,21 +449,27 @@ function InsightPanel({
         </div>
       </CardHeader>
       <CardContent className="space-y-3 p-4">
-        {items.map((item) => (
-          <Link
-            className="block rounded-md border bg-background px-3 py-2 transition-colors hover:border-primary/50 hover:bg-primary/5"
-            href="/workspace"
-            key={item.id}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{item.title}</p>
-                <p className="mt-1 truncate text-xs text-muted-foreground">{item.meta}</p>
+        {items.length > 0 ? (
+          items.map((item) => (
+            <Link
+              className="block rounded-md border bg-background px-3 py-2 transition-colors hover:border-primary/50 hover:bg-primary/5"
+              href="/workspace"
+              key={item.id}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{item.title}</p>
+                  <p className="mt-1 truncate text-xs text-muted-foreground">{item.meta}</p>
+                </div>
+                <StatusBadge status={item.tone === "blocked" ? "blocked" : "done"} />
               </div>
-              <StatusBadge status={item.tone === "blocked" ? "blocked" : "done"} />
-            </div>
-          </Link>
-        ))}
+            </Link>
+          ))
+        ) : (
+          <p className="rounded-md border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
+            No items yet
+          </p>
+        )}
       </CardContent>
     </Card>
   );
@@ -444,6 +485,7 @@ function StatusBadge({
     in_progress: "진행중",
     blocked: "막힘",
     done: "완료",
+    paused: "보류",
   };
 
   return (
@@ -458,9 +500,191 @@ function StatusBadge({
           "border-red-200 bg-red-50 text-red-700 dark:border-red-800/40 dark:bg-red-950/25 dark:text-red-300/80",
         status === "done" &&
           "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-950/25 dark:text-emerald-300/80",
+        status === "paused" &&
+          "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800/40 dark:bg-amber-950/25 dark:text-amber-300/80",
       )}
     >
       {labelByStatus[status]}
     </span>
   );
+}
+
+function getTodoItems(
+  todayTodos: TodayTodo[],
+  nodes: GoalTreeNode[],
+  todayDate: string,
+): TodoItem[] {
+  return todayTodos
+    .filter((todo) => todo.date === todayDate)
+    .map((todo) => {
+      const task = nodes.find((node) => node.id === todo.taskId);
+
+      if (!task || task.type !== "task" || !isNodeVisible(task, nodes)) {
+        return undefined;
+      }
+
+      const plan = nodes.find((node) => node.id === task.parentId);
+      const goal = plan?.parentId
+        ? nodes.find((node) => node.id === plan.parentId)
+        : undefined;
+
+      return {
+        id: todo.id,
+        taskId: task.id,
+        title: task.title,
+        goal: goal?.title ?? "Goal",
+        plan: plan?.title ?? "Plan",
+        status: task.status,
+        done: todo.done || task.status === "done",
+        sortOrder: todo.sortOrder,
+      };
+    })
+    .filter((todo): todo is TodoItem => Boolean(todo))
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+function getFocusItems(nodes: GoalTreeNode[]): FocusItem[] {
+  return nodes
+    .filter(
+      (node) =>
+        node.type === "plan" &&
+        isNodeVisible(node, nodes) &&
+        node.status !== "done" &&
+        node.status !== "paused",
+    )
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .slice(0, 3)
+    .map((plan) => {
+      const goal = nodes.find((node) => node.id === plan.parentId);
+
+      return {
+        id: plan.id,
+        title: plan.title,
+        goal: goal?.title ?? "Goal",
+        plan: plan.title,
+        progress: getNodeProgress(plan, nodes),
+        dueLabel: getDueLabel(plan),
+      };
+    });
+}
+
+function getBlockedItems(nodes: GoalTreeNode[]): InsightItem[] {
+  return nodes
+    .filter(
+      (node) =>
+        node.type === "task" &&
+        node.status === "blocked" &&
+        isNodeVisible(node, nodes),
+    )
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+    .slice(0, 3)
+    .map((task) => ({
+      id: task.id,
+      title: task.title,
+      meta: getNodeBreadcrumb(task, nodes),
+      tone: "blocked",
+    }));
+}
+
+function getCompletionItems(nodes: GoalTreeNode[]): InsightItem[] {
+  return nodes
+    .filter(
+      (node) =>
+        node.type === "task" &&
+        node.status === "done" &&
+        isNodeVisible(node, nodes),
+    )
+    .sort((a, b) =>
+      (b.actualEndDate ?? b.updatedAt).localeCompare(a.actualEndDate ?? a.updatedAt),
+    )
+    .slice(0, 3)
+    .map((task) => ({
+      id: task.id,
+      title: task.title,
+      meta: getNodeBreadcrumb(task, nodes),
+      tone: "done",
+    }));
+}
+
+function getTaskStatusUpdate(task: GoalTreeNode, nextDone: boolean, todayDate: string) {
+  if (nextDone) {
+    return {
+      status: "done",
+      actual_start_date:
+        !task.actualStartDate || task.actualStartDate > todayDate
+          ? todayDate
+          : task.actualStartDate,
+      actual_end_date: todayDate,
+    };
+  }
+
+  return {
+    status: "in_progress",
+    actual_start_date: task.actualStartDate ?? todayDate,
+    actual_end_date: null,
+  };
+}
+
+function getNodeBreadcrumb(node: GoalTreeNode, nodes: GoalTreeNode[]) {
+  const plan = node.parentId ? nodes.find((item) => item.id === node.parentId) : undefined;
+
+  if (node.type === "plan") {
+    const goal = plan;
+    return goal?.title ?? "Goal";
+  }
+
+  const goal = plan?.parentId
+    ? nodes.find((item) => item.id === plan.parentId)
+    : undefined;
+
+  return `${goal?.title ?? "Goal"} / ${plan?.title ?? "Plan"}`;
+}
+
+function getDueLabel(node: GoalTreeNode) {
+  if (!node.plannedEndDate) {
+    return "Active";
+  }
+
+  return node.plannedEndDate;
+}
+
+function getNodeProgress(node: GoalTreeNode, nodes: GoalTreeNode[]) {
+  const tasks =
+    node.type === "plan"
+      ? nodes.filter(
+          (item) =>
+            item.type === "task" &&
+            item.parentId === node.id &&
+            isNodeVisible(item, nodes),
+        )
+      : nodes.filter((item) => {
+          if (item.type !== "task" || !isNodeVisible(item, nodes)) {
+            return false;
+          }
+          const parentPlan = nodes.find((plan) => plan.id === item.parentId);
+          return parentPlan?.parentId === node.id;
+        });
+
+  const calculableTasks = tasks.filter((task) => task.status !== "paused");
+
+  if (calculableTasks.length === 0) {
+    return 0;
+  }
+
+  const doneTasks = calculableTasks.filter((task) => task.status === "done");
+  return Math.round((doneTasks.length / calculableTasks.length) * 100);
+}
+
+function isNodeVisible(node: GoalTreeNode, nodes: GoalTreeNode[]): boolean {
+  if (node.trashedAt) {
+    return false;
+  }
+
+  if (!node.parentId) {
+    return true;
+  }
+
+  const parent = nodes.find((item) => item.id === node.parentId);
+
+  return parent ? isNodeVisible(parent, nodes) : false;
 }

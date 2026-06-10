@@ -242,6 +242,10 @@ type PlanCategory = {
 
 오늘의 TODO는 Task와 연결한다.
 
+날짜가 바뀌면 오늘 TODO는 새 목록으로 시작한다. 이전 날짜의 TODO는 DB에 기록으로 남기되, 오늘 목록에는 `date = 오늘`인 항목만 표시한다.
+
+미완료 TODO 이월은 MVP 기본 동작에 포함하지 않는다. 이후 사용자 설정에서 자동 이월을 켜거나, Dashboard에서 "어제 미완료 TODO 가져오기" 버튼을 제공하는 방향을 검토한다.
+
 ```ts
 type TodayTodo = {
   id: string;
@@ -289,6 +293,8 @@ type UserSettings = {
 - 진행중 / 막힘 -> 완료: 실제 종료일을 오늘 날짜로 자동입력
 - 완료 -> 진행중: 실제 종료일을 비운다.
 - 오늘 TODO 완료: 연결된 Task도 완료 처리한다.
+- 날짜가 바뀌면 오늘 TODO는 새 빈 목록으로 시작한다.
+- 미완료 TODO 이월은 향후 사용자 설정 또는 수동 가져오기 기능으로 검토한다.
 - 보류는 언젠가 다시 활성화할 항목이고, 휴지통은 삭제 예정 항목이다.
 
 ---
@@ -410,7 +416,7 @@ type UserSettings = {
 - [x] Goal 왜 중요한지 / 성공기준 입력 / 수정 기능 구현
 - [x] Plan 카테고리 변경 기능 구현
 - [x] 상태 변경 시 실제 날짜 자동입력 구현
-- [ ] ❗️Task를 오늘의 TODO에 추가 / 제거
+- [x] Task를 오늘의 TODO에 추가 / 제거
 
 ### 6. Plan 카테고리
 
@@ -425,12 +431,14 @@ type UserSettings = {
 
 - [x] 테스트용 오늘의 TODO 목록 표시
 - [ ] 오늘의 TODO 정렬
-- [x] 테스트용 오늘의 TODO 완료 처리
+- [x] Supabase 오늘의 TODO 목록 데이터 연결
+- [x] 오늘의 TODO 완료 처리
+- [x] 오늘의 TODO 완료 시 연결된 Task 완료 처리
 - [x] TODO 클릭 시 `/workspace`로 이동
 - [ ] TODO 클릭 시 해당 Goal / Plan / Task 선택 상태 복원
-- [x] 테스트용 막힌 Task 요약
-- [x] 테스트용 최근 완료한 Task 요약
-- [x] 테스트용 이번 주 핵심 항목 요약
+- [x] 막힌 Task 요약
+- [x] 최근 완료한 Task 요약
+- [x] 이번 주 핵심 항목 요약
 - [x] 선택 컴포넌트 제거하기 쉽게 분리
 
 ### 8. /whativedone
@@ -489,3 +497,10 @@ type UserSettings = {
 - [ ] 캘린더 연동
 - [ ] 협업 기능
 - [ ] 결제
+
+### 13. 현 시점 다음 작업
+아직 남겨둔 부분도 있어:
+
+TODO 클릭 시 /workspace로 이동은 가능하지만, 해당 Goal/Plan/Task를 자동 선택해서 열어주는 기능은 아직 미구현
+/whativedone, /timeline은 아직 실제 DB 연결 전
+Plan category 추가/수정/삭제 UI는 아직 실제 DB 작업 전

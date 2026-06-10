@@ -21,6 +21,8 @@ export default async function WorkspacePage() {
     <WorkspaceBoard
       initialCategories={workspaceData.categories}
       initialNodes={workspaceData.nodes}
+      initialTodayDate={workspaceData.todayDate}
+      initialTodayTodos={workspaceData.todayTodos}
       userId={user.id}
     />
   );
