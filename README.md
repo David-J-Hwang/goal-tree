@@ -430,7 +430,7 @@ type UserSettings = {
 ### 7. /dashboard
 
 - [x] 테스트용 오늘의 TODO 목록 표시
-- [ ] 오늘의 TODO 정렬
+- [x] 오늘의 TODO 정렬
 - [x] Supabase 오늘의 TODO 목록 데이터 연결
 - [x] 오늘의 TODO 완료 처리
 - [x] 오늘의 TODO 완료 시 연결된 Task 완료 처리

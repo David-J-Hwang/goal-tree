@@ -5,7 +5,6 @@ import {
   closestCenter,
   DndContext,
   type DragEndEvent,
-  type Modifier,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -40,6 +39,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { sortableStackModifiers } from "@/lib/dnd/sortable-stack-modifier";
 import { mapNodeRow, nodeSelectColumns, type NodeRow } from "@/lib/goaltree/node-rows";
 import {
   mapTodayTodoRow,
@@ -78,10 +78,6 @@ type UpdateNodeInput = {
   successCriteriaText: string | null;
   categoryId: string | null;
 };
-
-const sortableStackModifiers: Modifier[] = [restrictToSortableStack];
-const dragBoundaryOvershoot = 20;
-const dragBoundarySoftness = 54;
 
 const statusMeta: Record<
   NodeStatus,
@@ -1610,43 +1606,4 @@ function getLocalDateString(date: Date) {
   const day = String(date.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
-}
-
-function restrictToSortableStack({
-  activeNodeRect,
-  containerNodeRect,
-  transform,
-}: Parameters<Modifier>[0]) {
-  if (!activeNodeRect || !containerNodeRect) {
-    return { ...transform, x: 0 };
-  }
-
-  const minY = containerNodeRect.top - activeNodeRect.top;
-  const maxY = containerNodeRect.bottom - activeNodeRect.bottom;
-
-  return {
-    ...transform,
-    x: 0,
-    y: softClamp(transform.y, minY, maxY),
-  };
-}
-
-function softClamp(value: number, min: number, max: number) {
-  if (max < min) {
-    return min;
-  }
-
-  if (value < min) {
-    return min - getBoundaryOvershoot(min - value);
-  }
-
-  if (value > max) {
-    return max + getBoundaryOvershoot(value - max);
-  }
-
-  return value;
-}
-
-function getBoundaryOvershoot(distance: number) {
-  return dragBoundaryOvershoot * (1 - Math.exp(-distance / dragBoundarySoftness));
 }

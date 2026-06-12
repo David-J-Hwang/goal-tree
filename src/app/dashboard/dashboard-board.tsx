@@ -3,6 +3,22 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import {
   ArrowPathIcon,
   CalendarDaysIcon,
   CheckIcon,
@@ -10,6 +26,7 @@ import {
   ExclamationTriangleIcon,
   Squares2X2Icon,
 } from "@heroicons/react/24/outline";
+import { GripVertical } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +36,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { sortableStackModifiers } from "@/lib/dnd/sortable-stack-modifier";
 import { mapNodeRow, nodeSelectColumns, type NodeRow } from "@/lib/goaltree/node-rows";
 import {
   mapTodayTodoRow,
@@ -167,6 +185,38 @@ export function DashboardBoard({
     setUpdatingTodoId("");
   }
 
+  async function handleReorderTodos(orderedIds: string[]) {
+    const previousTodos = todayTodos;
+    const nextTodos = todayTodos.map((todo) => {
+      const index = orderedIds.indexOf(todo.id);
+
+      if (index === -1) {
+        return todo;
+      }
+
+      return { ...todo, sortOrder: index + 1 };
+    });
+
+    setTodayTodos(nextTodos);
+    setTodoError("");
+
+    const supabase = createSupabaseBrowserClient();
+    const updates = orderedIds.map((id, index) =>
+      supabase
+        .from("today_todos")
+        .update({ sort_order: index + 1 })
+        .eq("id", id)
+        .eq("user_id", userId),
+    );
+    const results = await Promise.all(updates);
+    const failedResult = results.find((result) => result.error);
+
+    if (failedResult?.error) {
+      setTodayTodos(previousTodos);
+      setTodoError(failedResult.error.message);
+    }
+  }
+
   return (
     <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8">
       <header className="flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
@@ -196,6 +246,7 @@ export function DashboardBoard({
           errorMessage={todoError}
           todos={todos}
           updatingTodoId={updatingTodoId}
+          onReorderTodos={handleReorderTodos}
           onToggleTodo={handleToggleTodo}
         />
 
@@ -239,13 +290,51 @@ function TodayTodoPanel({
   errorMessage,
   todos,
   updatingTodoId,
+  onReorderTodos,
   onToggleTodo,
 }: {
   errorMessage: string;
   todos: TodoItem[];
   updatingTodoId: string;
+  onReorderTodos: (orderedIds: string[]) => Promise<void>;
   onToggleTodo: (id: string) => Promise<void>;
 }) {
+  const [isReordering, setIsReordering] = useState(false);
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 2,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const oldIndex = todos.findIndex((todo) => todo.id === active.id);
+    const newIndex = todos.findIndex((todo) => todo.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) {
+      return;
+    }
+
+    const orderedIds = arrayMove(todos, oldIndex, newIndex).map((todo) => todo.id);
+    setIsReordering(true);
+
+    try {
+      await onReorderTodos(orderedIds);
+    } finally {
+      setIsReordering(false);
+    }
+  }
+
   return (
     <Card className="min-h-[34rem] rounded-lg shadow-none">
       <CardHeader className="border-b p-4">
@@ -272,17 +361,30 @@ function TodayTodoPanel({
           </p>
         ) : null}
         {todos.length > 0 ? (
-          <div className="space-y-2">
-            {todos.map((todo, index) => (
-              <TodoRow
-                index={index}
-                isUpdating={updatingTodoId === todo.id}
-                key={todo.id}
-                todo={todo}
-                onToggle={() => onToggleTodo(todo.id)}
-              />
-            ))}
-          </div>
+          <DndContext
+            collisionDetection={closestCenter}
+            modifiers={sortableStackModifiers}
+            sensors={sensors}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={todos.map((todo) => todo.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-2">
+                {todos.map((todo, index) => (
+                  <SortableTodoRow
+                    index={index}
+                    isReordering={isReordering}
+                    isUpdating={updatingTodoId === todo.id}
+                    key={todo.id}
+                    todo={todo}
+                    onToggle={() => onToggleTodo(todo.id)}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         ) : (
           <div className="flex min-h-40 flex-col items-center justify-center rounded-md border border-dashed px-4 text-center">
             <p className="text-sm font-medium">No Today TODO yet</p>
@@ -296,24 +398,66 @@ function TodayTodoPanel({
   );
 }
 
-function TodoRow({
+function SortableTodoRow({
   todo,
   index,
+  isReordering,
   isUpdating,
   onToggle,
 }: {
   todo: TodoItem;
   index: number;
+  isReordering: boolean;
   isUpdating: boolean;
   onToggle: () => void;
 }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: todo.id,
+    disabled: isUpdating || isReordering,
+    transition: {
+      duration: 140,
+      easing: "cubic-bezier(0.2, 0, 0, 1)",
+    },
+  });
+
+  const style = {
+    position: "relative" as const,
+    transform: transform ? `translate3d(0, ${Math.round(transform.y)}px, 0)` : undefined,
+    transition: isDragging ? "none" : transition,
+    zIndex: isDragging ? 50 : undefined,
+    willChange: "transform",
+  };
+
   return (
     <div
+      ref={setNodeRef}
+      style={style}
       className={cn(
-        "grid grid-cols-[2.25rem_minmax(0,1fr)_auto] items-start gap-3 rounded-lg border bg-background p-3 transition-colors",
+        "grid grid-cols-[1.75rem_2.25rem_minmax(0,1fr)_auto] items-start gap-3 rounded-lg border bg-background p-3 transition-colors",
         todo.done && "bg-muted/45 text-muted-foreground",
+        isDragging && "shadow-md ring-1 ring-primary/30",
       )}
     >
+      <button
+        aria-label={`Reorder ${todo.title}`}
+        className={cn(
+          "mt-0.5 flex h-7 w-7 touch-none cursor-grab items-center justify-center rounded text-muted-foreground transition hover:bg-muted hover:text-foreground active:cursor-grabbing",
+          (isUpdating || isReordering) && "cursor-wait opacity-60",
+        )}
+        disabled={isUpdating || isReordering}
+        type="button"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4" aria-hidden="true" />
+      </button>
       <button
         aria-label={todo.done ? `Mark ${todo.title} as open` : `Mark ${todo.title} as done`}
         className={cn(
