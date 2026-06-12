@@ -435,7 +435,7 @@ type UserSettings = {
 - [x] 오늘의 TODO 완료 처리
 - [x] 오늘의 TODO 완료 시 연결된 Task 완료 처리
 - [x] TODO 클릭 시 `/workspace`로 이동
-- [ ] TODO 클릭 시 해당 Goal / Plan / Task 선택 상태 복원
+- [x] TODO 클릭 시 해당 Goal / Plan / Task 선택 상태 복원
 - [x] 막힌 Task 요약
 - [x] 최근 완료한 Task 요약
 - [x] 이번 주 핵심 항목 요약
@@ -499,8 +499,15 @@ type UserSettings = {
 - [ ] 결제
 
 ### 13. 현 시점 다음 작업
-아직 남겨둔 부분도 있어:
 
-TODO 클릭 시 /workspace로 이동은 가능하지만, 해당 Goal/Plan/Task를 자동 선택해서 열어주는 기능은 아직 미구현
-/whativedone, /timeline은 아직 실제 DB 연결 전
-Plan category 추가/수정/삭제 UI는 아직 실제 DB 작업 전
+아직 남겨둔 부분:
+
+- `/whativedone`, `/timeline`은 아직 실제 DB 연결 전
+- Plan category 추가 / 수정 / 삭제 UI는 아직 실제 DB 작업 전
+- `/workspace` 검색 기능은 아직 placeholder 상태
+
+추천 순서:
+
+1. `/whativedone` 실제 DB 연결
+2. `/timeline` 실제 DB 연결
+3. Plan category 추가 / 수정 / 삭제 UI 구현

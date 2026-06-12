@@ -1115,6 +1115,8 @@ PlanCategory, TodayTodo, UserSettings TypeScript 타입 초안
 /dashboard Supabase TodayTodo 데이터 읽기 연결
 /dashboard TodayTodo 완료 시 연결 Task done 처리 연결
 /dashboard Blocked / Recent Done / This Week Focus를 실제 Node 상태 기반으로 표시
+/workspace URL nodeId 선택 복원 연결
+/dashboard TODO / Blocked / Recent Done 클릭 시 /workspace Goal / Plan / Task 맥락 복원 연결
 /trash Supabase 데이터 읽기 연결
 /trash 실제 복원 기능 연결
 /trash 실제 영구 삭제 기능 연결
@@ -1140,7 +1142,6 @@ Plan 카테고리 표시
 ```txt
 /whativedone, /timeline 데이터는 아직 Supabase에 연결되지 않았다.
 Plan 카테고리 자체의 추가 / 수정 / 삭제는 아직 없다.
-Dashboard TODO 클릭 시 /workspace 선택 상태 복원은 아직 연결되지 않았다.
 검색 입력은 아직 placeholder다.
 ```
 
@@ -1169,7 +1170,7 @@ Blocked / Recent Done은 OptionalDashboardPanels 컴포넌트로 분리했다.
 showOptionalPanels 값을 통해 선택 패널을 쉽게 숨길 수 있다.
 Today TODO는 Supabase today_todos 데이터를 사용한다.
 TODO 체크는 today_todos.done을 업데이트하고, 연결된 Task status도 done으로 바꾼다.
-TODO 링크는 /workspace로 이동하지만 아직 Goal / Plan / Task 선택 상태 복원은 연결되지 않았다.
+TODO 링크는 /workspace?nodeId=task-id로 이동하고, 해당 Goal / Plan / Task 선택 상태를 복원한다.
 ```
 
 What I've Done mock UI:

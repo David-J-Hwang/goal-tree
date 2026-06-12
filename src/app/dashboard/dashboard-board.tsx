@@ -25,6 +25,7 @@ import {
   todayTodoSelectColumns,
   type TodayTodoRow,
 } from "@/lib/goaltree/today-todo-rows";
+import { getWorkspaceNodeHref } from "@/lib/goaltree/workspace-links";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import type { GoalTreeNode, NodeStatus, TodayTodo } from "@/types/domain";
@@ -336,7 +337,7 @@ function TodoRow({
               "text-sm font-medium leading-5 hover:text-primary",
               todo.done && "line-through",
             )}
-            href="/workspace"
+            href={getWorkspaceNodeHref(todo.taskId)}
           >
             {todo.title}
           </Link>
@@ -352,7 +353,10 @@ function TodoRow({
           {index + 1}
         </span>
         <Button asChild size="icon" variant="ghost">
-          <Link aria-label={`Open ${todo.title} in workspace`} href="/workspace">
+          <Link
+            aria-label={`Open ${todo.title} in workspace`}
+            href={getWorkspaceNodeHref(todo.taskId)}
+          >
             <ChevronRightIcon className="h-4 w-4" aria-hidden="true" />
           </Link>
         </Button>
@@ -453,7 +457,7 @@ function InsightPanel({
           items.map((item) => (
             <Link
               className="block rounded-md border bg-background px-3 py-2 transition-colors hover:border-primary/50 hover:bg-primary/5"
-              href="/workspace"
+              href={getWorkspaceNodeHref(item.id)}
               key={item.id}
             >
               <div className="flex items-start justify-between gap-3">

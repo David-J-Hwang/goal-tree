@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   closestCenter,
   DndContext,
@@ -139,26 +139,29 @@ const statusOptions: NodeStatus[] = [
 export function WorkspaceBoard({
   initialCategories,
   initialNodes,
+  initialSelectedNodeId,
   initialTodayDate,
   initialTodayTodos,
   userId,
 }: {
   initialCategories: PlanCategory[];
   initialNodes: GoalTreeNode[];
+  initialSelectedNodeId: string | null;
   initialTodayDate: string;
   initialTodayTodos: TodayTodo[];
   userId: string;
 }) {
+  const initialSelection = useMemo(
+    () => getSelectionForNode(initialNodes, initialSelectedNodeId),
+    [initialNodes, initialSelectedNodeId],
+  );
   const [nodes, setNodes] = useState<WorkspaceNode[]>(initialNodes);
   const [todayTodos, setTodayTodos] = useState<TodayTodo[]>(initialTodayTodos);
   const [planCategories] = useState<PlanCategory[]>(initialCategories);
-  const initialGoalId = useMemo(
-    () => getSortedChildren(initialNodes, "goal", null)[0]?.id ?? "",
-    [initialNodes],
-  );
-  const [selectedGoalId, setSelectedGoalId] = useState(initialGoalId);
-  const [selectedPlanId, setSelectedPlanId] = useState("");
-  const [selectedNodeId, setSelectedNodeId] = useState(initialGoalId);
+  const nodesRef = useRef<WorkspaceNode[]>(initialNodes);
+  const [selectedGoalId, setSelectedGoalId] = useState(initialSelection.goalId);
+  const [selectedPlanId, setSelectedPlanId] = useState(initialSelection.planId);
+  const [selectedNodeId, setSelectedNodeId] = useState(initialSelection.nodeId);
 
   const goals = useMemo(() => getSortedChildren(nodes, "goal", null), [nodes]);
   const plans = useMemo(
@@ -179,6 +182,21 @@ export function WorkspaceBoard({
   const selectedPlan = nodes.find(
     (node) => node.id === selectedPlanId && isNodeVisible(node, nodes),
   );
+
+  useEffect(() => {
+    nodesRef.current = nodes;
+  }, [nodes]);
+
+  useEffect(() => {
+    const nextSelection = getSelectionForNode(
+      nodesRef.current,
+      initialSelectedNodeId,
+    );
+
+    setSelectedGoalId(nextSelection.goalId);
+    setSelectedPlanId(nextSelection.planId);
+    setSelectedNodeId(nextSelection.nodeId);
+  }, [initialSelectedNodeId]);
 
   function handleSelect(node: WorkspaceNode) {
     setSelectedNodeId(node.id);
@@ -1450,6 +1468,63 @@ function getVisibleNode(nodes: WorkspaceNode[], id?: string | null) {
   }
 
   return nodes.find((node) => node.id === id && isNodeVisible(node, nodes));
+}
+
+function getSelectionForNode(
+  nodes: WorkspaceNode[],
+  nodeId?: string | null,
+) {
+  const fallbackGoal = getSortedChildren(nodes, "goal", null)[0];
+  const fallbackSelection = {
+    goalId: fallbackGoal?.id ?? "",
+    planId: "",
+    nodeId: fallbackGoal?.id ?? "",
+  };
+  const targetNode = getVisibleNode(nodes, nodeId);
+
+  if (!targetNode) {
+    return fallbackSelection;
+  }
+
+  if (targetNode.type === "goal") {
+    return {
+      goalId: targetNode.id,
+      planId: "",
+      nodeId: targetNode.id,
+    };
+  }
+
+  if (targetNode.type === "plan") {
+    const parentGoal = getVisibleNode(nodes, targetNode.parentId);
+
+    if (!parentGoal || parentGoal.type !== "goal") {
+      return fallbackSelection;
+    }
+
+    return {
+      goalId: parentGoal.id,
+      planId: targetNode.id,
+      nodeId: targetNode.id,
+    };
+  }
+
+  const parentPlan = getVisibleNode(nodes, targetNode.parentId);
+  const parentGoal = getVisibleNode(nodes, parentPlan?.parentId);
+
+  if (
+    !parentPlan ||
+    parentPlan.type !== "plan" ||
+    !parentGoal ||
+    parentGoal.type !== "goal"
+  ) {
+    return fallbackSelection;
+  }
+
+  return {
+    goalId: parentGoal.id,
+    planId: parentPlan.id,
+    nodeId: targetNode.id,
+  };
 }
 
 function getSelectionAfterTrash(nodes: WorkspaceNode[], trashedNode: WorkspaceNode) {

@@ -5,7 +5,11 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { WorkspaceBoard } from "./workspace-board";
 
-export default async function WorkspacePage() {
+type WorkspacePageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function WorkspacePage({ searchParams }: WorkspacePageProps) {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -15,15 +19,37 @@ export default async function WorkspacePage() {
     redirect("/login");
   }
 
+  const resolvedSearchParams = await searchParams;
   const workspaceData = await getWorkspaceData(supabase, user.id);
 
   return (
     <WorkspaceBoard
       initialCategories={workspaceData.categories}
       initialNodes={workspaceData.nodes}
+      initialSelectedNodeId={getInitialSelectedNodeId(resolvedSearchParams)}
       initialTodayDate={workspaceData.todayDate}
       initialTodayTodos={workspaceData.todayTodos}
       userId={user.id}
     />
   );
+}
+
+function getInitialSelectedNodeId(
+  searchParams?: Record<string, string | string[] | undefined>,
+) {
+  return (
+    getSearchParamValue(searchParams?.nodeId) ??
+    getSearchParamValue(searchParams?.taskId) ??
+    getSearchParamValue(searchParams?.planId) ??
+    getSearchParamValue(searchParams?.goalId) ??
+    null
+  );
+}
+
+function getSearchParamValue(value?: string | string[]) {
+  if (Array.isArray(value)) {
+    return value[0] ?? null;
+  }
+
+  return value ?? null;
 }
