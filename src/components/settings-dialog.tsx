@@ -106,6 +106,9 @@ export function SettingsDialog() {
 
   useEffect(() => {
     if (!isOpen) {
+      setPendingDeleteCategoryId("");
+      setStatusMessage("");
+      setErrorMessage("");
       return;
     }
 
