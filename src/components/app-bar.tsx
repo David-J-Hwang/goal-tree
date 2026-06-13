@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/outline";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import {
+  ArrowRightStartOnRectangleIcon,
+  Bars3Icon,
+} from "@heroicons/react/24/outline";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { SettingsDialog } from "@/components/settings-dialog";
@@ -16,6 +20,9 @@ const navItems = [
   { href: "/timeline", label: "Timeline" },
   { href: "/trash", label: "Trash" },
 ];
+
+const mobileMenuItemClassName =
+  "flex h-9 cursor-pointer items-center rounded-md px-3 text-sm font-medium text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground";
 
 export function AppBar() {
   const router = useRouter();
@@ -50,9 +57,10 @@ export function AppBar() {
             ))}
           </nav>
           <SettingsDialog />
+          <MobileNavigationMenu onSignOut={handleSignOut} />
           <Button
             aria-label="Sign out"
-            className="text-muted-foreground hover:text-foreground"
+            className="hidden text-muted-foreground hover:text-foreground md:inline-flex"
             onClick={handleSignOut}
             size="sm"
             type="button"
@@ -64,5 +72,52 @@ export function AppBar() {
         </div>
       </div>
     </header>
+  );
+}
+
+function MobileNavigationMenu({
+  onSignOut,
+}: {
+  onSignOut: () => Promise<void>;
+}) {
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <Button
+          aria-label="Open navigation menu"
+          className="text-muted-foreground hover:text-foreground md:hidden"
+          size="sm"
+          type="button"
+          variant="ghost"
+        >
+          <Bars3Icon className="h-5 w-5" aria-hidden="true" />
+        </Button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="end"
+          className="z-[90] min-w-52 rounded-md border bg-popover p-1 text-popover-foreground shadow-lg"
+          sideOffset={8}
+        >
+          {navItems.map((item) => (
+            <DropdownMenu.Item asChild key={item.href}>
+              <Link className={mobileMenuItemClassName} href={item.href}>
+                {item.label}
+              </Link>
+            </DropdownMenu.Item>
+          ))}
+          <DropdownMenu.Separator className="my-1 h-px bg-border" />
+          <DropdownMenu.Item
+            className={cn(mobileMenuItemClassName, "gap-2 text-destructive")}
+            onSelect={() => {
+              void onSignOut();
+            }}
+          >
+            <ArrowRightStartOnRectangleIcon className="h-4 w-4" aria-hidden="true" />
+            Sign out
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
   );
 }
