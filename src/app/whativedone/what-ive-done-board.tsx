@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { format, parseISO } from "date-fns";
+import { endOfWeek, format, isWithinInterval, parseISO, startOfWeek } from "date-fns";
 import {
   ArrowTopRightOnSquareIcon,
   CalendarDaysIcon,
@@ -19,14 +19,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getWorkspaceNodeHref } from "@/lib/goaltree/workspace-links";
 import { cn } from "@/lib/utils";
+import type { GoalTreeNode, PlanCategory } from "@/types/domain";
 
 type ViewMode = "day" | "month" | "year";
 
 type Completion = {
   id: string;
   title: string;
+  goalId: string;
   goal: string;
+  planId: string;
   plan: string;
   category: string;
   completedAt: string;
@@ -39,102 +43,38 @@ type Contribution = {
   percentage: number;
 };
 
-const completions: Completion[] = [
-  {
-    id: "done-dashboard-mock",
-    title: "Dashboard mock UI 구성",
-    goal: "경제적 자유",
-    plan: "Goaltree MVP 만들기",
-    category: "웹개발",
-    completedAt: "2026-06-09",
-    memo: "Today TODO와 This Week Focus의 첫 화면 흐름을 확인했다.",
-  },
-  {
-    id: "done-badge-tone",
-    title: "다크모드 상태 배지 톤 조정",
-    goal: "경제적 자유",
-    plan: "Goaltree MVP 만들기",
-    category: "웹개발",
-    completedAt: "2026-06-09",
-    memo: "상태 의미는 유지하고 카드 본문보다 덜 튀게 만들었다.",
-  },
-  {
-    id: "done-workspace-ux",
-    title: "Workspace 카드 선택 UX 정리",
-    goal: "경제적 자유",
-    plan: "Goaltree MVP 만들기",
-    category: "웹개발",
-    completedAt: "2026-06-08",
-    memo: "Goal 선택 시 Plan 자동 활성화를 막고 빈 상태 문구를 정리했다.",
-  },
-  {
-    id: "done-drag-soft-clamp",
-    title: "드래그 경계 soft clamp 적용",
-    goal: "경제적 자유",
-    plan: "Goaltree MVP 만들기",
-    category: "웹개발",
-    completedAt: "2026-06-08",
-    memo: "카드가 섹션 밖으로 크게 벗어나지 않으면서 부드럽게 움직이도록 조정했다.",
-  },
-  {
-    id: "done-project-docs",
-    title: "README와 CODEX 문서 정리",
-    goal: "경제적 자유",
-    plan: "Goaltree MVP 만들기",
-    category: "문서",
-    completedAt: "2026-06-07",
-    memo: "다른 세션에서도 프로젝트 맥락을 바로 읽을 수 있게 정리했다.",
-  },
-  {
-    id: "done-research-feedback",
-    title: "초기 피드백 질문 초안 작성",
-    goal: "개발자로 성장하기",
-    plan: "사용자 피드백 받기",
-    category: "외부활동",
-    completedAt: "2026-05-30",
-    memo: "MVP를 보여줄 때 확인할 질문을 정리했다.",
-  },
-  {
-    id: "done-next-study",
-    title: "Next.js App Router 구조 복습",
-    goal: "개발자로 성장하기",
-    plan: "Next.js 공부하기",
-    category: "공부",
-    completedAt: "2026-05-18",
-    memo: "라우트와 레이아웃 구성 방식을 다시 확인했다.",
-  },
-  {
-    id: "done-annual-plan",
-    title: "2026년 제품 개발 목표 정리",
-    goal: "경제적 자유",
-    plan: "작은 수익형 웹서비스 확보",
-    category: "사업",
-    completedAt: "2026-01-12",
-    memo: "작게 출시하고 피드백을 받는 방향으로 정리했다.",
-  },
-];
-
 const viewModes: Array<{ value: ViewMode; label: string }> = [
   { value: "day", label: "Day" },
   { value: "month", label: "Month" },
   { value: "year", label: "Year" },
 ];
 
-export function WhatIveDoneBoard() {
+export function WhatIveDoneBoard({
+  initialCategories,
+  initialNodes,
+}: {
+  initialCategories: PlanCategory[];
+  initialNodes: GoalTreeNode[];
+}) {
   const [viewMode, setViewMode] = useState<ViewMode>("day");
+  const completions = useMemo(
+    () => getCompletions(initialNodes, initialCategories),
+    [initialCategories, initialNodes],
+  );
 
   const groupedCompletions = useMemo(
     () => groupCompletions(completions, viewMode),
-    [viewMode],
+    [completions, viewMode],
   );
   const goalContributions = useMemo(
     () => getContributions(completions, "goal"),
-    [],
+    [completions],
   );
   const planContributions = useMemo(
     () => getContributions(completions, "plan"),
-    [],
+    [completions],
   );
+  const summaryItems = useMemo(() => getSummaryItems(completions), [completions]);
 
   return (
     <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8">
@@ -150,10 +90,14 @@ export function WhatIveDoneBoard() {
       </header>
 
       <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryTile label="Today" value="2" detail="completed tasks" />
-        <SummaryTile label="This Week" value="5" detail="visible progress" />
-        <SummaryTile label="This Month" value="7" detail="done records" />
-        <SummaryTile label="Goals" value="2" detail="contributed" />
+        {summaryItems.map((item) => (
+          <SummaryTile
+            detail={item.detail}
+            key={item.label}
+            label={item.label}
+            value={item.value}
+          />
+        ))}
       </section>
 
       <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
@@ -185,9 +129,18 @@ export function WhatIveDoneBoard() {
             </div>
           </CardHeader>
           <CardContent className="space-y-5 p-4">
-            {groupedCompletions.map((group) => (
-              <CompletionGroup group={group} key={group.key} />
-            ))}
+            {groupedCompletions.length > 0 ? (
+              groupedCompletions.map((group) => (
+                <CompletionGroup group={group} key={group.key} />
+              ))
+            ) : (
+              <div className="flex min-h-40 flex-col items-center justify-center rounded-md border border-dashed px-4 text-center">
+                <p className="text-sm font-medium">No completed Tasks yet</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Complete Tasks from Dashboard or Workspace to build your log.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -256,7 +209,7 @@ function CompletionCard({ completion }: { completion: Completion }) {
   return (
     <Link
       className="block rounded-lg border bg-background p-3 transition-colors hover:border-primary/50 hover:bg-primary/5"
-      href="/workspace"
+      href={getWorkspaceNodeHref(completion.id)}
     >
       <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
         <div className="min-w-0">
@@ -311,25 +264,105 @@ function ContributionPanel({
         </div>
       </CardHeader>
       <CardContent className="space-y-4 p-4">
-        {items.map((item) => (
-          <div key={item.label} className="space-y-2">
-            <div className="flex items-center justify-between gap-3">
-              <p className="truncate text-sm font-medium">{item.label}</p>
-              <span className="shrink-0 text-xs text-muted-foreground">
-                {item.count} done
-              </span>
+        {items.length > 0 ? (
+          items.map((item) => (
+            <div key={item.label} className="space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <p className="truncate text-sm font-medium">{item.label}</p>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {item.count} done
+                </span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary"
+                  style={{ width: `${item.percentage}%` }}
+                />
+              </div>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-primary"
-                style={{ width: `${item.percentage}%` }}
-              />
-            </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <p className="rounded-md border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
+            No contribution data yet
+          </p>
+        )}
       </CardContent>
     </Card>
   );
+}
+
+function getCompletions(
+  nodes: GoalTreeNode[],
+  categories: PlanCategory[],
+): Completion[] {
+  return nodes
+    .filter(
+      (node) =>
+        node.type === "task" &&
+        node.status === "done" &&
+        Boolean(node.actualEndDate) &&
+        isNodeVisible(node, nodes),
+    )
+    .map((task) => {
+      const plan = task.parentId
+        ? nodes.find((node) => node.id === task.parentId)
+        : undefined;
+      const goal = plan?.parentId
+        ? nodes.find((node) => node.id === plan.parentId)
+        : undefined;
+      const category = categories.find((item) => item.id === plan?.categoryId);
+
+      return {
+        id: task.id,
+        title: task.title,
+        goalId: goal?.id ?? "",
+        goal: goal?.title ?? "Goal",
+        planId: plan?.id ?? "",
+        plan: plan?.title ?? "Plan",
+        category: category?.name ?? "No category",
+        completedAt: task.actualEndDate ?? "",
+        memo: task.memo ?? "",
+      };
+    })
+    .sort((first, second) => {
+      const dateComparison = second.completedAt.localeCompare(first.completedAt);
+
+      if (dateComparison !== 0) {
+        return dateComparison;
+      }
+
+      return second.id.localeCompare(first.id);
+    });
+}
+
+function getSummaryItems(completions: Completion[]) {
+  const today = getLocalDateString(new Date());
+  const currentDate = parseISO(today);
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
+  const currentMonth = today.slice(0, 7);
+  const todayCount = completions.filter(
+    (completion) => completion.completedAt === today,
+  ).length;
+  const weekCount = completions.filter((completion) =>
+    isWithinInterval(parseISO(completion.completedAt), {
+      start: weekStart,
+      end: weekEnd,
+    }),
+  ).length;
+  const monthCount = completions.filter((completion) =>
+    completion.completedAt.startsWith(currentMonth),
+  ).length;
+  const goalCount = new Set(
+    completions.map((completion) => completion.goalId || completion.goal),
+  ).size;
+
+  return [
+    { label: "Today", value: String(todayCount), detail: "completed tasks" },
+    { label: "This Week", value: String(weekCount), detail: "visible progress" },
+    { label: "This Month", value: String(monthCount), detail: "done records" },
+    { label: "Goals", value: String(goalCount), detail: "contributed" },
+  ];
 }
 
 function groupCompletions(items: Completion[], viewMode: ViewMode) {
@@ -372,17 +405,48 @@ function getGroupLabel(key: string, viewMode: ViewMode) {
 }
 
 function getContributions(items: Completion[], property: "goal" | "plan") {
-  const counts = new Map<string, number>();
+  const counts = new Map<string, { label: string; count: number }>();
 
   items.forEach((item) => {
-    counts.set(item[property], (counts.get(item[property]) ?? 0) + 1);
+    const key =
+      property === "goal"
+        ? item.goalId || item.goal
+        : item.planId || item.plan;
+    const currentItem = counts.get(key);
+
+    counts.set(key, {
+      label: item[property],
+      count: (currentItem?.count ?? 0) + 1,
+    });
   });
 
-  return Array.from(counts.entries())
-    .sort(([, firstCount], [, secondCount]) => secondCount - firstCount)
-    .map(([label, count]) => ({
+  return Array.from(counts.values())
+    .sort((firstItem, secondItem) => secondItem.count - firstItem.count)
+    .map(({ label, count }) => ({
       label,
       count,
       percentage: Math.round((count / items.length) * 100),
     }));
+}
+
+function isNodeVisible(node: GoalTreeNode, nodes: GoalTreeNode[]): boolean {
+  if (node.trashedAt) {
+    return false;
+  }
+
+  if (!node.parentId) {
+    return true;
+  }
+
+  const parent = nodes.find((item) => item.id === node.parentId);
+
+  return parent ? isNodeVisible(parent, nodes) : false;
+}
+
+function getLocalDateString(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }

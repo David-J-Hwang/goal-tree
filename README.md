@@ -449,7 +449,10 @@ type UserSettings = {
 - [x] 연별 완료 기록 표시
 - [x] 완료 기록에서 연결된 Goal / Plan 표시
 - [x] 테스트용 Goal / Plan Contribution 표시
+- [x] Supabase 완료 Task 데이터 연결
+- [x] 실제 Goal / Plan Contribution 계산
 - [x] 완료 기록 클릭 시 `/workspace`로 이동
+- [x] 완료 기록 클릭 시 해당 Task 선택 상태 복원
 
 ### 9. /timeline
 
@@ -462,6 +465,10 @@ type UserSettings = {
 - [x] 연간 보기
 - [x] 이틀 이상 이어지는 작업 기간 표시
 - [x] 타임라인 항목 클릭 시 `/workspace`로 이동
+- [x] Supabase Timeline 데이터 연결
+- [x] 실제 Goal / Plan / Task 예정기간 표시
+- [x] 실제 Goal / Plan / Task 실제 진행기간 표시
+- [x] 타임라인 항목 클릭 시 해당 Goal / Plan / Task 선택 상태 복원
 
 ### 10. /trash
 
@@ -502,12 +509,11 @@ type UserSettings = {
 
 아직 남겨둔 부분:
 
-- `/whativedone`, `/timeline`은 아직 실제 DB 연결 전
 - Plan category 추가 / 수정 / 삭제 UI는 아직 실제 DB 작업 전
 - `/workspace` 검색 기능은 아직 placeholder 상태
 
 추천 순서:
 
-1. `/whativedone` 실제 DB 연결
-2. `/timeline` 실제 DB 연결
-3. Plan category 추가 / 수정 / 삭제 UI 구현
+1. Plan category 추가 / 수정 / 삭제 UI 구현
+2. `/workspace` 검색 기능 구현
+3. 앱 설정 모달 구현

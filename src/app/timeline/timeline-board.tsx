@@ -20,11 +20,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getWorkspaceNodeHref } from "@/lib/goaltree/workspace-links";
 import { cn } from "@/lib/utils";
+import type { GoalTreeNode, NodeStatus } from "@/types/domain";
 
 type TimelineMode = "upcoming" | "done";
 type RangeView = "week" | "month" | "year";
 type TimelineNodeType = "goal" | "plan" | "task";
+type TimelineStatus = "scheduled" | "in_progress" | "blocked" | "done" | "paused";
+type TimelineRange = {
+  start: string;
+  end: string;
+};
 
 type TimelineItem = {
   id: string;
@@ -32,169 +39,13 @@ type TimelineItem = {
   title: string;
   goal: string;
   plan?: string;
-  status: "scheduled" | "in_progress" | "blocked" | "done";
+  status: TimelineStatus;
   progress?: number;
-  plannedStartDate: string;
-  plannedEndDate: string;
+  plannedStartDate?: string | null;
+  plannedEndDate?: string | null;
   actualStartDate?: string;
   actualEndDate?: string;
 };
-
-const timelineItems: TimelineItem[] = [
-  {
-    id: "timeline-goal-finance",
-    type: "goal",
-    title: "경제적 자유",
-    goal: "경제적 자유",
-    status: "in_progress",
-    progress: 36,
-    plannedStartDate: "2026-06-01",
-    plannedEndDate: "2026-12-31",
-  },
-  {
-    id: "timeline-goal-growth",
-    type: "goal",
-    title: "개발자로 성장하기",
-    goal: "개발자로 성장하기",
-    status: "in_progress",
-    progress: 28,
-    plannedStartDate: "2026-05-01",
-    plannedEndDate: "2026-10-31",
-  },
-  {
-    id: "timeline-goal-launch",
-    type: "goal",
-    title: "첫 제품 출시하기",
-    goal: "첫 제품 출시하기",
-    status: "done",
-    progress: 100,
-    plannedStartDate: "2026-01-01",
-    plannedEndDate: "2026-03-31",
-    actualStartDate: "2026-01-06",
-    actualEndDate: "2026-03-28",
-  },
-  {
-    id: "timeline-plan-goaltree",
-    type: "plan",
-    title: "Goaltree MVP 만들기",
-    goal: "경제적 자유",
-    plan: "Goaltree MVP 만들기",
-    status: "in_progress",
-    progress: 62,
-    plannedStartDate: "2026-06-08",
-    plannedEndDate: "2026-06-21",
-  },
-  {
-    id: "timeline-plan-feedback",
-    type: "plan",
-    title: "사용자 피드백 받기",
-    goal: "개발자로 성장하기",
-    plan: "사용자 피드백 받기",
-    status: "blocked",
-    progress: 15,
-    plannedStartDate: "2026-06-18",
-    plannedEndDate: "2026-07-15",
-  },
-  {
-    id: "timeline-plan-first-release",
-    type: "plan",
-    title: "첫 배포 준비",
-    goal: "첫 제품 출시하기",
-    plan: "첫 배포 준비",
-    status: "done",
-    progress: 100,
-    plannedStartDate: "2026-02-01",
-    plannedEndDate: "2026-03-31",
-    actualStartDate: "2026-02-03",
-    actualEndDate: "2026-03-28",
-  },
-  {
-    id: "timeline-dashboard",
-    type: "task",
-    title: "Dashboard mock UI 확인",
-    goal: "경제적 자유",
-    plan: "Goaltree MVP 만들기",
-    status: "done",
-    plannedStartDate: "2026-06-09",
-    plannedEndDate: "2026-06-09",
-    actualStartDate: "2026-06-09",
-    actualEndDate: "2026-06-09",
-  },
-  {
-    id: "timeline-whativedone",
-    type: "task",
-    title: "What I've Done 기록장 UI 확인",
-    goal: "경제적 자유",
-    plan: "Goaltree MVP 만들기",
-    status: "done",
-    plannedStartDate: "2026-06-09",
-    plannedEndDate: "2026-06-09",
-    actualStartDate: "2026-06-09",
-    actualEndDate: "2026-06-09",
-  },
-  {
-    id: "timeline-workspace",
-    type: "task",
-    title: "Workspace UX 정리",
-    goal: "경제적 자유",
-    plan: "Goaltree MVP 만들기",
-    status: "done",
-    plannedStartDate: "2026-06-08",
-    plannedEndDate: "2026-06-08",
-    actualStartDate: "2026-06-08",
-    actualEndDate: "2026-06-08",
-  },
-  {
-    id: "timeline-schema",
-    type: "task",
-    title: "Supabase 테이블 구조 설계",
-    goal: "경제적 자유",
-    plan: "Goaltree MVP 만들기",
-    status: "scheduled",
-    plannedStartDate: "2026-06-10",
-    plannedEndDate: "2026-06-12",
-  },
-  {
-    id: "timeline-auth",
-    type: "task",
-    title: "이메일 로그인 플로우 만들기",
-    goal: "경제적 자유",
-    plan: "Goaltree MVP 만들기",
-    status: "scheduled",
-    plannedStartDate: "2026-06-13",
-    plannedEndDate: "2026-06-14",
-  },
-  {
-    id: "timeline-todo-link",
-    type: "task",
-    title: "Today TODO와 Task 완료 규칙 연결",
-    goal: "경제적 자유",
-    plan: "Goaltree MVP 만들기",
-    status: "in_progress",
-    plannedStartDate: "2026-06-15",
-    plannedEndDate: "2026-06-17",
-  },
-  {
-    id: "timeline-feedback",
-    type: "task",
-    title: "초기 사용자 피드백 받기",
-    goal: "개발자로 성장하기",
-    plan: "사용자 피드백 받기",
-    status: "blocked",
-    plannedStartDate: "2026-06-18",
-    plannedEndDate: "2026-06-21",
-  },
-  {
-    id: "timeline-first-release",
-    type: "task",
-    title: "MVP 첫 배포 준비",
-    goal: "경제적 자유",
-    plan: "작은 수익형 웹서비스 확보",
-    status: "scheduled",
-    plannedStartDate: "2026-07-01",
-    plannedEndDate: "2026-07-07",
-  },
-];
 
 const timelineModes: Array<{ value: TimelineMode; label: string }> = [
   { value: "upcoming", label: "Upcoming" },
@@ -213,10 +64,11 @@ const nodeTypeViews: Array<{ value: TimelineNodeType; label: string }> = [
   { value: "task", label: "Task" },
 ];
 
-export function TimelineBoard() {
+export function TimelineBoard({ initialNodes }: { initialNodes: GoalTreeNode[] }) {
   const [timelineMode, setTimelineMode] = useState<TimelineMode>("upcoming");
   const [nodeType, setNodeType] = useState<TimelineNodeType>("task");
   const [rangeView, setRangeView] = useState<RangeView>("month");
+  const timelineItems = useMemo(() => getTimelineItems(initialNodes), [initialNodes]);
 
   const visibleItems = useMemo(
     () =>
@@ -225,12 +77,11 @@ export function TimelineBoard() {
         .filter((item) =>
           timelineMode === "done" ? item.status === "done" : item.status !== "done",
         )
+        .filter((item) => Boolean(getTimelineRange(item, timelineMode)))
         .sort((first, second) =>
-          getRangeStart(first, timelineMode).localeCompare(
-            getRangeStart(second, timelineMode),
-          ),
+          getRangeStart(first, timelineMode).localeCompare(getRangeStart(second, timelineMode)),
         ),
-    [nodeType, timelineMode],
+    [nodeType, timelineItems, timelineMode],
   );
 
   const groupedItems = useMemo(
@@ -256,8 +107,16 @@ export function TimelineBoard() {
       <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryTile label="Visible" value={String(visibleItems.length)} detail={`${nodeType} items`} />
         <SummaryTile label="Ranges" value={String(rangeItems.length)} detail="multi-day items" />
-        <SummaryTile label="Upcoming" value={String(countItems(nodeType, "upcoming"))} detail="planned items" />
-        <SummaryTile label="Done" value={String(countItems(nodeType, "done"))} detail="completed items" />
+        <SummaryTile
+          label="Upcoming"
+          value={String(countItems(timelineItems, nodeType, "upcoming"))}
+          detail="planned items"
+        />
+        <SummaryTile
+          label="Done"
+          value={String(countItems(timelineItems, nodeType, "done"))}
+          detail="completed items"
+        />
       </section>
 
       <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
@@ -290,11 +149,20 @@ export function TimelineBoard() {
             </div>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="space-y-6">
-              {groupedItems.map((group) => (
-                <TimelineGroup group={group} key={group.key} mode={timelineMode} />
-              ))}
-            </div>
+            {groupedItems.length > 0 ? (
+              <div className="space-y-6">
+                {groupedItems.map((group) => (
+                  <TimelineGroup group={group} key={group.key} mode={timelineMode} />
+                ))}
+              </div>
+            ) : (
+              <div className="flex min-h-40 flex-col items-center justify-center rounded-md border border-dashed px-4 text-center">
+                <p className="text-sm font-medium">No timeline items yet</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Add planned or actual dates in Workspace to build this view.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -392,7 +260,7 @@ function TimelineItemCard({ item, mode }: { item: TimelineItem; mode: TimelineMo
         "relative block rounded-lg border bg-background p-3 transition-colors hover:border-primary/50 hover:bg-primary/5",
         isRange && "bg-primary/5",
       )}
-      href="/workspace"
+      href={getWorkspaceNodeHref(item.id)}
     >
       <span className="absolute -left-[1.34rem] top-4 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary" />
 
@@ -437,8 +305,12 @@ function TimelineItemCard({ item, mode }: { item: TimelineItem; mode: TimelineMo
 }
 
 function RangeBar({ item, mode }: { item: TimelineItem; mode: TimelineMode }) {
-  const start = getRangeStart(item, mode);
-  const end = getRangeEnd(item, mode);
+  const range = getTimelineRange(item, mode);
+
+  if (!range) {
+    return null;
+  }
+
   const rangeLength = getRangeLength(item, mode);
   const width = Math.min(100, Math.max(28, rangeLength * 16));
 
@@ -446,7 +318,7 @@ function RangeBar({ item, mode }: { item: TimelineItem; mode: TimelineMode }) {
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <CalendarDaysIcon className="h-3.5 w-3.5" aria-hidden="true" />
-        <span>{formatRangeLabel(start, end)}</span>
+        <span>{formatRangeLabel(range.start, range.end)}</span>
         {rangeLength > 1 ? <span>{rangeLength} days</span> : <span>1 day</span>}
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-muted">
@@ -504,25 +376,33 @@ function RangeOverviewPanel({
             No multi-day {nodeType} items in this view
           </div>
         ) : (
-          items.map((item) => (
-            <Link
-              className="block rounded-md border bg-background px-3 py-2 transition-colors hover:border-primary/50 hover:bg-primary/5"
-              href="/workspace"
-              key={item.id}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{item.title}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {formatRangeLabel(getRangeStart(item, mode), getRangeEnd(item, mode))}
-                  </p>
+          items.map((item) => {
+            const range = getTimelineRange(item, mode);
+
+            if (!range) {
+              return null;
+            }
+
+            return (
+              <Link
+                className="block rounded-md border bg-background px-3 py-2 transition-colors hover:border-primary/50 hover:bg-primary/5"
+                href={getWorkspaceNodeHref(item.id)}
+                key={item.id}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{item.title}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {formatRangeLabel(range.start, range.end)}
+                    </p>
+                  </div>
+                  <span className="shrink-0 rounded-full border bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
+                    {getRangeLength(item, mode)}d
+                  </span>
                 </div>
-                <span className="shrink-0 rounded-full border bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
-                  {getRangeLength(item, mode)}d
-                </span>
-              </div>
-            </Link>
-          ))
+              </Link>
+            );
+          })
         )}
       </CardContent>
     </Card>
@@ -559,12 +439,49 @@ function LegendRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+function getTimelineItems(nodes: GoalTreeNode[]): TimelineItem[] {
+  return nodes
+    .filter((node) => isNodeVisible(node, nodes))
+    .map((node) => {
+      const parentPlan =
+        node.type === "task" && node.parentId
+          ? nodes.find((item) => item.id === node.parentId)
+          : undefined;
+      const parentGoal =
+        node.type === "plan" && node.parentId
+          ? nodes.find((item) => item.id === node.parentId)
+          : parentPlan?.parentId
+            ? nodes.find((item) => item.id === parentPlan.parentId)
+            : undefined;
+
+      return {
+        id: node.id,
+        type: node.type,
+        title: node.title,
+        goal: node.type === "goal" ? node.title : parentGoal?.title ?? "Goal",
+        plan:
+          node.type === "plan"
+            ? node.title
+            : node.type === "task"
+              ? parentPlan?.title ?? "Plan"
+              : undefined,
+        status: getTimelineStatus(node.status),
+        progress: node.type === "task" ? undefined : getNodeProgress(node, nodes),
+        plannedStartDate: nullToUndefined(node.plannedStartDate),
+        plannedEndDate: nullToUndefined(node.plannedEndDate),
+        actualStartDate: nullToUndefined(node.actualStartDate),
+        actualEndDate: nullToUndefined(node.actualEndDate),
+      };
+    });
+}
+
 function StatusBadge({ status }: { status: TimelineItem["status"] }) {
   const labels = {
     scheduled: "예정",
     in_progress: "진행중",
     blocked: "막힘",
     done: "완료",
+    paused: "보류",
   };
 
   return (
@@ -579,6 +496,8 @@ function StatusBadge({ status }: { status: TimelineItem["status"] }) {
           "border-red-200 bg-red-50 text-red-700 dark:border-red-800/40 dark:bg-red-950/25 dark:text-red-300/80",
         status === "done" &&
           "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-950/25 dark:text-emerald-300/80",
+        status === "paused" &&
+          "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800/40 dark:bg-amber-950/25 dark:text-amber-300/80",
       )}
     >
       {labels[status]}
@@ -594,7 +513,13 @@ function groupTimelineItems(
   const groups = new Map<string, TimelineItem[]>();
 
   items.forEach((item) => {
-    const date = parseISO(getRangeStart(item, mode));
+    const range = getTimelineRange(item, mode);
+
+    if (!range) {
+      return;
+    }
+
+    const date = parseISO(range.start);
     const key =
       rangeView === "week"
         ? format(date, "yyyy-'W'II")
@@ -628,24 +553,43 @@ function getGroupLabel(key: string, rangeView: RangeView) {
 }
 
 function getRangeStart(item: TimelineItem, mode: TimelineMode) {
-  return mode === "done"
-    ? item.actualStartDate ?? item.actualEndDate ?? item.plannedStartDate
-    : item.plannedStartDate;
+  return getTimelineRange(item, mode)?.start ?? "";
 }
 
 function getRangeEnd(item: TimelineItem, mode: TimelineMode) {
-  return mode === "done"
-    ? item.actualEndDate ?? item.actualStartDate ?? item.plannedEndDate
-    : item.plannedEndDate;
+  return getTimelineRange(item, mode)?.end ?? "";
 }
 
 function getRangeLength(item: TimelineItem, mode: TimelineMode) {
+  const range = getTimelineRange(item, mode);
+
+  if (!range) {
+    return 0;
+  }
+
   return (
     differenceInCalendarDays(
-      parseISO(getRangeEnd(item, mode)),
-      parseISO(getRangeStart(item, mode)),
+      parseISO(range.end),
+      parseISO(range.start),
     ) + 1
   );
+}
+
+function getTimelineRange(item: TimelineItem, mode: TimelineMode): TimelineRange | null {
+  const start =
+    mode === "done"
+      ? item.actualStartDate ?? item.actualEndDate
+      : item.plannedStartDate ?? item.plannedEndDate;
+  const end =
+    mode === "done"
+      ? item.actualEndDate ?? item.actualStartDate
+      : item.plannedEndDate ?? item.plannedStartDate;
+
+  if (!start || !end) {
+    return null;
+  }
+
+  return start <= end ? { start, end } : { start: end, end: start };
 }
 
 function getBreadcrumb(item: TimelineItem) {
@@ -664,12 +608,75 @@ function getNodeTypeLabel(nodeType: TimelineNodeType) {
   return nodeType === "goal" ? "Goals" : nodeType === "plan" ? "Plans" : "Tasks";
 }
 
-function countItems(nodeType: TimelineNodeType, mode: TimelineMode) {
-  return timelineItems.filter(
+function getTimelineStatus(status: NodeStatus): TimelineStatus {
+  if (status === "not_started") {
+    return "scheduled";
+  }
+
+  return status;
+}
+
+function getNodeProgress(node: GoalTreeNode, nodes: GoalTreeNode[]) {
+  if (node.type === "task") {
+    return node.status === "done" ? 100 : node.status === "in_progress" ? 50 : 0;
+  }
+
+  const tasks =
+    node.type === "plan"
+      ? nodes.filter(
+          (item) =>
+            item.type === "task" &&
+            item.parentId === node.id &&
+            isNodeVisible(item, nodes),
+        )
+      : nodes.filter((item) => {
+          if (item.type !== "task" || !isNodeVisible(item, nodes)) {
+            return false;
+          }
+
+          const parentPlan = nodes.find((plan) => plan.id === item.parentId);
+          return parentPlan?.parentId === node.id;
+        });
+
+  const calculableTasks = tasks.filter((task) => task.status !== "paused");
+
+  if (calculableTasks.length === 0) {
+    return 0;
+  }
+
+  const doneTasks = calculableTasks.filter((task) => task.status === "done");
+  return Math.round((doneTasks.length / calculableTasks.length) * 100);
+}
+
+function countItems(
+  items: TimelineItem[],
+  nodeType: TimelineNodeType,
+  mode: TimelineMode,
+) {
+  return items.filter(
     (item) =>
       item.type === nodeType &&
-      (mode === "done" ? item.status === "done" : item.status !== "done"),
+      (mode === "done" ? item.status === "done" : item.status !== "done") &&
+      Boolean(getTimelineRange(item, mode)),
   ).length;
+}
+
+function isNodeVisible(node: GoalTreeNode, nodes: GoalTreeNode[]): boolean {
+  if (node.trashedAt) {
+    return false;
+  }
+
+  if (!node.parentId) {
+    return true;
+  }
+
+  const parent = nodes.find((item) => item.id === node.parentId);
+
+  return parent ? isNodeVisible(parent, nodes) : false;
+}
+
+function nullToUndefined(value?: string | null) {
+  return value ?? undefined;
 }
 
 function formatRangeLabel(start: string, end: string) {
