@@ -27,6 +27,7 @@ export default async function WorkspacePage({ searchParams }: WorkspacePageProps
       initialCategories={workspaceData.categories}
       initialNodes={workspaceData.nodes}
       initialSelectedNodeId={getInitialSelectedNodeId(resolvedSearchParams)}
+      initialSettings={workspaceData.settings}
       initialTodayDate={workspaceData.todayDate}
       initialTodayTodos={workspaceData.todayTodos}
       userId={user.id}

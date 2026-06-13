@@ -258,14 +258,13 @@ dnd-kit은 드래그 UI를 도와주는 라이브러리다.
 
 ### 5.4 Heroicons
 
-Heroicons는 상단 앱바의 라이트모드 / 다크모드 토글처럼 명확한 UI 아이콘이 필요한 곳에 사용한다.
+Heroicons는 상단 앱바의 설정 버튼처럼 명확한 UI 아이콘이 필요한 곳에 사용한다.
 
 현재 구현된 사용처:
 
 ```txt
-상단 앱바 테마 토글
--> light mode: Moon icon
--> dark mode: Sun icon
+상단 앱바 설정 버튼
+설정 모달 내부 light / dark theme 버튼
 ```
 
 lucide-react도 기존 `/workspace` mock UI에서 일부 사용 중이다. 새 아이콘은 사용 목적에 따라 정하되, 사용자가 Heroicons를 명시한 공통 앱 UI에는 Heroicons를 우선 사용한다.
@@ -710,11 +709,16 @@ autoFillActualDatesOnStatusChange = true
 
 ```txt
 전역 상단 앱바를 만들었다.
-앱바 오른쪽에 Heroicons 기반 라이트모드 / 다크모드 토글을 배치했다.
+앱바 오른쪽에 Heroicons 기반 설정 버튼을 배치했다.
+설정 버튼을 누르면 오른쪽 설정 모달이 열린다.
+설정 모달에서 light / dark theme을 전환한다.
+설정 모달에서 Plan category를 추가 / 수정 / 삭제한다.
+설정 모달에서 autoFillActualDatesOnStatusChange 값을 변경한다.
 테마 선택은 localStorage의 goaltree-theme에 저장한다.
 저장된 테마가 없으면 시스템 prefers-color-scheme 값을 따른다.
 Tailwind darkMode는 class 전략을 사용한다.
 html.dark 클래스와 CSS 변수 토큰으로 전체 색상을 전환한다.
+Plan category 변경과 automation 변경 후 router.refresh()로 현재 페이지 데이터를 갱신한다.
 ```
 
 브랜드 / 색상 방향:
@@ -1085,7 +1089,8 @@ README_CODEX.md
 기본 라우트 생성: /login, /dashboard, /workspace, /whativedone, /timeline, /trash
 공통 상단 앱바
 상단 앱바 Sign out 버튼
-앱바 내 라이트모드 / 다크모드 토글
+상단 앱바 Settings 버튼
+설정 모달 내 라이트모드 / 다크모드 전환
 페이지 표시 이름 Goaltree 통일
 Goaltree 테마 색상 적용
 다크모드 상태 배지 색상 조정
@@ -1108,6 +1113,7 @@ PlanCategory, TodayTodo, UserSettings TypeScript 타입 초안
 /workspace Goal Detail Panel 왜 중요한지 / 성공기준 Supabase update 연결
 /workspace Plan Detail Panel 카테고리 변경 Supabase update 연결
 /workspace 상태 변경 시 실제 진행기간 자동입력 규칙 연결
+/workspace 상태 변경 시 실제 진행기간 자동입력 ON / OFF 설정값 반영
 /workspace Goal / Plan / Task 휴지통 이동 연결
 /workspace 상위 항목이 휴지통에 있을 때 하위 항목 일반 화면 숨김 처리
 /workspace Task를 오늘 TODO에 추가 / 제거 연결
@@ -1120,6 +1126,10 @@ PlanCategory, TodayTodo, UserSettings TypeScript 타입 초안
 /whativedone Goal / Plan Contribution 실제 Node 상태 기반 계산
 /timeline Supabase Goal / Plan / Task 데이터 읽기 연결
 /timeline planned date / actual date 기반 기간 표시 연결
+/settings 모달 구현
+/settings light / dark theme 전환 연결
+/settings Plan category 추가 / 수정 / 삭제 Supabase 연결
+/settings autoFillActualDatesOnStatusChange Supabase 연결
 /workspace URL nodeId 선택 복원 연결
 /dashboard TODO / Blocked / Recent Done 클릭 시 /workspace Goal / Plan / Task 맥락 복원 연결
 /trash Supabase 데이터 읽기 연결
@@ -1145,8 +1155,8 @@ Plan 카테고리 표시
 아직 미연결 단계인 것:
 
 ```txt
-Plan 카테고리 자체의 추가 / 수정 / 삭제는 아직 없다.
 검색 입력은 아직 placeholder다.
+카테고리별 Plan 필터링은 아직 없다.
 ```
 
 Login / Auth UI:
@@ -1262,7 +1272,7 @@ Goal / Plan / Task 카드 드래그 정렬
 오늘 TODO 완료 시 Task 완료 처리
 상태 변경 시 실제 날짜 자동입력 기본 ON
 상단 앱바 설정 모달 방향
-상단 앱바 라이트모드 / 다크모드 토글
+설정 모달 내 라이트모드 / 다크모드 전환
 페이지 표시 이름 Goaltree 통일
 초록 primary / 나무줄기 갈색 secondary 색상 방향
 ```

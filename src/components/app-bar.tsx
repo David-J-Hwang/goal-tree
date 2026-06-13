@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/outline";
 
 import { Button, buttonVariants } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { SettingsDialog } from "@/components/settings-dialog";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -49,7 +49,7 @@ export function AppBar() {
               </Link>
             ))}
           </nav>
-          <ThemeToggle />
+          <SettingsDialog />
           <Button
             aria-label="Sign out"
             className="text-muted-foreground hover:text-foreground"

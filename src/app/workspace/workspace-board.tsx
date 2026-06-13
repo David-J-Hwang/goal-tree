@@ -54,6 +54,7 @@ import type {
   NodeType,
   PlanCategory,
   TodayTodo,
+  UserSettings,
 } from "@/types/domain";
 
 type WorkspaceNode = GoalTreeNode & {
@@ -136,6 +137,7 @@ export function WorkspaceBoard({
   initialCategories,
   initialNodes,
   initialSelectedNodeId,
+  initialSettings,
   initialTodayDate,
   initialTodayTodos,
   userId,
@@ -143,6 +145,7 @@ export function WorkspaceBoard({
   initialCategories: PlanCategory[];
   initialNodes: GoalTreeNode[];
   initialSelectedNodeId: string | null;
+  initialSettings: UserSettings;
   initialTodayDate: string;
   initialTodayTodos: TodayTodo[];
   userId: string;
@@ -153,7 +156,9 @@ export function WorkspaceBoard({
   );
   const [nodes, setNodes] = useState<WorkspaceNode[]>(initialNodes);
   const [todayTodos, setTodayTodos] = useState<TodayTodo[]>(initialTodayTodos);
-  const [planCategories] = useState<PlanCategory[]>(initialCategories);
+  const [planCategories, setPlanCategories] =
+    useState<PlanCategory[]>(initialCategories);
+  const [userSettings, setUserSettings] = useState<UserSettings>(initialSettings);
   const nodesRef = useRef<WorkspaceNode[]>(initialNodes);
   const [selectedGoalId, setSelectedGoalId] = useState(initialSelection.goalId);
   const [selectedPlanId, setSelectedPlanId] = useState(initialSelection.planId);
@@ -182,6 +187,23 @@ export function WorkspaceBoard({
   useEffect(() => {
     nodesRef.current = nodes;
   }, [nodes]);
+
+  useEffect(() => {
+    setNodes(initialNodes);
+    nodesRef.current = initialNodes;
+  }, [initialNodes]);
+
+  useEffect(() => {
+    setTodayTodos(initialTodayTodos);
+  }, [initialTodayTodos]);
+
+  useEffect(() => {
+    setPlanCategories(initialCategories);
+  }, [initialCategories]);
+
+  useEffect(() => {
+    setUserSettings(initialSettings);
+  }, [initialSettings]);
 
   useEffect(() => {
     const nextSelection = getSelectionForNode(
@@ -287,7 +309,11 @@ export function WorkspaceBoard({
       throw new Error("Node was not found.");
     }
 
-    const nextDates = getDateValuesWithStatusUpdates(currentNode, input);
+    const nextDates = getDateValuesWithStatusUpdates(
+      currentNode,
+      input,
+      userSettings.autoFillActualDatesOnStatusChange,
+    );
     const supabase = createSupabaseBrowserClient();
     const { data, error } = await supabase
       .from("nodes")
@@ -494,6 +520,9 @@ export function WorkspaceBoard({
           onMoveNodeToTrash={handleMoveNodeToTrash}
           onToggleTodayTodo={handleToggleTodayTodo}
           onUpdateNode={handleUpdateNode}
+          autoFillActualDatesOnStatusChange={
+            userSettings.autoFillActualDatesOnStatusChange
+          }
         />
       </section>
     </main>
@@ -851,6 +880,7 @@ function SortableNodeCard({
 }
 
 function DetailPanel({
+  autoFillActualDatesOnStatusChange,
   node,
   goal,
   plan,
@@ -861,6 +891,7 @@ function DetailPanel({
   onToggleTodayTodo,
   onUpdateNode,
 }: {
+  autoFillActualDatesOnStatusChange: boolean;
   node?: WorkspaceNode;
   goal?: WorkspaceNode;
   plan?: WorkspaceNode;
@@ -965,7 +996,11 @@ function DetailPanel({
         node.type === "goal" ? emptyStringToNull(successCriteriaValue) : null,
       categoryId: node.type === "plan" ? categoryIdValue || null : null,
     };
-    const nextActualDates = getDateValuesWithStatusUpdates(node, nextInput);
+    const nextActualDates = getDateValuesWithStatusUpdates(
+      node,
+      nextInput,
+      autoFillActualDatesOnStatusChange,
+    );
 
     if (!trimmedTitle) {
       setSaveError("Title is required.");
@@ -1562,11 +1597,12 @@ function getSelectionAfterTrash(nodes: WorkspaceNode[], trashedNode: WorkspaceNo
 function getDateValuesWithStatusUpdates(
   node: WorkspaceNode,
   input: UpdateNodeInput,
+  autoFillActualDatesOnStatusChange: boolean,
 ) {
   let actualStartDate = input.actualStartDate;
   let actualEndDate = input.actualEndDate;
 
-  if (node.status === input.status) {
+  if (node.status === input.status || !autoFillActualDatesOnStatusChange) {
     return { actualStartDate, actualEndDate };
   }
 

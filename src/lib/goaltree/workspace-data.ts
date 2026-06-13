@@ -11,7 +11,17 @@ import {
   todayTodoSelectColumns,
   type TodayTodoRow,
 } from "@/lib/goaltree/today-todo-rows";
-import type { GoalTreeNode, PlanCategory, TodayTodo } from "@/types/domain";
+import {
+  mapUserSettingsRow,
+  userSettingsSelectColumns,
+  type UserSettingsRow,
+} from "@/lib/goaltree/user-settings-rows";
+import type {
+  GoalTreeNode,
+  PlanCategory,
+  TodayTodo,
+  UserSettings,
+} from "@/types/domain";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createSupabaseServerClient>>;
 
@@ -28,6 +38,7 @@ export const defaultPlanCategories = [
 export type WorkspaceData = {
   categories: PlanCategory[];
   nodes: GoalTreeNode[];
+  settings: UserSettings;
   todayDate: string;
   todayTodos: TodayTodo[];
 };
@@ -46,6 +57,7 @@ export async function getWorkspaceData(
   const [
     { data: categoryRows, error: categoriesError },
     { data: nodeRows, error: nodesError },
+    { data: settingsRow, error: settingsError },
     { data: todayTodoRows, error: todayTodosError },
   ] = await Promise.all([
     supabase
@@ -61,6 +73,12 @@ export async function getWorkspaceData(
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true })
       .returns<NodeRow[]>(),
+    supabase
+      .from("user_settings")
+      .select(userSettingsSelectColumns)
+      .eq("user_id", userId)
+      .single()
+      .returns<UserSettingsRow>(),
     supabase
       .from("today_todos")
       .select(todayTodoSelectColumns)
@@ -78,6 +96,10 @@ export async function getWorkspaceData(
     throw new Error(`Failed to load workspace nodes: ${nodesError.message}`);
   }
 
+  if (settingsError) {
+    throw new Error(`Failed to load user settings: ${settingsError.message}`);
+  }
+
   if (todayTodosError) {
     throw new Error(`Failed to load today todos: ${todayTodosError.message}`);
   }
@@ -85,6 +107,7 @@ export async function getWorkspaceData(
   return {
     categories: (categoryRows ?? []).map(mapPlanCategoryRow),
     nodes: (nodeRows ?? []).map(mapNodeRow),
+    settings: mapUserSettingsRow(settingsRow),
     todayDate: today,
     todayTodos: (todayTodoRows ?? []).map(mapTodayTodoRow),
   };
