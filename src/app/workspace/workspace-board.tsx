@@ -1279,7 +1279,11 @@ function DetailPanel({
             </div>
             <div className="flex flex-wrap justify-end gap-2">
               <Button
-                className="border-destructive/35 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                className={cn(
+                  isConfirmingTrash
+                    ? "border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground"
+                    : "border-destructive/35 text-destructive hover:bg-destructive/10 hover:text-destructive",
+                )}
                 disabled={isSaving || isMovingToTrash || isUpdatingTodayTodo}
                 type="button"
                 variant="outline"
