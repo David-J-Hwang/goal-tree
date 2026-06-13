@@ -46,6 +46,7 @@ export function LoginBoard() {
     event.preventDefault();
     setFeedback(null);
     setIsSubmitting(true);
+    let keepSubmittingUntilNavigation = false;
 
     try {
       const supabase = createSupabaseBrowserClient();
@@ -78,6 +79,7 @@ export function LoginBoard() {
         return;
       }
 
+      keepSubmittingUntilNavigation = true;
       router.replace("/dashboard");
       router.refresh();
     } catch (error) {
@@ -87,7 +89,9 @@ export function LoginBoard() {
           error instanceof Error ? error.message : "Authentication request failed.",
       });
     } finally {
-      setIsSubmitting(false);
+      if (!keepSubmittingUntilNavigation) {
+        setIsSubmitting(false);
+      }
     }
   }
 
@@ -159,6 +163,7 @@ export function LoginBoard() {
                     "flex-1 rounded px-3 py-2 text-sm font-medium text-muted-foreground transition-colors",
                     authMode === mode.value && "bg-background text-foreground shadow-sm",
                   )}
+                  disabled={isSubmitting}
                   key={mode.value}
                   onClick={() => {
                     setAuthMode(mode.value);
@@ -178,6 +183,7 @@ export function LoginBoard() {
                   <EnvelopeIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   <input
                     className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                    disabled={isSubmitting}
                     onChange={(event) => setEmail(event.target.value)}
                     placeholder="Enter email"
                     required
@@ -193,6 +199,7 @@ export function LoginBoard() {
                   <LockClosedIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   <input
                     className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                    disabled={isSubmitting}
                     onChange={(event) => setPassword(event.target.value)}
                     placeholder="Enter password"
                     required
@@ -202,6 +209,7 @@ export function LoginBoard() {
                   <button
                     aria-label={showPassword ? "Hide password" : "Show password"}
                     className="rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    disabled={isSubmitting}
                     onClick={() => setShowPassword((current) => !current)}
                     type="button"
                   >
@@ -218,6 +226,7 @@ export function LoginBoard() {
                 <label className="flex items-center gap-2 text-sm text-muted-foreground">
                   <input
                     className="h-4 w-4 rounded border-input accent-primary"
+                    disabled={isSubmitting}
                     type="checkbox"
                   />
                   Remember me
