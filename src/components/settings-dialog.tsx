@@ -499,7 +499,11 @@ export function SettingsDialog() {
                       {savingCategoryId === category.id ? "Saving" : "Save"}
                     </Button>
                     <Button
-                      className="border-destructive/35 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      className={cn(
+                        pendingDeleteCategoryId === category.id
+                          ? "border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground"
+                          : "border-destructive/35 text-destructive hover:bg-destructive/10 hover:text-destructive",
+                      )}
                       disabled={
                         isLoading ||
                         savingCategoryId === category.id ||
