@@ -561,16 +561,16 @@ function OptionalDashboardPanels({
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
       <InsightPanel
-        description={`${blockedItems.length} tasks`}
-        icon={ExclamationTriangleIcon}
-        items={blockedItems}
-        title="Blocked"
-      />
-      <InsightPanel
         description={`${completionItems.length} completed`}
         icon={ArrowPathIcon}
         items={completionItems}
         title="Recent Done"
+      />
+      <InsightPanel
+        description={`${blockedItems.length} tasks`}
+        icon={ExclamationTriangleIcon}
+        items={blockedItems}
+        title="Blocked"
       />
     </div>
   );
