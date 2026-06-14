@@ -26,7 +26,6 @@ import {
   PauseCircle,
   Plus,
   Search,
-  Timer,
   ListTodo,
   Trash2,
 } from "lucide-react";
@@ -1147,7 +1146,7 @@ function DetailPanel({
             </span>
           </div>
         </CardHeader>
-        <CardContent className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
+        <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
           <DetailSection title="Status">
             <select
               className="h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
@@ -1252,8 +1251,9 @@ function DetailPanel({
             />
           </DetailSection>
 
-          <DetailSection title="Memo">
+          <DetailSection className="flex min-h-0 flex-1 flex-col" title="Memo">
             <DetailTextArea
+              className="flex-1"
               disabled={isSaving}
               onChange={setMemoValue}
               placeholder="Add a memo"
@@ -1271,60 +1271,53 @@ function DetailPanel({
               {saveMessage}
             </p>
           ) : null}
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="rounded-md border bg-muted/40 p-2 text-xs text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <Timer className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>sortOrder {node.sortOrder}</span>
-              </div>
-            </div>
-            <div className="flex flex-wrap justify-end gap-2">
-              <Button
-                className={cn(
-                  isConfirmingTrash
-                    ? "border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground"
-                    : "border-destructive/35 text-destructive hover:bg-destructive/10 hover:text-destructive",
-                )}
-                disabled={isSaving || isMovingToTrash || isUpdatingTodayTodo}
-                size="sm"
-                type="button"
-                variant="outline"
-                onClick={handleMoveToTrash}
-              >
-                <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
-                {isMovingToTrash
-                  ? "Moving"
-                  : isConfirmingTrash
-                    ? "Confirm trash"
-                    : "Move to trash"}
-              </Button>
-              <Button
-                disabled={
-                  isSaving || isMovingToTrash || isUpdatingTodayTodo || !hasChanges
-                }
-                size="sm"
-                type="submit"
-              >
-                {isSaving ? "Saving" : "Save changes"}
-              </Button>
-            </div>
-          </div>
         </CardContent>
+        <div className="flex shrink-0 items-center justify-between gap-3 border-t p-3">
+          <Button
+            className={cn(
+              isConfirmingTrash
+                ? "border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground"
+                : "border-destructive/35 text-destructive hover:bg-destructive/10 hover:text-destructive",
+            )}
+            disabled={isSaving || isMovingToTrash || isUpdatingTodayTodo}
+            size="sm"
+            type="button"
+            variant="outline"
+            onClick={handleMoveToTrash}
+          >
+            <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
+            {isMovingToTrash
+              ? "Moving"
+              : isConfirmingTrash
+                ? "Confirm trash"
+                : "Move to trash"}
+          </Button>
+          <Button
+            disabled={
+              isSaving || isMovingToTrash || isUpdatingTodayTodo || !hasChanges
+            }
+            size="sm"
+            type="submit"
+          >
+            {isSaving ? "Saving" : "Save changes"}
+          </Button>
+        </div>
       </form>
     </Card>
   );
 }
 
 function DetailSection({
+  className,
   title,
   children,
 }: {
+  className?: string;
   title: string;
   children: React.ReactNode;
 }) {
   return (
-    <section>
+    <section className={className}>
       <h3 className="mb-1.5 text-xs font-semibold uppercase text-muted-foreground">{title}</h3>
       {children}
     </section>
@@ -1341,11 +1334,13 @@ function DetailValue({ label, value }: { label: string; value: string }) {
 }
 
 function DetailTextArea({
+  className,
   disabled,
   onChange,
   placeholder,
   value,
 }: {
+  className?: string;
   disabled: boolean;
   onChange: (value: string) => void;
   placeholder: string;
@@ -1353,7 +1348,10 @@ function DetailTextArea({
 }) {
   return (
     <textarea
-      className="min-h-20 w-full resize-y rounded-md border bg-background px-3 py-2 text-sm leading-5 outline-none transition placeholder:text-muted-foreground focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+      className={cn(
+        "min-h-20 w-full resize-y rounded-md border bg-background px-3 py-2 text-sm leading-5 outline-none transition placeholder:text-muted-foreground focus:border-primary/60 focus:ring-1 focus:ring-primary/30",
+        className,
+      )}
       disabled={disabled}
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
