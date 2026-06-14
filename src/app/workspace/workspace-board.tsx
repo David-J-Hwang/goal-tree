@@ -1122,14 +1122,14 @@ function DetailPanel({
   return (
     <Card className="flex min-h-[34rem] flex-col overflow-hidden rounded-lg shadow-none xl:h-full xl:min-h-0">
       <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSave}>
-        <CardHeader className="shrink-0 border-b p-4">
+        <CardHeader className="shrink-0 border-b p-3">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <CardDescription>{columnLabels[node.type]}</CardDescription>
-              <label className="mt-3 block">
+              <label className="mt-2.5 block">
                 <span className="sr-only">{columnLabels[node.type]} title</span>
                 <input
-                  className="h-10 w-full rounded-md border bg-background px-3 text-sm font-medium outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+                  className="h-9 w-full rounded-md border bg-background px-3 text-sm font-medium outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
                   disabled={isSaving}
                   onChange={(event) => setTitleValue(event.target.value)}
                   value={titleValue}
@@ -1138,7 +1138,7 @@ function DetailPanel({
             </div>
             <span
               className={cn(
-                "mt-6 inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium",
+                "mt-5 inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium",
                 status.className,
               )}
             >
@@ -1147,7 +1147,7 @@ function DetailPanel({
             </span>
           </div>
         </CardHeader>
-        <CardContent className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4">
+        <CardContent className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
           <DetailSection title="Status">
             <select
               className="h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
@@ -1273,7 +1273,7 @@ function DetailPanel({
           ) : null}
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
+            <div className="rounded-md border bg-muted/40 p-2 text-xs text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Timer className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>sortOrder {node.sortOrder}</span>
@@ -1287,6 +1287,7 @@ function DetailPanel({
                     : "border-destructive/35 text-destructive hover:bg-destructive/10 hover:text-destructive",
                 )}
                 disabled={isSaving || isMovingToTrash || isUpdatingTodayTodo}
+                size="sm"
                 type="button"
                 variant="outline"
                 onClick={handleMoveToTrash}
@@ -1302,6 +1303,7 @@ function DetailPanel({
                 disabled={
                   isSaving || isMovingToTrash || isUpdatingTodayTodo || !hasChanges
                 }
+                size="sm"
                 type="submit"
               >
                 {isSaving ? "Saving" : "Save changes"}
@@ -1323,7 +1325,7 @@ function DetailSection({
 }) {
   return (
     <section>
-      <h3 className="mb-2 text-xs font-semibold uppercase text-muted-foreground">{title}</h3>
+      <h3 className="mb-1.5 text-xs font-semibold uppercase text-muted-foreground">{title}</h3>
       {children}
     </section>
   );
@@ -1351,7 +1353,7 @@ function DetailTextArea({
 }) {
   return (
     <textarea
-      className="min-h-28 w-full resize-y rounded-md border bg-background px-3 py-2 text-sm leading-6 outline-none transition placeholder:text-muted-foreground focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+      className="min-h-20 w-full resize-y rounded-md border bg-background px-3 py-2 text-sm leading-5 outline-none transition placeholder:text-muted-foreground focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
       disabled={disabled}
       onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
@@ -1376,13 +1378,13 @@ function DateRangeFields({
   startValue: string;
 }) {
   return (
-    <div className="mb-3 rounded-md border bg-background px-3 py-2 last:mb-0">
-      <div className="mb-2 text-xs font-medium text-muted-foreground">{label}</div>
+    <div className="mb-2 rounded-md border bg-background px-2.5 py-2 last:mb-0">
+      <div className="mb-1.5 text-xs font-medium text-muted-foreground">{label}</div>
       <div className="grid grid-cols-2 gap-2">
         <label className="block">
           <span className="text-xs text-muted-foreground">Start</span>
           <input
-            className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+            className="mt-1 h-8 w-full rounded-md border bg-background px-2 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
             disabled={disabled}
             onChange={(event) => onStartChange(event.target.value)}
             type="date"
@@ -1392,7 +1394,7 @@ function DateRangeFields({
         <label className="block">
           <span className="text-xs text-muted-foreground">End</span>
           <input
-            className="mt-1 h-9 w-full rounded-md border bg-background px-2 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+            className="mt-1 h-8 w-full rounded-md border bg-background px-2 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
             disabled={disabled}
             onChange={(event) => onEndChange(event.target.value)}
             type="date"
