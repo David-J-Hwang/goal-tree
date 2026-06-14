@@ -219,47 +219,49 @@ export function DashboardBoard({
 
   return (
     <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8">
-      <header className="flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">Goaltree</p>
-          <h1 className="mt-1 text-2xl font-semibold">Dashboard</h1>
-        </div>
-        <div className="flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
-          <CalendarDaysIcon className="h-4 w-4" aria-hidden="true" />
-          <span>Today</span>
-        </div>
-      </header>
+      <div className="mx-auto max-w-[1440px]">
+        <header className="flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Goaltree</p>
+            <h1 className="mt-1 text-2xl font-semibold">Dashboard</h1>
+          </div>
+          <div className="flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
+            <CalendarDaysIcon className="h-4 w-4" aria-hidden="true" />
+            <span>Today</span>
+          </div>
+        </header>
 
-      <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {summaryItems.map((item) => (
-          <SummaryTile
-            detail={item.detail}
-            key={item.label}
-            label={item.label}
-            value={item.value}
-          />
-        ))}
-      </section>
-
-      <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.85fr)]">
-        <TodayTodoPanel
-          errorMessage={todoError}
-          todos={todos}
-          updatingTodoId={updatingTodoId}
-          onReorderTodos={handleReorderTodos}
-          onToggleTodo={handleToggleTodo}
-        />
-
-        <div className="grid gap-4">
-          <ThisWeekFocusPanel items={focusItems} />
-          {showOptionalPanels ? (
-            <OptionalDashboardPanels
-              blockedItems={blockedItems}
-              completionItems={completionItems}
+        <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {summaryItems.map((item) => (
+            <SummaryTile
+              detail={item.detail}
+              key={item.label}
+              label={item.label}
+              value={item.value}
             />
-          ) : null}
-        </div>
-      </section>
+          ))}
+        </section>
+
+        <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.85fr)]">
+          <TodayTodoPanel
+            errorMessage={todoError}
+            todos={todos}
+            updatingTodoId={updatingTodoId}
+            onReorderTodos={handleReorderTodos}
+            onToggleTodo={handleToggleTodo}
+          />
+
+          <div className="grid gap-4">
+            <ThisWeekFocusPanel items={focusItems} />
+            {showOptionalPanels ? (
+              <OptionalDashboardPanels
+                blockedItems={blockedItems}
+                completionItems={completionItems}
+              />
+            ) : null}
+          </div>
+        </section>
+      </div>
     </main>
   );
 }
