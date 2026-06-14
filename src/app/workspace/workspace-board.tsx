@@ -448,83 +448,85 @@ export function WorkspaceBoard({
 
   return (
     <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8">
-      <header className="flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">Goaltree</p>
-          <h1 className="mt-1 text-2xl font-semibold">Workspace</h1>
-        </div>
-        <div className="flex w-full items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm lg:w-80">
-          <Search className="h-4 w-4" aria-hidden="true" />
-          <span>Search Goal, Plan, Task</span>
-        </div>
-      </header>
+      <div className="mx-auto max-w-[1800px]">
+        <header className="flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Goaltree</p>
+            <h1 className="mt-1 text-2xl font-semibold">Workspace</h1>
+          </div>
+          <div className="flex w-full items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm lg:w-80">
+            <Search className="h-4 w-4" aria-hidden="true" />
+            <span>Search Goal, Plan, Task</span>
+          </div>
+        </header>
 
-      <section className="mt-5 grid gap-4 xl:grid-cols-[minmax(230px,1fr)_minmax(260px,1fr)_minmax(280px,1fr)_380px]">
-        <WorkspaceColumn
-          type="goal"
-          parentId={null}
-          title="Goals"
-          nodes={goals}
-          selectedId={selectedGoalId}
-          categories={planCategories}
-          emptyMessage="No Goal cards yet"
-          onCreate={handleCreateNode}
-          onSelect={handleSelect}
-          onReorder={handleReorder}
-          summary={`${goals.length} active goals`}
-        />
-        <WorkspaceColumn
-          type="plan"
-          parentId={selectedGoalId}
-          title="Plans"
-          nodes={plans}
-          selectedId={selectedPlanId}
-          categories={planCategories}
-          onCreate={handleCreateNode}
-          onSelect={handleSelect}
-          onReorder={handleReorder}
-          emptyMessage={
-            selectedGoalId ? "No Plan cards yet" : "Select a goal card to view plans"
-          }
-          summary={selectedGoal ? selectedGoal.title : "No goal selected"}
-        />
-        <WorkspaceColumn
-          type="task"
-          parentId={selectedPlanId}
-          title="Tasks"
-          nodes={tasks}
-          selectedId={selectedNodeId}
-          categories={planCategories}
-          onCreate={handleCreateNode}
-          onSelect={handleSelect}
-          onReorder={handleReorder}
-          emptyMessage={
-            selectedPlanId ? undefined : "Select a plan card to view tasks"
-          }
-          summary={selectedPlan ? selectedPlan.title : "No plan selected"}
-        />
-        <DetailPanel
-          node={selectedNode}
-          goal={selectedGoal}
-          plan={selectedPlan}
-          nodes={nodes}
-          categories={planCategories}
-          isSelectedTaskInTodayTodo={
-            selectedNode?.type === "task" &&
-            todayTodos.some(
-              (todo) =>
-                todo.taskId === selectedNode.id &&
-                todo.date === initialTodayDate,
-            )
-          }
-          onMoveNodeToTrash={handleMoveNodeToTrash}
-          onToggleTodayTodo={handleToggleTodayTodo}
-          onUpdateNode={handleUpdateNode}
-          autoFillActualDatesOnStatusChange={
-            userSettings.autoFillActualDatesOnStatusChange
-          }
-        />
-      </section>
+        <section className="mt-5 grid gap-4 xl:grid-cols-[minmax(230px,1fr)_minmax(260px,1fr)_minmax(280px,1fr)_360px] 2xl:grid-cols-[minmax(300px,380px)_minmax(360px,460px)_minmax(320px,420px)_minmax(340px,400px)] 2xl:justify-center">
+          <WorkspaceColumn
+            type="goal"
+            parentId={null}
+            title="Goals"
+            nodes={goals}
+            selectedId={selectedGoalId}
+            categories={planCategories}
+            emptyMessage="No Goal cards yet"
+            onCreate={handleCreateNode}
+            onSelect={handleSelect}
+            onReorder={handleReorder}
+            summary={`${goals.length} active goals`}
+          />
+          <WorkspaceColumn
+            type="plan"
+            parentId={selectedGoalId}
+            title="Plans"
+            nodes={plans}
+            selectedId={selectedPlanId}
+            categories={planCategories}
+            onCreate={handleCreateNode}
+            onSelect={handleSelect}
+            onReorder={handleReorder}
+            emptyMessage={
+              selectedGoalId ? "No Plan cards yet" : "Select a goal card to view plans"
+            }
+            summary={selectedGoal ? selectedGoal.title : "No goal selected"}
+          />
+          <WorkspaceColumn
+            type="task"
+            parentId={selectedPlanId}
+            title="Tasks"
+            nodes={tasks}
+            selectedId={selectedNodeId}
+            categories={planCategories}
+            onCreate={handleCreateNode}
+            onSelect={handleSelect}
+            onReorder={handleReorder}
+            emptyMessage={
+              selectedPlanId ? undefined : "Select a plan card to view tasks"
+            }
+            summary={selectedPlan ? selectedPlan.title : "No plan selected"}
+          />
+          <DetailPanel
+            node={selectedNode}
+            goal={selectedGoal}
+            plan={selectedPlan}
+            nodes={nodes}
+            categories={planCategories}
+            isSelectedTaskInTodayTodo={
+              selectedNode?.type === "task" &&
+              todayTodos.some(
+                (todo) =>
+                  todo.taskId === selectedNode.id &&
+                  todo.date === initialTodayDate,
+              )
+            }
+            onMoveNodeToTrash={handleMoveNodeToTrash}
+            onToggleTodayTodo={handleToggleTodayTodo}
+            onUpdateNode={handleUpdateNode}
+            autoFillActualDatesOnStatusChange={
+              userSettings.autoFillActualDatesOnStatusChange
+            }
+          />
+        </section>
+      </div>
     </main>
   );
 }
