@@ -1165,12 +1165,13 @@ Login / Auth UI:
 /login은 src/app/login/login-board.tsx에 구현되어 있다.
 MVP 방향에 맞게 이메일 로그인만 UI에 포함했다.
 Sign in / Create account segmented control로 로그인과 회원가입 화면을 전환한다.
-Email, Password, Remember me, Reset password UI를 배치했다.
+Email, Password, Reset password UI를 배치했다.
 Sign in은 supabase.auth.signInWithPassword를 호출한다.
 Create account는 supabase.auth.signUp을 호출한다.
 Reset password는 이메일이 입력된 경우 Supabase password reset email 요청을 보낸다.
 성공하면 /dashboard로 이동한다.
-Remember me는 현재 별도 옵션으로 처리하지 않고 Supabase SSR 세션 쿠키 기본 동작을 사용한다.
+Remember me 체크박스는 실제 기능과 UI가 어긋나지 않도록 제거했다.
+세션 유지는 Supabase SSR 세션 쿠키 기본 동작을 사용한다.
 인증 전 주요 페이지 이동을 피하기 위해 /login에서는 상단 앱바를 숨긴다.
 ```
 

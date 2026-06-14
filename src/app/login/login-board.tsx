@@ -222,15 +222,7 @@ export function LoginBoard() {
                 </span>
               </label>
 
-              <div className="flex items-center justify-between gap-4">
-                <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <input
-                    className="h-4 w-4 rounded border-input accent-primary"
-                    disabled={isSubmitting}
-                    type="checkbox"
-                  />
-                  Remember me
-                </label>
+              <div className="flex items-center justify-end">
                 <button
                   className="text-sm font-medium text-primary hover:underline"
                   disabled={isSubmitting}
