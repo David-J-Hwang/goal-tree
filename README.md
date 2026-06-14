@@ -302,6 +302,7 @@ type UserSettings = {
 ## 향후 개발방향
 
 - Google 로그인 추가
+- v2에서 별도 비밀번호 재설정 / 수정 페이지 추가
 ---
 
 ## 개발 체크리스트
@@ -498,6 +499,7 @@ type UserSettings = {
 - [ ] Projects 페이지
 - [ ] Actions 페이지
 - [ ] Search / All Nodes 페이지
+- [ ] 비밀번호 재설정 / 수정 페이지
 - [ ] Goal 성공기준 체크리스트
 - [ ] Plan 설명 / 목적 필드
 - [ ] Task 세부 체크리스트

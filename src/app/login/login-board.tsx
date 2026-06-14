@@ -95,48 +95,6 @@ export function LoginBoard() {
     }
   }
 
-  async function handlePasswordReset() {
-    setFeedback(null);
-
-    const trimmedEmail = email.trim();
-
-    if (!trimmedEmail) {
-      setFeedback({
-        tone: "error",
-        message: "Enter your email before requesting a password reset.",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const supabase = createSupabaseBrowserClient();
-      const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
-        redirectTo: `${window.location.origin}/login`,
-      });
-
-      setFeedback(
-        error
-          ? {
-              tone: "error",
-              message: error.message,
-            }
-          : {
-              tone: "success",
-              message: "Password reset email requested.",
-            },
-      );
-    } catch (error) {
-      setFeedback({
-        tone: "error",
-        message: error instanceof Error ? error.message : "Password reset request failed.",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4 py-8 text-foreground sm:px-6 lg:px-8">
       <section className="w-full max-w-[420px]">
@@ -222,18 +180,7 @@ export function LoginBoard() {
                 </span>
               </label>
 
-              <div className="flex items-center justify-end">
-                <button
-                  className="text-sm font-medium text-primary hover:underline"
-                  disabled={isSubmitting}
-                  onClick={handlePasswordReset}
-                  type="button"
-                >
-                  Reset password
-                </button>
-              </div>
-
-              <Button className="w-full" disabled={isSubmitting} type="submit">
+              <Button className="mt-2 w-full" disabled={isSubmitting} type="submit">
                 {isSubmitting
                   ? authMode === "signin"
                     ? "Signing in"
