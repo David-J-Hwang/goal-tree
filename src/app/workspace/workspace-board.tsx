@@ -933,6 +933,7 @@ function DetailPanel({
   const [isConfirmingTrash, setIsConfirmingTrash] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
+  const trashButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!node) {
@@ -968,6 +969,32 @@ function DetailPanel({
     setSaveMessage("");
     setIsConfirmingTrash(false);
   }, [node?.id]);
+
+  useEffect(() => {
+    if (!isConfirmingTrash) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target;
+
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      if (trashButtonRef.current?.contains(target)) {
+        return;
+      }
+
+      setIsConfirmingTrash(false);
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [isConfirmingTrash]);
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1146,7 +1173,7 @@ function DetailPanel({
             </span>
           </div>
         </CardHeader>
-        <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
+        <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 pb-6 pt-3">
           <DetailSection title="Status">
             <select
               className="h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
@@ -1272,7 +1299,12 @@ function DetailPanel({
             </p>
           ) : null}
         </CardContent>
-        <div className="flex shrink-0 items-center justify-between gap-3 border-t p-3">
+        <div
+          className={cn(
+            "flex shrink-0 items-center gap-3 border-t p-3",
+            hasChanges ? "justify-between" : "justify-center",
+          )}
+        >
           <Button
             className={cn(
               isConfirmingTrash
@@ -1280,6 +1312,7 @@ function DetailPanel({
                 : "border-destructive/35 text-destructive hover:bg-destructive/10 hover:text-destructive",
             )}
             disabled={isSaving || isMovingToTrash || isUpdatingTodayTodo}
+            ref={trashButtonRef}
             size="sm"
             type="button"
             variant="outline"
@@ -1292,15 +1325,15 @@ function DetailPanel({
                 ? "Confirm trash"
                 : "Move to trash"}
           </Button>
-          <Button
-            disabled={
-              isSaving || isMovingToTrash || isUpdatingTodayTodo || !hasChanges
-            }
-            size="sm"
-            type="submit"
-          >
-            {isSaving ? "Saving" : "Save changes"}
-          </Button>
+          {hasChanges ? (
+            <Button
+              disabled={isSaving || isMovingToTrash || isUpdatingTodayTodo}
+              size="sm"
+              type="submit"
+            >
+              {isSaving ? "Saving" : "Save changes"}
+            </Button>
+          ) : null}
         </div>
       </form>
     </Card>
