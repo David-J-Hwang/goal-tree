@@ -180,16 +180,18 @@ export function LoginBoard() {
                 </span>
               </label>
 
-              <Button className="mt-2 w-full" disabled={isSubmitting} type="submit">
-                {isSubmitting
-                  ? authMode === "signin"
-                    ? "Signing in"
-                    : "Creating account"
-                  : authMode === "signin"
-                    ? "Sign in"
-                    : "Create account"}
-                <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
-              </Button>
+              <div className="pt-2">
+                <Button className="w-full" disabled={isSubmitting} type="submit">
+                  {isSubmitting
+                    ? authMode === "signin"
+                      ? "Signing in"
+                      : "Creating account"
+                    : authMode === "signin"
+                      ? "Sign in"
+                      : "Create account"}
+                  <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              </div>
             </form>
 
             {feedback ? (
