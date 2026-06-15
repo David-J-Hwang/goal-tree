@@ -11,6 +11,7 @@ import {
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
+  ChevronDownIcon,
   Cog6ToothIcon,
   MoonIcon,
   PlusIcon,
@@ -48,6 +49,7 @@ export function SettingsDialog() {
   const [categories, setCategories] = useState<PlanCategory[]>([]);
   const [savedCategories, setSavedCategories] = useState<PlanCategory[]>([]);
   const [settings, setSettings] = useState<UserSettings | null>(null);
+  const [isPlanCategoriesOpen, setIsPlanCategoriesOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryColor, setNewCategoryColor] = useState(defaultCategoryColor);
   const [isLoading, setIsLoading] = useState(false);
@@ -109,6 +111,7 @@ export function SettingsDialog() {
 
   useEffect(() => {
     if (!isOpen) {
+      setIsPlanCategoriesOpen(false);
       setPendingDeleteCategoryId("");
       setStatusMessage("");
       setErrorMessage("");
@@ -493,132 +496,144 @@ export function SettingsDialog() {
           </SettingsSection>
 
           <SettingsSection
+            collapsible
             description={`${categories.length} categories`}
+            isOpen={isPlanCategoriesOpen}
             isLoading={isLoading}
+            onToggle={() =>
+              setIsPlanCategoriesOpen((currentIsOpen) => !currentIsOpen)
+            }
             title="Plan Categories"
           >
-            <form
-              className="rounded-md border bg-muted/25 p-3"
-              onSubmit={handleAddCategory}
-            >
-              <div
-                className={cn(
-                  "grid gap-2",
-                  canAddCategory
-                    ? "sm:grid-cols-[2.5rem_minmax(0,1fr)_auto]"
-                    : "sm:grid-cols-[2.5rem_minmax(0,1fr)]",
-                )}
+            <div className="h-[24rem] space-y-3 overflow-y-auto pr-1">
+              <form
+                className="rounded-md border bg-muted/25 p-3"
+                onSubmit={handleAddCategory}
               >
-                <input
-                  aria-label="New category color"
-                  className="size-10 rounded-md border bg-background p-1"
-                  disabled={isAddingCategory || isLoading}
-                  onChange={(event) => setNewCategoryColor(event.target.value)}
-                  type="color"
-                  value={newCategoryColor}
-                />
-                <input
-                  className="h-10 rounded-md border bg-background px-3 text-sm outline-none transition placeholder:text-muted-foreground focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
-                  disabled={isAddingCategory || isLoading}
-                  onChange={(event) => setNewCategoryName(event.target.value)}
-                  placeholder="Add new category"
-                  value={newCategoryName}
-                />
-                {canAddCategory ? (
-                  <Button disabled={isAddingCategory || isLoading} type="submit">
-                    <PlusIcon className="h-4 w-4" aria-hidden="true" />
-                    {isAddingCategory ? "Adding" : "Add"}
-                  </Button>
-                ) : null}
-              </div>
-            </form>
+                <div
+                  className={cn(
+                    "grid gap-2",
+                    canAddCategory
+                      ? "grid-cols-[2.5rem_minmax(0,1fr)_auto]"
+                      : "grid-cols-[2.5rem_minmax(0,1fr)]",
+                  )}
+                >
+                  <input
+                    aria-label="New category color"
+                    className="size-10 rounded-md border bg-background p-1"
+                    disabled={isAddingCategory || isLoading}
+                    onChange={(event) => setNewCategoryColor(event.target.value)}
+                    type="color"
+                    value={newCategoryColor}
+                  />
+                  <input
+                    className="h-10 rounded-md border bg-background px-3 text-sm outline-none transition placeholder:text-muted-foreground focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+                    disabled={isAddingCategory || isLoading}
+                    onChange={(event) => setNewCategoryName(event.target.value)}
+                    placeholder="Add new category"
+                    value={newCategoryName}
+                  />
+                  {canAddCategory ? (
+                    <Button disabled={isAddingCategory || isLoading} type="submit">
+                      <PlusIcon className="h-4 w-4" aria-hidden="true" />
+                      {isAddingCategory ? "Adding" : "Add"}
+                    </Button>
+                  ) : null}
+                </div>
+              </form>
 
-            <div className="space-y-2">
-              {categories.length > 0 ? (
-                categories.map((category) => {
-                  const hasChanges = hasCategoryChanges(category);
+              <div className="space-y-2">
+                {categories.length > 0 ? (
+                  categories.map((category) => {
+                    const hasChanges = hasCategoryChanges(category);
 
-                  return (
-                    <div
-                      className={cn(
-                        "grid gap-2 rounded-md border bg-background p-3",
-                        hasChanges
-                          ? "sm:grid-cols-[2.5rem_minmax(0,1fr)_auto_auto]"
-                          : "sm:grid-cols-[2.5rem_minmax(0,1fr)_auto]",
-                      )}
-                      key={category.id}
-                    >
-                      <input
-                        aria-label={`${category.name} color`}
-                        className="size-10 rounded-md border bg-background p-1"
-                        disabled={isLoading || savingCategoryId === category.id}
-                        onChange={(event) =>
-                          updateCategoryDraft(category.id, {
-                            color: event.target.value,
-                          })
-                        }
-                        type="color"
-                        value={category.color ?? defaultCategoryColor}
-                      />
-                      <input
-                        className="h-10 rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
-                        disabled={isLoading || savingCategoryId === category.id}
-                        onChange={(event) =>
-                          updateCategoryDraft(category.id, {
-                            name: event.target.value,
-                          })
-                        }
-                        value={category.name}
-                      />
-                      {hasChanges ? (
+                    return (
+                      <div
+                        className={cn(
+                          "grid gap-2 rounded-md border bg-background p-3",
+                          hasChanges
+                            ? "grid-cols-[2.5rem_minmax(0,1fr)_auto_auto]"
+                            : "grid-cols-[2.5rem_minmax(0,1fr)_auto]",
+                        )}
+                        key={category.id}
+                      >
+                        <input
+                          aria-label={`${category.name} color`}
+                          className="size-10 rounded-md border bg-background p-1"
+                          disabled={isLoading || savingCategoryId === category.id}
+                          onChange={(event) =>
+                            updateCategoryDraft(category.id, {
+                              color: event.target.value,
+                            })
+                          }
+                          type="color"
+                          value={category.color ?? defaultCategoryColor}
+                        />
+                        <input
+                          className="h-10 rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+                          disabled={isLoading || savingCategoryId === category.id}
+                          onChange={(event) =>
+                            updateCategoryDraft(category.id, {
+                              name: event.target.value,
+                            })
+                          }
+                          value={category.name}
+                        />
+                        {hasChanges ? (
+                          <Button
+                            disabled={
+                              isLoading ||
+                              savingCategoryId === category.id ||
+                              deletingCategoryId === category.id
+                            }
+                            onClick={() => handleUpdateCategory(category)}
+                            type="button"
+                            variant="outline"
+                          >
+                            {savingCategoryId === category.id ? "Saving" : "Save"}
+                          </Button>
+                        ) : null}
                         <Button
+                          className={cn(
+                            pendingDeleteCategoryId === category.id
+                              ? "border-destructive bg-destructive px-3 text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground"
+                              : "size-10 border-destructive/35 px-0 text-destructive hover:bg-destructive/10 hover:text-destructive",
+                          )}
+                          aria-label={
+                            pendingDeleteCategoryId === category.id
+                              ? `Confirm delete ${category.name}`
+                              : `Delete ${category.name}`
+                          }
                           disabled={
                             isLoading ||
                             savingCategoryId === category.id ||
                             deletingCategoryId === category.id
                           }
-                          onClick={() => handleUpdateCategory(category)}
+                          onClick={() => handleDeleteCategory(category)}
+                          ref={
+                            pendingDeleteCategoryId === category.id
+                              ? pendingDeleteButtonRef
+                              : null
+                          }
                           type="button"
                           variant="outline"
                         >
-                          {savingCategoryId === category.id ? "Saving" : "Save"}
+                          <TrashIcon className="h-4 w-4" aria-hidden="true" />
+                          {deletingCategoryId === category.id
+                            ? "Deleting"
+                            : pendingDeleteCategoryId === category.id
+                              ? "Confirm"
+                              : null}
                         </Button>
-                      ) : null}
-                      <Button
-                        className={cn(
-                          pendingDeleteCategoryId === category.id
-                            ? "border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground"
-                            : "border-destructive/35 text-destructive hover:bg-destructive/10 hover:text-destructive",
-                        )}
-                        disabled={
-                          isLoading ||
-                          savingCategoryId === category.id ||
-                          deletingCategoryId === category.id
-                        }
-                        onClick={() => handleDeleteCategory(category)}
-                        ref={
-                          pendingDeleteCategoryId === category.id
-                            ? pendingDeleteButtonRef
-                            : null
-                        }
-                        type="button"
-                        variant="outline"
-                      >
-                        <TrashIcon className="h-4 w-4" aria-hidden="true" />
-                        {deletingCategoryId === category.id
-                          ? "Deleting"
-                          : pendingDeleteCategoryId === category.id
-                            ? "Confirm"
-                            : "Delete"}
-                      </Button>
-                    </div>
-                  );
-                })
-              ) : (
-                <p className="rounded-md border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
-                  No categories yet
-                </p>
-              )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="rounded-md border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
+                    No categories yet
+                  </p>
+                )}
+              </div>
             </div>
           </SettingsSection>
 
@@ -670,24 +685,56 @@ export function SettingsDialog() {
 
 function SettingsSection({
   children,
+  collapsible = false,
   description,
+  isOpen = true,
   isLoading,
+  onToggle,
   title,
 }: {
   children: ReactNode;
+  collapsible?: boolean;
   description: string;
+  isOpen?: boolean;
   isLoading: boolean;
+  onToggle?: () => void;
   title: string;
 }) {
   return (
-    <section className={cn("rounded-lg border bg-card", isLoading && "opacity-70")}>
+    <section
+      className={cn(
+        "overflow-hidden rounded-lg border bg-card",
+        isLoading && "opacity-70",
+      )}
+    >
       <div className="border-b px-4 py-3">
         <div className="flex items-center justify-between gap-4">
           <h3 className="text-sm font-semibold">{title}</h3>
-          <span className="text-xs text-muted-foreground">{description}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">{description}</span>
+            {collapsible ? (
+              <Button
+                aria-expanded={isOpen}
+                aria-label={`${isOpen ? "Collapse" : "Expand"} ${title}`}
+                className="size-8 text-muted-foreground hover:text-foreground"
+                onClick={onToggle}
+                size="icon"
+                type="button"
+                variant="ghost"
+              >
+                <ChevronDownIcon
+                  className={cn(
+                    "h-4 w-4 transition-transform",
+                    isOpen && "rotate-180",
+                  )}
+                  aria-hidden="true"
+                />
+              </Button>
+            ) : null}
+          </div>
         </div>
       </div>
-      <div className="space-y-3 p-4">{children}</div>
+      {isOpen ? <div className="space-y-3 p-4">{children}</div> : null}
     </section>
   );
 }

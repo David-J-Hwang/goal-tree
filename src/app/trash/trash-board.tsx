@@ -190,7 +190,7 @@ export function TrashBoard({
         </section>
 
         <section className="mt-4 grid gap-4 xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
-          <Card className="flex min-h-0 flex-col overflow-hidden rounded-lg shadow-none">
+          <Card className="flex h-[32rem] min-h-0 flex-col overflow-hidden rounded-lg shadow-none xl:h-full">
             <CardHeader className="shrink-0 border-b p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
@@ -377,7 +377,7 @@ function TrashItemCard({
 
 function RestorePolicyPanel({ blockedRestoreCount }: { blockedRestoreCount: number }) {
   return (
-    <Card className="flex min-h-0 flex-col overflow-hidden rounded-lg shadow-none">
+    <Card className="flex h-64 min-h-0 flex-col overflow-hidden rounded-lg shadow-none xl:h-full">
       <CardHeader className="shrink-0 border-b p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -400,7 +400,7 @@ function RestorePolicyPanel({ blockedRestoreCount }: { blockedRestoreCount: numb
 
 function PermanentDeletePanel() {
   return (
-    <Card className="flex min-h-0 flex-col overflow-hidden rounded-lg shadow-none">
+    <Card className="flex h-64 min-h-0 flex-col overflow-hidden rounded-lg shadow-none xl:h-full">
       <CardHeader className="shrink-0 border-b p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
