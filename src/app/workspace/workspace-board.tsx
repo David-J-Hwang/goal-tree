@@ -851,7 +851,20 @@ function SortableNodeCard({
         </button>
         <button className="min-w-0 flex-1 text-left" onClick={onSelect}>
           <div className="flex items-start justify-between gap-2">
-            <h3 className="line-clamp-2 text-sm font-medium leading-5">{node.title}</h3>
+            <div className="flex min-w-0 items-center gap-2">
+              {category ? (
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{ backgroundColor: category.color ?? "#64748b" }}
+                  />
+                  {category.name}
+                </span>
+              ) : null}
+              <h3 className="line-clamp-2 text-sm font-medium leading-5">
+                {node.title}
+              </h3>
+            </div>
             <span
               className={cn(
                 "inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium",
@@ -861,17 +874,6 @@ function SortableNodeCard({
               <StatusIcon className="h-3 w-3" aria-hidden="true" />
               {status.label}
             </span>
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            {category ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1">
-                <span
-                  className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: category.color ?? "#64748b" }}
-                />
-                {category.name}
-              </span>
-            ) : null}
           </div>
           <ProgressBar value={progress} className="mt-3" />
         </button>
