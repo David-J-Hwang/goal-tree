@@ -275,12 +275,12 @@ function SegmentedControl<TValue extends string>({
   onChange: (value: TValue) => void;
 }) {
   return (
-    <div className="inline-flex rounded-md border bg-muted/50 p-1">
+    <div className="grid w-full grid-cols-4 rounded-md border bg-muted/50 p-1 sm:inline-flex sm:w-fit">
       {items.map((item) => (
         <button
           className={cn(
-            "rounded px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors",
-            value === item.value && "bg-background text-foreground shadow-sm",
+            "rounded px-2 py-1.5 text-sm font-medium text-muted-foreground transition-colors sm:px-3",
+            value === item.value && "bg-primary text-primary-foreground shadow-sm",
           )}
           key={item.value}
           onClick={() => onChange(item.value)}
