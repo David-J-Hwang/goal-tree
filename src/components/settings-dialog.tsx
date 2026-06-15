@@ -45,6 +45,7 @@ export function SettingsDialog() {
   const [theme, setTheme] = useState<Theme | null>(null);
   const [userId, setUserId] = useState("");
   const [categories, setCategories] = useState<PlanCategory[]>([]);
+  const [savedCategories, setSavedCategories] = useState<PlanCategory[]>([]);
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryColor, setNewCategoryColor] = useState(defaultCategoryColor);
@@ -164,7 +165,10 @@ export function SettingsDialog() {
       return;
     }
 
-    setCategories((categoryRows ?? []).map(mapPlanCategoryRow));
+    const nextCategories = (categoryRows ?? []).map(mapPlanCategoryRow);
+
+    setCategories(nextCategories);
+    setSavedCategories(nextCategories);
 
     if (settingsRow) {
       setSettings(mapUserSettingsRow(settingsRow));
@@ -237,6 +241,10 @@ export function SettingsDialog() {
       ...currentCategories,
       mapPlanCategoryRow(data),
     ]);
+    setSavedCategories((currentCategories) => [
+      ...currentCategories,
+      mapPlanCategoryRow(data),
+    ]);
     setNewCategoryName("");
     setNewCategoryColor(defaultCategoryColor);
     setStatusMessage("Category added.");
@@ -284,6 +292,13 @@ export function SettingsDialog() {
           : currentCategory,
       ),
     );
+    setSavedCategories((currentCategories) =>
+      currentCategories.map((currentCategory) =>
+        currentCategory.id === updatedCategory.id
+          ? updatedCategory
+          : currentCategory,
+      ),
+    );
     setStatusMessage("Category saved.");
     setSavingCategoryId("");
     router.refresh();
@@ -315,6 +330,9 @@ export function SettingsDialog() {
     }
 
     setCategories((currentCategories) =>
+      currentCategories.filter((currentCategory) => currentCategory.id !== category.id),
+    );
+    setSavedCategories((currentCategories) =>
       currentCategories.filter((currentCategory) => currentCategory.id !== category.id),
     );
     setPendingDeleteCategoryId("");
@@ -368,6 +386,22 @@ export function SettingsDialog() {
   }
 
   const canAddCategory = Boolean(newCategoryName.trim());
+
+  function hasCategoryChanges(category: PlanCategory) {
+    const savedCategory = savedCategories.find(
+      (currentCategory) => currentCategory.id === category.id,
+    );
+
+    if (!savedCategory) {
+      return true;
+    }
+
+    return (
+      category.name.trim() !== savedCategory.name ||
+      (category.color ?? defaultCategoryColor) !==
+        (savedCategory.color ?? defaultCategoryColor)
+    );
+  }
 
   const settingsDialog = isOpen ? (
     <div className="fixed inset-0 z-[100] overflow-hidden">
@@ -473,69 +507,80 @@ export function SettingsDialog() {
 
             <div className="space-y-2">
               {categories.length > 0 ? (
-                categories.map((category) => (
-                  <div
-                    className="grid gap-2 rounded-md border bg-background p-3 sm:grid-cols-[2.5rem_minmax(0,1fr)_auto_auto]"
-                    key={category.id}
-                  >
-                    <input
-                      aria-label={`${category.name} color`}
-                      className="size-10 rounded-md border bg-background p-1"
-                      disabled={isLoading || savingCategoryId === category.id}
-                      onChange={(event) =>
-                        updateCategoryDraft(category.id, {
-                          color: event.target.value,
-                        })
-                      }
-                      type="color"
-                      value={category.color ?? defaultCategoryColor}
-                    />
-                    <input
-                      className="h-10 rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
-                      disabled={isLoading || savingCategoryId === category.id}
-                      onChange={(event) =>
-                        updateCategoryDraft(category.id, {
-                          name: event.target.value,
-                        })
-                      }
-                      value={category.name}
-                    />
-                    <Button
-                      disabled={
-                        isLoading ||
-                        savingCategoryId === category.id ||
-                        deletingCategoryId === category.id
-                      }
-                      onClick={() => handleUpdateCategory(category)}
-                      type="button"
-                      variant="outline"
-                    >
-                      {savingCategoryId === category.id ? "Saving" : "Save"}
-                    </Button>
-                    <Button
+                categories.map((category) => {
+                  const hasChanges = hasCategoryChanges(category);
+
+                  return (
+                    <div
                       className={cn(
-                        pendingDeleteCategoryId === category.id
-                          ? "border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground"
-                          : "border-destructive/35 text-destructive hover:bg-destructive/10 hover:text-destructive",
+                        "grid gap-2 rounded-md border bg-background p-3",
+                        hasChanges
+                          ? "sm:grid-cols-[2.5rem_minmax(0,1fr)_auto_auto]"
+                          : "sm:grid-cols-[2.5rem_minmax(0,1fr)_auto]",
                       )}
-                      disabled={
-                        isLoading ||
-                        savingCategoryId === category.id ||
-                        deletingCategoryId === category.id
-                      }
-                      onClick={() => handleDeleteCategory(category)}
-                      type="button"
-                      variant="outline"
+                      key={category.id}
                     >
-                      <TrashIcon className="h-4 w-4" aria-hidden="true" />
-                      {deletingCategoryId === category.id
-                        ? "Deleting"
-                        : pendingDeleteCategoryId === category.id
-                          ? "Confirm"
-                          : "Delete"}
-                    </Button>
-                  </div>
-                ))
+                      <input
+                        aria-label={`${category.name} color`}
+                        className="size-10 rounded-md border bg-background p-1"
+                        disabled={isLoading || savingCategoryId === category.id}
+                        onChange={(event) =>
+                          updateCategoryDraft(category.id, {
+                            color: event.target.value,
+                          })
+                        }
+                        type="color"
+                        value={category.color ?? defaultCategoryColor}
+                      />
+                      <input
+                        className="h-10 rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+                        disabled={isLoading || savingCategoryId === category.id}
+                        onChange={(event) =>
+                          updateCategoryDraft(category.id, {
+                            name: event.target.value,
+                          })
+                        }
+                        value={category.name}
+                      />
+                      {hasChanges ? (
+                        <Button
+                          disabled={
+                            isLoading ||
+                            savingCategoryId === category.id ||
+                            deletingCategoryId === category.id
+                          }
+                          onClick={() => handleUpdateCategory(category)}
+                          type="button"
+                          variant="outline"
+                        >
+                          {savingCategoryId === category.id ? "Saving" : "Save"}
+                        </Button>
+                      ) : null}
+                      <Button
+                        className={cn(
+                          pendingDeleteCategoryId === category.id
+                            ? "border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground"
+                            : "border-destructive/35 text-destructive hover:bg-destructive/10 hover:text-destructive",
+                        )}
+                        disabled={
+                          isLoading ||
+                          savingCategoryId === category.id ||
+                          deletingCategoryId === category.id
+                        }
+                        onClick={() => handleDeleteCategory(category)}
+                        type="button"
+                        variant="outline"
+                      >
+                        <TrashIcon className="h-4 w-4" aria-hidden="true" />
+                        {deletingCategoryId === category.id
+                          ? "Deleting"
+                          : pendingDeleteCategoryId === category.id
+                            ? "Confirm"
+                            : "Delete"}
+                      </Button>
+                    </div>
+                  );
+                })
               ) : (
                 <p className="rounded-md border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
                   No categories yet
