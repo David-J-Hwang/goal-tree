@@ -152,8 +152,8 @@ export function TimelineBoard({ initialNodes }: { initialNodes: GoalTreeNode[] }
         </section>
 
         <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
-          <Card className="rounded-lg shadow-none">
-            <CardHeader className="border-b p-4">
+          <Card className="flex h-[36rem] min-h-0 flex-col overflow-hidden rounded-lg shadow-none">
+            <CardHeader className="shrink-0 border-b p-4">
               <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
                 <div className="min-w-0">
                   <CardTitle className="text-base">Timeline Track</CardTitle>
@@ -184,7 +184,7 @@ export function TimelineBoard({ initialNodes }: { initialNodes: GoalTreeNode[] }
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-4">
+            <CardContent className="min-h-0 flex-1 overflow-y-auto p-4">
               {groupedItems.length > 0 ? (
                 <div className="space-y-6">
                   {groupedItems.map((group) => (
@@ -431,8 +431,8 @@ function RangeOverviewPanel({
   nodeType: TimelineNodeType;
 }) {
   return (
-    <Card className="rounded-lg shadow-none">
-      <CardHeader className="border-b p-4">
+    <Card className="flex h-64 min-h-0 flex-col overflow-hidden rounded-lg shadow-none">
+      <CardHeader className="shrink-0 border-b p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
             <CardTitle className="text-base">Range {getNodeTypeLabel(nodeType)}</CardTitle>
@@ -443,7 +443,7 @@ function RangeOverviewPanel({
           <QueueListIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
         </div>
       </CardHeader>
-      <CardContent className="space-y-3 p-4">
+      <CardContent className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
         {items.length === 0 ? (
           <div className="rounded-md border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
             No multi-day {nodeType} items in this view
@@ -484,8 +484,8 @@ function RangeOverviewPanel({
 
 function LegendPanel() {
   return (
-    <Card className="rounded-lg shadow-none">
-      <CardHeader className="border-b p-4">
+    <Card className="flex h-64 min-h-0 flex-col overflow-hidden rounded-lg shadow-none">
+      <CardHeader className="shrink-0 border-b p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
             <CardTitle className="text-base">Timeline Legend</CardTitle>
@@ -494,7 +494,7 @@ function LegendPanel() {
           <FlagIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
         </div>
       </CardHeader>
-      <CardContent className="space-y-3 p-4 text-sm text-muted-foreground">
+      <CardContent className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4 text-sm text-muted-foreground">
         <LegendRow label="Done" value="Uses actual date range" />
         <LegendRow label="Upcoming" value="Uses planned date range" />
         <LegendRow label="Range bar" value="Shows multi-day span" />
