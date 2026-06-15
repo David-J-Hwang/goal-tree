@@ -515,7 +515,7 @@ function SortableTodoRow({
 
 function ThisWeekFocusPanel({ items }: { items: FocusItem[] }) {
   return (
-    <Card className="flex min-h-0 flex-col overflow-hidden rounded-lg shadow-none">
+    <Card className="flex h-72 min-h-0 flex-col overflow-hidden rounded-lg shadow-none xl:h-full">
       <CardHeader className="shrink-0 border-b p-4">
         <CardTitle className="text-base">This Week Focus</CardTitle>
         <CardDescription className="mt-1">{items.length} active priorities</CardDescription>
@@ -590,7 +590,7 @@ function InsightPanel({
   items: InsightItem[];
 }) {
   return (
-    <Card className="flex min-h-0 flex-col overflow-hidden rounded-lg shadow-none">
+    <Card className="flex h-64 min-h-0 flex-col overflow-hidden rounded-lg shadow-none xl:h-full">
       <CardHeader className="shrink-0 border-b p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
