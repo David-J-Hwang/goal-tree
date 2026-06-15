@@ -2,11 +2,26 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { differenceInCalendarDays, format, parseISO } from "date-fns";
+import {
+  addMonths,
+  addWeeks,
+  addYears,
+  differenceInCalendarDays,
+  endOfMonth,
+  endOfWeek,
+  endOfYear,
+  format,
+  parseISO,
+  startOfMonth,
+  startOfWeek,
+  startOfYear,
+} from "date-fns";
 import {
   ArrowTopRightOnSquareIcon,
   CalendarDaysIcon,
   CheckCircleIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   ClockIcon,
   FlagIcon,
   QueueListIcon,
@@ -31,6 +46,9 @@ type TimelineStatus = "scheduled" | "in_progress" | "blocked" | "done" | "paused
 type TimelineRange = {
   start: string;
   end: string;
+};
+type TimelinePeriod = TimelineRange & {
+  label: string;
 };
 
 type TimelineItem = {
@@ -68,7 +86,12 @@ export function TimelineBoard({ initialNodes }: { initialNodes: GoalTreeNode[] }
   const [timelineMode, setTimelineMode] = useState<TimelineMode>("upcoming");
   const [nodeType, setNodeType] = useState<TimelineNodeType>("task");
   const [rangeView, setRangeView] = useState<RangeView>("month");
+  const [periodCursor, setPeriodCursor] = useState(() => getLocalDateString(new Date()));
   const timelineItems = useMemo(() => getTimelineItems(initialNodes), [initialNodes]);
+  const periodRange = useMemo(
+    () => getPeriodRange(periodCursor, rangeView),
+    [periodCursor, rangeView],
+  );
 
   const visibleItems = useMemo(
     () =>
@@ -77,23 +100,32 @@ export function TimelineBoard({ initialNodes }: { initialNodes: GoalTreeNode[] }
         .filter((item) =>
           timelineMode === "done" ? item.status === "done" : item.status !== "done",
         )
-        .filter((item) => Boolean(getTimelineRange(item, timelineMode)))
+        .filter((item) => itemOverlapsPeriod(item, timelineMode, periodRange))
         .sort((first, second) =>
           getRangeStart(first, timelineMode).localeCompare(getRangeStart(second, timelineMode)),
         ),
-    [nodeType, timelineItems, timelineMode],
+    [nodeType, periodRange, timelineItems, timelineMode],
   );
 
   const groupedItems = useMemo(
-    () => groupTimelineItems(visibleItems, timelineMode, rangeView),
-    [rangeView, timelineMode, visibleItems],
+    () =>
+      visibleItems.length > 0
+        ? [{ key: periodRange.start, label: periodRange.label, items: visibleItems }]
+        : [],
+    [periodRange, visibleItems],
   );
 
   const rangeItems = visibleItems.filter((item) => getRangeLength(item, timelineMode) > 1);
   const summaryItems = useMemo(
-    () => getStatusSummaryItems(timelineItems, nodeType),
-    [nodeType, timelineItems],
+    () => getStatusSummaryItems(timelineItems, nodeType, periodRange),
+    [nodeType, periodRange, timelineItems],
   );
+
+  function handleMovePeriod(direction: -1 | 1) {
+    setPeriodCursor((currentCursor) =>
+      shiftPeriodCursor(currentCursor, rangeView, direction),
+    );
+  }
 
   return (
     <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8">
@@ -131,6 +163,12 @@ export function TimelineBoard({ initialNodes }: { initialNodes: GoalTreeNode[] }
                   </CardDescription>
                 </div>
                 <div className="flex flex-wrap gap-2 xl:flex-nowrap xl:justify-end">
+                  <PeriodNavigator
+                    label={periodRange.label}
+                    rangeView={rangeView}
+                    onNext={() => handleMovePeriod(1)}
+                    onPrevious={() => handleMovePeriod(-1)}
+                  />
                   <SegmentedControl
                     items={timelineModes}
                     value={timelineMode}
@@ -196,6 +234,42 @@ function SegmentedControl<TValue extends string>({
           {item.label}
         </button>
       ))}
+    </div>
+  );
+}
+
+function PeriodNavigator({
+  label,
+  rangeView,
+  onNext,
+  onPrevious,
+}: {
+  label: string;
+  rangeView: RangeView;
+  onNext: () => void;
+  onPrevious: () => void;
+}) {
+  return (
+    <div className="inline-flex w-fit max-w-full shrink-0 items-center rounded-md border bg-muted/50 p-1">
+      <button
+        aria-label={`Previous ${rangeView}`}
+        className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+        onClick={onPrevious}
+        type="button"
+      >
+        <ChevronLeftIcon className="h-4 w-4" aria-hidden="true" />
+      </button>
+      <span className="min-w-0 whitespace-nowrap px-2 text-center text-sm font-medium text-foreground sm:min-w-36">
+        {label}
+      </span>
+      <button
+        aria-label={`Next ${rangeView}`}
+        className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+        onClick={onNext}
+        type="button"
+      >
+        <ChevronRightIcon className="h-4 w-4" aria-hidden="true" />
+      </button>
     </div>
   );
 }
@@ -501,53 +575,6 @@ function StatusBadge({ status }: { status: TimelineItem["status"] }) {
   );
 }
 
-function groupTimelineItems(
-  items: TimelineItem[],
-  mode: TimelineMode,
-  rangeView: RangeView,
-) {
-  const groups = new Map<string, TimelineItem[]>();
-
-  items.forEach((item) => {
-    const range = getTimelineRange(item, mode);
-
-    if (!range) {
-      return;
-    }
-
-    const date = parseISO(range.start);
-    const key =
-      rangeView === "week"
-        ? format(date, "yyyy-'W'II")
-        : rangeView === "month"
-          ? format(date, "yyyy-MM")
-          : format(date, "yyyy");
-
-    groups.set(key, [...(groups.get(key) ?? []), item]);
-  });
-
-  return Array.from(groups.entries())
-    .sort(([firstKey], [secondKey]) => firstKey.localeCompare(secondKey))
-    .map(([key, groupItems]) => ({
-      key,
-      label: getGroupLabel(key, rangeView),
-      items: groupItems,
-    }));
-}
-
-function getGroupLabel(key: string, rangeView: RangeView) {
-  if (rangeView === "week") {
-    return key.replace("-W", " Week ");
-  }
-
-  if (rangeView === "month") {
-    const [year, month] = key.split("-");
-    return `${year}.${month}`;
-  }
-
-  return key;
-}
-
 function getRangeStart(item: TimelineItem, mode: TimelineMode) {
   return getTimelineRange(item, mode)?.start ?? "";
 }
@@ -586,6 +613,65 @@ function getTimelineRange(item: TimelineItem, mode: TimelineMode): TimelineRange
   }
 
   return start <= end ? { start, end } : { start: end, end: start };
+}
+
+function itemOverlapsPeriod(
+  item: TimelineItem,
+  mode: TimelineMode,
+  period: TimelinePeriod,
+) {
+  const range = getTimelineRange(item, mode);
+
+  return Boolean(range && rangesOverlap(range, period));
+}
+
+function rangesOverlap(range: TimelineRange, period: TimelineRange) {
+  return range.start <= period.end && range.end >= period.start;
+}
+
+function getPeriodRange(cursor: string, rangeView: RangeView): TimelinePeriod {
+  const date = parseISO(cursor);
+  const start =
+    rangeView === "week"
+      ? startOfWeek(date, { weekStartsOn: 1 })
+      : rangeView === "month"
+        ? startOfMonth(date)
+        : startOfYear(date);
+  const end =
+    rangeView === "week"
+      ? endOfWeek(date, { weekStartsOn: 1 })
+      : rangeView === "month"
+        ? endOfMonth(date)
+        : endOfYear(date);
+  const startLabel = format(start, "yyyy.MM.dd");
+  const endLabel = format(end, "yyyy.MM.dd");
+
+  return {
+    start: getLocalDateString(start),
+    end: getLocalDateString(end),
+    label:
+      rangeView === "week"
+        ? `${startLabel} - ${endLabel}`
+        : rangeView === "month"
+          ? format(start, "yyyy.MM")
+          : format(start, "yyyy"),
+  };
+}
+
+function shiftPeriodCursor(cursor: string, rangeView: RangeView, direction: -1 | 1) {
+  const date = parseISO(cursor);
+  const nextDate =
+    rangeView === "week"
+      ? addWeeks(date, direction)
+      : rangeView === "month"
+        ? addMonths(date, direction)
+        : addYears(date, direction);
+
+  return getLocalDateString(nextDate);
+}
+
+function getLocalDateString(date: Date) {
+  return format(date, "yyyy-MM-dd");
 }
 
 function getBreadcrumb(item: TimelineItem) {
@@ -647,13 +733,19 @@ function getNodeProgress(node: GoalTreeNode, nodes: GoalTreeNode[]) {
 function getStatusSummaryItems(
   items: TimelineItem[],
   nodeType: TimelineNodeType,
+  period: TimelinePeriod,
 ) {
   const filteredItems = items.filter((item) => item.type === nodeType);
   const countByStatus = (status: TimelineStatus) =>
     filteredItems.filter((item) => {
       const mode = status === "done" ? "done" : "upcoming";
+      const range = getTimelineRange(item, mode);
 
-      return item.status === status && Boolean(getTimelineRange(item, mode));
+      return Boolean(
+        item.status === status &&
+          range &&
+          rangesOverlap(range, period),
+      );
     }).length;
 
   return [
