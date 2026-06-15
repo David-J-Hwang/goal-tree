@@ -17,7 +17,6 @@ import {
   startOfYear,
 } from "date-fns";
 import {
-  ArrowTopRightOnSquareIcon,
   CalendarDaysIcon,
   CheckCircleIcon,
   ChevronLeftIcon,
@@ -347,7 +346,7 @@ function TimelineItemCard({ item, mode }: { item: TimelineItem; mode: TimelineMo
     >
       <span className="absolute -left-[1.34rem] top-4 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary" />
 
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3">
+      <div className="min-w-0">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             {mode === "done" ? (
@@ -372,15 +371,6 @@ function TimelineItemCard({ item, mode }: { item: TimelineItem; mode: TimelineMo
               <ProgressBar value={item.progress ?? 0} />
             </div>
           ) : null}
-        </div>
-
-        <div className="flex items-start justify-end">
-          <Button asChild size="sm" variant="ghost">
-            <span>
-              <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden="true" />
-              <span className="hidden sm:inline">Workspace</span>
-            </span>
-          </Button>
         </div>
       </div>
     </Link>
