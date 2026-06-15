@@ -344,7 +344,7 @@ function TrashItemCard({
           ) : null}
         </div>
 
-        <div className="flex flex-wrap items-start justify-end gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Button
             className="border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 disabled:border-input disabled:bg-background disabled:text-muted-foreground dark:border-emerald-800/40 dark:bg-emerald-950/25 dark:text-emerald-300/85 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-200"
             disabled={restoreBlocked || isMutating}
