@@ -90,6 +90,10 @@ export function TimelineBoard({ initialNodes }: { initialNodes: GoalTreeNode[] }
   );
 
   const rangeItems = visibleItems.filter((item) => getRangeLength(item, timelineMode) > 1);
+  const summaryItems = useMemo(
+    () => getStatusSummaryItems(timelineItems, nodeType),
+    [nodeType, timelineItems],
+  );
 
   return (
     <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8">
@@ -106,19 +110,14 @@ export function TimelineBoard({ initialNodes }: { initialNodes: GoalTreeNode[] }
           />
         </header>
 
-        <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <SummaryTile label="Visible" value={String(visibleItems.length)} detail={`${nodeType} items`} />
-          <SummaryTile label="Ranges" value={String(rangeItems.length)} detail="multi-day items" />
-          <SummaryTile
-            label="Upcoming"
-            value={String(countItems(timelineItems, nodeType, "upcoming"))}
-            detail="planned items"
-          />
-          <SummaryTile
-            label="Done"
-            value={String(countItems(timelineItems, nodeType, "done"))}
-            detail="completed items"
-          />
+        <section className="mt-5 grid grid-cols-4 gap-2 sm:gap-3">
+          {summaryItems.map((item) => (
+            <SummaryTile
+              key={item.label}
+              label={item.label}
+              value={item.value}
+            />
+          ))}
         </section>
 
         <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
@@ -183,12 +182,12 @@ function SegmentedControl<TValue extends string>({
   onChange: (value: TValue) => void;
 }) {
   return (
-    <div className="inline-flex shrink-0 rounded-md border bg-muted/50 p-1">
+    <div className="inline-flex w-fit max-w-full shrink-0 self-start rounded-md border bg-muted/50 p-1">
       {items.map((item) => (
         <button
           className={cn(
             "rounded px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors",
-            value === item.value && "bg-background text-foreground shadow-sm",
+            value === item.value && "bg-primary text-primary-foreground shadow-sm",
           )}
           key={item.value}
           onClick={() => onChange(item.value)}
@@ -204,20 +203,19 @@ function SegmentedControl<TValue extends string>({
 function SummaryTile({
   label,
   value,
-  detail,
 }: {
   label: string;
   value: string;
-  detail: string;
 }) {
   return (
-    <Card className="rounded-lg shadow-none">
-      <CardContent className="flex items-end justify-between gap-3 p-4">
-        <div>
-          <p className="text-xs font-medium uppercase text-muted-foreground">{label}</p>
-          <p className="mt-2 text-2xl font-semibold">{value}</p>
+    <Card className="min-w-0 rounded-lg shadow-none">
+      <CardContent className="flex min-w-0 flex-col gap-1 p-3 sm:p-4">
+        <div className="min-w-0">
+          <p className="truncate text-[10px] font-medium uppercase text-muted-foreground sm:text-xs">
+            {label}
+          </p>
+          <p className="mt-1 text-xl font-semibold sm:mt-2 sm:text-2xl">{value}</p>
         </div>
-        <p className="pb-1 text-right text-xs text-muted-foreground">{detail}</p>
       </CardContent>
     </Card>
   );
@@ -646,17 +644,24 @@ function getNodeProgress(node: GoalTreeNode, nodes: GoalTreeNode[]) {
   return Math.round((doneTasks.length / calculableTasks.length) * 100);
 }
 
-function countItems(
+function getStatusSummaryItems(
   items: TimelineItem[],
   nodeType: TimelineNodeType,
-  mode: TimelineMode,
 ) {
-  return items.filter(
-    (item) =>
-      item.type === nodeType &&
-      (mode === "done" ? item.status === "done" : item.status !== "done") &&
-      Boolean(getTimelineRange(item, mode)),
-  ).length;
+  const filteredItems = items.filter((item) => item.type === nodeType);
+  const countByStatus = (status: TimelineStatus) =>
+    filteredItems.filter((item) => {
+      const mode = status === "done" ? "done" : "upcoming";
+
+      return item.status === status && Boolean(getTimelineRange(item, mode));
+    }).length;
+
+  return [
+    { label: "Not Started", value: String(countByStatus("scheduled")) },
+    { label: "In Progress", value: String(countByStatus("in_progress")) },
+    { label: "Blocked", value: String(countByStatus("blocked")) },
+    { label: "Done", value: String(countByStatus("done")) },
+  ];
 }
 
 function isNodeVisible(node: GoalTreeNode, nodes: GoalTreeNode[]): boolean {
