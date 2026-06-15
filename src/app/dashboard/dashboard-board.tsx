@@ -106,12 +106,16 @@ export function DashboardBoard({
 
   const summaryItems = useMemo(
     () => [
-      { label: "Today", value: String(todos.length), detail: "scheduled tasks" },
-      { label: "Open", value: String(openCount), detail: "remaining" },
-      { label: "Done", value: String(completedCount), detail: "completed today" },
-      { label: "Blocked", value: String(blockedCount), detail: "needs attention" },
+      { label: "Today", value: String(todos.length) },
+      { label: "Remaining", value: String(openCount) },
+      { label: "Done", value: String(completedCount) },
+      { label: "Blocked", value: String(blockedCount) },
     ],
     [blockedCount, completedCount, openCount, todos.length],
+  );
+  const todayDateLabel = useMemo(
+    () => formatKoreanDateLabel(initialTodayDate),
+    [initialTodayDate],
   );
 
   async function handleToggleTodo(id: string) {
@@ -227,14 +231,13 @@ export function DashboardBoard({
           </div>
           <div className="flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
             <CalendarDaysIcon className="h-4 w-4" aria-hidden="true" />
-            <span>Today</span>
+            <span>{todayDateLabel}</span>
           </div>
         </header>
 
         <section className="mt-5 grid shrink-0 grid-cols-4 gap-2 sm:gap-3">
           {summaryItems.map((item) => (
             <SummaryTile
-              detail={item.detail}
               key={item.label}
               label={item.label}
               value={item.value}
@@ -269,24 +272,19 @@ export function DashboardBoard({
 function SummaryTile({
   label,
   value,
-  detail,
 }: {
   label: string;
   value: string;
-  detail: string;
 }) {
   return (
     <Card className="min-w-0 rounded-lg shadow-none">
-      <CardContent className="flex min-w-0 flex-col gap-1 p-3 sm:flex-row sm:items-end sm:justify-between sm:gap-3 sm:p-4">
+      <CardContent className="flex min-w-0 flex-col gap-1 p-3 sm:p-4">
         <div className="min-w-0">
           <p className="truncate text-[10px] font-medium uppercase text-muted-foreground sm:text-xs">
             {label}
           </p>
           <p className="mt-1 text-xl font-semibold sm:mt-2 sm:text-2xl">{value}</p>
         </div>
-        <p className="text-[10px] leading-4 text-muted-foreground sm:pb-1 sm:text-right sm:text-xs">
-          {detail}
-        </p>
       </CardContent>
     </Card>
   );
@@ -777,6 +775,19 @@ function getTaskStatusUpdate(task: GoalTreeNode, nextDone: boolean, todayDate: s
     actual_start_date: task.actualStartDate ?? todayDate,
     actual_end_date: null,
   };
+}
+
+function formatKoreanDateLabel(dateValue: string) {
+  const [year, month, day] = dateValue.split("-").map(Number);
+
+  if (!year || !month || !day) {
+    return dateValue;
+  }
+
+  const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
+  const weekday = weekdays[new Date(year, month - 1, day).getDay()];
+
+  return `${year}.${String(month).padStart(2, "0")}.${String(day).padStart(2, "0")}(${weekday})`;
 }
 
 function getNodeBreadcrumb(node: GoalTreeNode, nodes: GoalTreeNode[]) {
