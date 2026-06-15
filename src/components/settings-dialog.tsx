@@ -5,6 +5,7 @@ import {
   type FormEvent,
   type ReactNode,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { createPortal } from "react-dom";
@@ -57,6 +58,7 @@ export function SettingsDialog() {
   const [isUpdatingAutomation, setIsUpdatingAutomation] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const pendingDeleteButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -115,6 +117,32 @@ export function SettingsDialog() {
 
     void loadSettingsData();
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!pendingDeleteCategoryId) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target;
+
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      if (pendingDeleteButtonRef.current?.contains(target)) {
+        return;
+      }
+
+      setPendingDeleteCategoryId("");
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [pendingDeleteCategoryId]);
 
   async function loadSettingsData() {
     setIsLoading(true);
@@ -568,6 +596,11 @@ export function SettingsDialog() {
                           deletingCategoryId === category.id
                         }
                         onClick={() => handleDeleteCategory(category)}
+                        ref={
+                          pendingDeleteCategoryId === category.id
+                            ? pendingDeleteButtonRef
+                            : null
+                        }
                         type="button"
                         variant="outline"
                       >
