@@ -1182,6 +1182,12 @@ function DetailPanel({
           </div>
         </CardHeader>
         <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 pb-6 pt-3">
+          {node.type === "task" ? (
+            <DetailSection title="Linked Plan">
+              <DetailValue value={plan?.title ?? parent?.title ?? "-"} />
+            </DetailSection>
+          ) : null}
+
           <DetailSection title="Status">
             <select
               className="h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
@@ -1203,6 +1209,28 @@ function DetailPanel({
               <span className="w-10 text-right text-sm font-medium">{progress}%</span>
             </div>
           </DetailSection>
+
+          {node.type === "task" ? (
+            <Button
+              className={cn(
+                "w-full",
+                isSelectedTaskInTodayTodo
+                  ? "bg-secondary hover:bg-secondary/80"
+                  : "bg-accent text-accent-foreground hover:bg-accent/80",
+              )}
+              disabled={isSaving || isMovingToTrash || isUpdatingTodayTodo}
+              type="button"
+              variant={isSelectedTaskInTodayTodo ? "secondary" : "outline"}
+              onClick={handleToggleTodayTodo}
+            >
+              <ListTodo className="mr-2 h-4 w-4" aria-hidden="true" />
+              {isUpdatingTodayTodo
+                ? "Updating"
+                : isSelectedTaskInTodayTodo
+                  ? "Remove from Today TODO"
+                  : "Add to Today TODO"}
+            </Button>
+          ) : null}
 
           {node.type === "goal" ? (
             <>
@@ -1227,7 +1255,7 @@ function DetailPanel({
 
           {node.type === "plan" ? (
             <DetailSection title="Linked Goal">
-              <DetailValue label="Goal" value={goal?.title ?? parent?.title ?? "-"} />
+              <DetailValue value={goal?.title ?? parent?.title ?? "-"} />
               <label className="mt-3 block">
                 <span className="text-xs font-medium text-muted-foreground">Category</span>
                 <select
@@ -1244,26 +1272,6 @@ function DetailPanel({
                   ))}
                 </select>
               </label>
-            </DetailSection>
-          ) : null}
-
-          {node.type === "task" ? (
-            <DetailSection title="Linked Plan">
-              <DetailValue label="Plan" value={plan?.title ?? parent?.title ?? "-"} />
-              <Button
-                className="mt-3 w-full"
-                disabled={isSaving || isMovingToTrash || isUpdatingTodayTodo}
-                type="button"
-                variant={isSelectedTaskInTodayTodo ? "secondary" : "outline"}
-                onClick={handleToggleTodayTodo}
-              >
-                <ListTodo className="mr-2 h-4 w-4" aria-hidden="true" />
-                {isUpdatingTodayTodo
-                  ? "Updating"
-                  : isSelectedTaskInTodayTodo
-                    ? "Remove from Today TODO"
-                    : "Add to Today TODO"}
-              </Button>
             </DetailSection>
           ) : null}
 
@@ -1365,11 +1373,10 @@ function DetailSection({
   );
 }
 
-function DetailValue({ label, value }: { label: string; value: string }) {
+function DetailValue({ value }: { value: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-md border bg-background px-3 py-2">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="truncate text-sm font-medium">{value}</span>
+    <div className="rounded-md border bg-background px-3 py-2">
+      <span className="block truncate text-sm font-medium">{value}</span>
     </div>
   );
 }
