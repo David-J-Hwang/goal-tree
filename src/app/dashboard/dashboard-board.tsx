@@ -231,7 +231,7 @@ export function DashboardBoard({
           </div>
         </header>
 
-        <section className="mt-5 grid shrink-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="mt-5 grid shrink-0 grid-cols-4 gap-2 sm:gap-3">
           {summaryItems.map((item) => (
             <SummaryTile
               detail={item.detail}
@@ -276,13 +276,17 @@ function SummaryTile({
   detail: string;
 }) {
   return (
-    <Card className="rounded-lg shadow-none">
-      <CardContent className="flex items-end justify-between gap-3 p-4">
-        <div>
-          <p className="text-xs font-medium uppercase text-muted-foreground">{label}</p>
-          <p className="mt-2 text-2xl font-semibold">{value}</p>
+    <Card className="min-w-0 rounded-lg shadow-none">
+      <CardContent className="flex min-w-0 flex-col gap-1 p-3 sm:flex-row sm:items-end sm:justify-between sm:gap-3 sm:p-4">
+        <div className="min-w-0">
+          <p className="truncate text-[10px] font-medium uppercase text-muted-foreground sm:text-xs">
+            {label}
+          </p>
+          <p className="mt-1 text-xl font-semibold sm:mt-2 sm:text-2xl">{value}</p>
         </div>
-        <p className="pb-1 text-right text-xs text-muted-foreground">{detail}</p>
+        <p className="text-[10px] leading-4 text-muted-foreground sm:pb-1 sm:text-right sm:text-xs">
+          {detail}
+        </p>
       </CardContent>
     </Card>
   );

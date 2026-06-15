@@ -629,7 +629,7 @@ export function SettingsDialog() {
           >
             <label className="flex items-center justify-between gap-4 rounded-md border bg-background px-3 py-3">
               <span className="text-sm font-medium">
-                Auto-fill actual dates on status change
+                Auto-fill actual start/end dates on status change
               </span>
               <input
                 checked={settings?.autoFillActualDatesOnStatusChange ?? true}
