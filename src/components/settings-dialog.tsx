@@ -367,6 +367,8 @@ export function SettingsDialog() {
     setPendingDeleteCategoryId("");
   }
 
+  const canAddCategory = Boolean(newCategoryName.trim());
+
   const settingsDialog = isOpen ? (
     <div className="fixed inset-0 z-[100] overflow-hidden">
       <button
@@ -437,7 +439,14 @@ export function SettingsDialog() {
               className="rounded-md border bg-muted/25 p-3"
               onSubmit={handleAddCategory}
             >
-              <div className="grid gap-2 sm:grid-cols-[2.5rem_minmax(0,1fr)_auto]">
+              <div
+                className={cn(
+                  "grid gap-2",
+                  canAddCategory
+                    ? "sm:grid-cols-[2.5rem_minmax(0,1fr)_auto]"
+                    : "sm:grid-cols-[2.5rem_minmax(0,1fr)]",
+                )}
+              >
                 <input
                   aria-label="New category color"
                   className="size-10 rounded-md border bg-background p-1"
@@ -450,13 +459,15 @@ export function SettingsDialog() {
                   className="h-10 rounded-md border bg-background px-3 text-sm outline-none transition placeholder:text-muted-foreground focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
                   disabled={isAddingCategory || isLoading}
                   onChange={(event) => setNewCategoryName(event.target.value)}
-                  placeholder="New category"
+                  placeholder="Add new category"
                   value={newCategoryName}
                 />
-                <Button disabled={isAddingCategory || isLoading} type="submit">
-                  <PlusIcon className="h-4 w-4" aria-hidden="true" />
-                  {isAddingCategory ? "Adding" : "Add"}
-                </Button>
+                {canAddCategory ? (
+                  <Button disabled={isAddingCategory || isLoading} type="submit">
+                    <PlusIcon className="h-4 w-4" aria-hidden="true" />
+                    {isAddingCategory ? "Adding" : "Add"}
+                  </Button>
+                ) : null}
               </div>
             </form>
 
