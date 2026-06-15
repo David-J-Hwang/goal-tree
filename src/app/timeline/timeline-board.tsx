@@ -123,14 +123,14 @@ export function TimelineBoard({ initialNodes }: { initialNodes: GoalTreeNode[] }
         <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
           <Card className="rounded-lg shadow-none">
             <CardHeader className="border-b p-4">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                <div>
+              <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
+                <div className="min-w-0">
                   <CardTitle className="text-base">Timeline Track</CardTitle>
                   <CardDescription className="mt-1">
                     {timelineMode === "done" ? "Actual date ranges" : "Planned date ranges"}
                   </CardDescription>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 xl:flex-nowrap xl:justify-end">
                   <SegmentedControl
                     items={timelineModes}
                     value={timelineMode}
@@ -187,7 +187,7 @@ function SegmentedControl<TValue extends string>({
   onChange: (value: TValue) => void;
 }) {
   return (
-    <div className="inline-flex rounded-md border bg-muted/50 p-1">
+    <div className="inline-flex shrink-0 rounded-md border bg-muted/50 p-1">
       {items.map((item) => (
         <button
           className={cn(
