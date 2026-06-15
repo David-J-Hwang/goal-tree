@@ -88,10 +88,9 @@ export function WhatIveDoneBoard({
           </div>
         </header>
 
-        <section className="mt-5 grid shrink-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="mt-5 grid shrink-0 grid-cols-4 gap-2 sm:gap-3">
           {summaryItems.map((item) => (
             <SummaryTile
-              detail={item.detail}
               key={item.label}
               label={item.label}
               value={item.value}
@@ -164,20 +163,19 @@ export function WhatIveDoneBoard({
 function SummaryTile({
   label,
   value,
-  detail,
 }: {
   label: string;
   value: string;
-  detail: string;
 }) {
   return (
-    <Card className="rounded-lg shadow-none">
-      <CardContent className="flex items-end justify-between gap-3 p-4">
-        <div>
-          <p className="text-xs font-medium uppercase text-muted-foreground">{label}</p>
-          <p className="mt-2 text-2xl font-semibold">{value}</p>
+    <Card className="min-w-0 rounded-lg shadow-none">
+      <CardContent className="flex min-w-0 flex-col gap-1 p-3 sm:p-4">
+        <div className="min-w-0">
+          <p className="truncate text-[10px] font-medium uppercase text-muted-foreground sm:text-xs">
+            {label}
+          </p>
+          <p className="mt-1 text-xl font-semibold sm:mt-2 sm:text-2xl">{value}</p>
         </div>
-        <p className="pb-1 text-right text-xs text-muted-foreground">{detail}</p>
       </CardContent>
     </Card>
   );
@@ -330,6 +328,7 @@ function getSummaryItems(completions: Completion[]) {
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
   const currentMonth = today.slice(0, 7);
+  const currentYear = today.slice(0, 4);
   const todayCount = completions.filter(
     (completion) => completion.completedAt === today,
   ).length;
@@ -342,15 +341,15 @@ function getSummaryItems(completions: Completion[]) {
   const monthCount = completions.filter((completion) =>
     completion.completedAt.startsWith(currentMonth),
   ).length;
-  const goalCount = new Set(
-    completions.map((completion) => completion.goalId || completion.goal),
-  ).size;
+  const yearCount = completions.filter((completion) =>
+    completion.completedAt.startsWith(currentYear),
+  ).length;
 
   return [
-    { label: "Today", value: String(todayCount), detail: "completed tasks" },
-    { label: "This Week", value: String(weekCount), detail: "visible progress" },
-    { label: "This Month", value: String(monthCount), detail: "done records" },
-    { label: "Goals", value: String(goalCount), detail: "contributed" },
+    { label: "Today", value: String(todayCount) },
+    { label: "Week", value: String(weekCount) },
+    { label: "Month", value: String(monthCount) },
+    { label: "Year", value: String(yearCount) },
   ];
 }
 
