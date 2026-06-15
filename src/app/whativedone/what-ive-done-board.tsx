@@ -4,14 +4,12 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { endOfWeek, format, isWithinInterval, parseISO, startOfWeek } from "date-fns";
 import {
-  ArrowTopRightOnSquareIcon,
   CalendarDaysIcon,
   CheckCircleIcon,
   Squares2X2Icon,
   TrophyIcon,
 } from "@heroicons/react/24/outline";
 
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -77,9 +75,9 @@ export function WhatIveDoneBoard({
   const summaryItems = useMemo(() => getSummaryItems(completions), [completions]);
 
   return (
-    <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-[1440px]">
-        <header className="flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
+    <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8 xl:h-[calc(100dvh-3.5rem-1px)] xl:min-h-0 xl:overflow-hidden">
+      <div className="mx-auto flex min-h-0 max-w-[1440px] flex-col xl:h-full">
+        <header className="flex shrink-0 flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-medium text-muted-foreground">Goaltree</p>
             <h1 className="mt-1 text-2xl font-semibold">What I&apos;ve Done</h1>
@@ -90,7 +88,7 @@ export function WhatIveDoneBoard({
           </div>
         </header>
 
-        <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="mt-5 grid shrink-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {summaryItems.map((item) => (
             <SummaryTile
               detail={item.detail}
@@ -101,9 +99,9 @@ export function WhatIveDoneBoard({
           ))}
         </section>
 
-        <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
-          <Card className="rounded-lg shadow-none">
-            <CardHeader className="border-b p-4">
+        <section className="mt-4 grid gap-4 xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
+          <Card className="flex min-h-0 flex-col overflow-hidden rounded-lg shadow-none">
+            <CardHeader className="shrink-0 border-b p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <CardTitle className="text-base">Completion Log</CardTitle>
@@ -129,7 +127,7 @@ export function WhatIveDoneBoard({
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-5 p-4">
+            <CardContent className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4">
               {groupedCompletions.length > 0 ? (
                 groupedCompletions.map((group) => (
                   <CompletionGroup group={group} key={group.key} />
@@ -145,7 +143,7 @@ export function WhatIveDoneBoard({
             </CardContent>
           </Card>
 
-          <div className="grid gap-4">
+          <div className="grid gap-4 xl:min-h-0 xl:grid-rows-2">
             <ContributionPanel
               description="Completed work grouped by the Goal it supports"
               items={goalContributions}
@@ -213,32 +211,21 @@ function CompletionCard({ completion }: { completion: Completion }) {
       className="block rounded-lg border bg-background p-3 transition-colors hover:border-primary/50 hover:bg-primary/5"
       href={getWorkspaceNodeHref(completion.id)}
     >
-      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <CheckCircleIcon className="h-4 w-4 text-primary" aria-hidden="true" />
-            <h3 className="text-sm font-medium leading-5">{completion.title}</h3>
-            <span className="rounded-full border bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-              {completion.category}
-            </span>
-          </div>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">{completion.memo}</p>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1">
-              <CalendarDaysIcon className="h-3.5 w-3.5" aria-hidden="true" />
-              {completion.completedAt}
-            </span>
-            <span>{completion.goal} / {completion.plan}</span>
-          </div>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <CheckCircleIcon className="h-4 w-4 text-primary" aria-hidden="true" />
+          <h3 className="text-sm font-medium leading-5">{completion.title}</h3>
+          <span className="rounded-full border bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+            {completion.category}
+          </span>
         </div>
-
-        <div className="flex items-start justify-end">
-          <Button asChild size="sm" variant="ghost">
-            <span>
-              <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden="true" />
-              Workspace
-            </span>
-          </Button>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">{completion.memo}</p>
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1">
+            <CalendarDaysIcon className="h-3.5 w-3.5" aria-hidden="true" />
+            {completion.completedAt}
+          </span>
+          <span>{completion.goal} / {completion.plan}</span>
         </div>
       </div>
     </Link>
@@ -255,8 +242,8 @@ function ContributionPanel({
   items: Contribution[];
 }) {
   return (
-    <Card className="rounded-lg shadow-none">
-      <CardHeader className="border-b p-4">
+    <Card className="flex min-h-0 flex-col overflow-hidden rounded-lg shadow-none">
+      <CardHeader className="shrink-0 border-b p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
             <CardTitle className="text-base">{title}</CardTitle>
@@ -265,7 +252,7 @@ function ContributionPanel({
           <Squares2X2Icon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
         </div>
       </CardHeader>
-      <CardContent className="space-y-4 p-4">
+      <CardContent className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
         {items.length > 0 ? (
           items.map((item) => (
             <div key={item.label} className="space-y-2">
