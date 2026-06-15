@@ -99,10 +99,11 @@ export function TimelineBoard({ initialNodes }: { initialNodes: GoalTreeNode[] }
             <p className="text-sm font-medium text-muted-foreground">Goaltree</p>
             <h1 className="mt-1 text-2xl font-semibold">Timeline</h1>
           </div>
-          <div className="flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
-            <CalendarDaysIcon className="h-4 w-4" aria-hidden="true" />
-            <span>{rangeViewLabel(rangeView)}</span>
-          </div>
+          <SegmentedControl
+            items={rangeViews}
+            value={rangeView}
+            onChange={setRangeView}
+          />
         </header>
 
         <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -140,11 +141,6 @@ export function TimelineBoard({ initialNodes }: { initialNodes: GoalTreeNode[] }
                     items={nodeTypeViews}
                     value={nodeType}
                     onChange={setNodeType}
-                  />
-                  <SegmentedControl
-                    items={rangeViews}
-                    value={rangeView}
-                    onChange={setRangeView}
                   />
                 </div>
               </div>
@@ -687,12 +683,4 @@ function formatRangeLabel(start: string, end: string) {
   }
 
   return `${format(parseISO(start), "MMM d")} - ${format(parseISO(end), "MMM d")}`;
-}
-
-function rangeViewLabel(rangeView: RangeView) {
-  return rangeView === "week"
-    ? "Weekly view"
-    : rangeView === "month"
-      ? "Monthly view"
-      : "Yearly view";
 }
