@@ -24,7 +24,6 @@ import {
   CheckIcon,
   ChevronRightIcon,
   ExclamationTriangleIcon,
-  Squares2X2Icon,
 } from "@heroicons/react/24/outline";
 import { GripVertical } from "lucide-react";
 
@@ -342,20 +341,10 @@ function TodayTodoPanel({
   return (
     <Card className="flex min-h-[34rem] flex-col overflow-hidden rounded-lg shadow-none xl:h-full xl:min-h-0">
       <CardHeader className="shrink-0 border-b p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <CardTitle className="text-base">Today TODO</CardTitle>
-            <CardDescription className="mt-1">
-              {todos.filter((todo) => !todo.done).length} open tasks
-            </CardDescription>
-          </div>
-          <Button asChild size="sm" variant="outline">
-            <Link href="/workspace">
-              <Squares2X2Icon className="h-4 w-4" aria-hidden="true" />
-              Workspace
-            </Link>
-          </Button>
-        </div>
+        <CardTitle className="text-base">Today TODO</CardTitle>
+        <CardDescription className="mt-1">
+          {todos.filter((todo) => !todo.done).length} open tasks
+        </CardDescription>
       </CardHeader>
 
       <CardContent className="min-h-0 flex-1 overflow-y-auto p-3">
