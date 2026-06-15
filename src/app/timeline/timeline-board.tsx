@@ -155,30 +155,33 @@ export function TimelineBoard({ initialNodes }: { initialNodes: GoalTreeNode[] }
         <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
           <Card className="rounded-lg shadow-none">
             <CardHeader className="border-b p-4">
-              <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
+              <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
                 <div className="min-w-0">
                   <CardTitle className="text-base">Timeline Track</CardTitle>
-                  <CardDescription className="mt-1">
-                    {timelineMode === "done" ? "Actual date ranges" : "Planned date ranges"}
-                  </CardDescription>
                 </div>
-                <div className="flex flex-wrap gap-2 xl:flex-nowrap xl:justify-end">
+                <div className="grid gap-2 sm:flex sm:flex-wrap 2xl:justify-end">
                   <PeriodNavigator
                     label={periodRange.label}
                     rangeView={rangeView}
                     onNext={() => handleMovePeriod(1)}
                     onPrevious={() => handleMovePeriod(-1)}
                   />
-                  <SegmentedControl
-                    items={timelineModes}
-                    value={timelineMode}
-                    onChange={setTimelineMode}
-                  />
-                  <SegmentedControl
-                    items={nodeTypeViews}
-                    value={nodeType}
-                    onChange={setNodeType}
-                  />
+                  <div className="grid grid-cols-2 gap-2 sm:contents">
+                    <SegmentedControl
+                      buttonClassName="flex-1 px-2 sm:flex-none sm:px-3"
+                      className="w-full sm:w-fit"
+                      items={timelineModes}
+                      value={timelineMode}
+                      onChange={setTimelineMode}
+                    />
+                    <SegmentedControl
+                      buttonClassName="flex-1 px-2 sm:flex-none sm:px-3"
+                      className="w-full sm:w-fit"
+                      items={nodeTypeViews}
+                      value={nodeType}
+                      onChange={setNodeType}
+                    />
+                  </div>
                 </div>
               </div>
             </CardHeader>
@@ -211,20 +214,30 @@ export function TimelineBoard({ initialNodes }: { initialNodes: GoalTreeNode[] }
 }
 
 function SegmentedControl<TValue extends string>({
+  buttonClassName,
+  className,
   items,
   value,
   onChange,
 }: {
+  buttonClassName?: string;
+  className?: string;
   items: Array<{ value: TValue; label: string }>;
   value: TValue;
   onChange: (value: TValue) => void;
 }) {
   return (
-    <div className="inline-flex w-fit max-w-full shrink-0 self-start rounded-md border bg-muted/50 p-1">
+    <div
+      className={cn(
+        "inline-flex w-fit max-w-full shrink-0 self-start rounded-md border bg-muted/50 p-1",
+        className,
+      )}
+    >
       {items.map((item) => (
         <button
           className={cn(
             "rounded px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors",
+            buttonClassName,
             value === item.value && "bg-primary text-primary-foreground shadow-sm",
           )}
           key={item.value}
@@ -250,7 +263,7 @@ function PeriodNavigator({
   onPrevious: () => void;
 }) {
   return (
-    <div className="inline-flex w-fit max-w-full shrink-0 items-center rounded-md border bg-muted/50 p-1">
+    <div className="inline-flex w-full max-w-full shrink-0 items-center rounded-md border bg-muted/50 p-1 sm:w-fit">
       <button
         aria-label={`Previous ${rangeView}`}
         className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
@@ -259,7 +272,7 @@ function PeriodNavigator({
       >
         <ChevronLeftIcon className="h-4 w-4" aria-hidden="true" />
       </button>
-      <span className="min-w-0 whitespace-nowrap px-2 text-center text-sm font-medium text-foreground sm:min-w-36">
+      <span className="min-w-0 flex-1 whitespace-nowrap px-2 text-center text-sm font-medium text-foreground sm:min-w-36">
         {label}
       </span>
       <button
@@ -334,7 +347,7 @@ function TimelineItemCard({ item, mode }: { item: TimelineItem; mode: TimelineMo
     >
       <span className="absolute -left-[1.34rem] top-4 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary" />
 
-      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             {mode === "done" ? (
@@ -365,7 +378,7 @@ function TimelineItemCard({ item, mode }: { item: TimelineItem; mode: TimelineMo
           <Button asChild size="sm" variant="ghost">
             <span>
               <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden="true" />
-              Workspace
+              <span className="hidden sm:inline">Workspace</span>
             </span>
           </Button>
         </div>
