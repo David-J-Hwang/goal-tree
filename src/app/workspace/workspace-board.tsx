@@ -1117,9 +1117,12 @@ function DetailPanel({
 
   if (!node) {
     return (
-      <Card className="min-h-[34rem] rounded-lg shadow-none xl:h-full xl:min-h-0">
-        <CardHeader className="border-b p-4">
-          <CardTitle className="text-base">Detail Panel</CardTitle>
+      <Card className="flex min-h-[34rem] flex-col overflow-hidden rounded-lg shadow-none xl:h-full xl:min-h-0">
+        <CardHeader className="shrink-0 border-b p-4">
+          <CardTitle className="text-base">Details</CardTitle>
+          <CardDescription className="mt-1">
+            Select a card to view details
+          </CardDescription>
         </CardHeader>
       </Card>
     );
@@ -1150,27 +1153,32 @@ function DetailPanel({
       <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSave}>
         <CardHeader className="shrink-0 border-b p-3">
           <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <CardDescription>{columnLabels[node.type]}</CardDescription>
-              <label className="mt-2.5 block">
-                <span className="sr-only">{columnLabels[node.type]} title</span>
-                <input
-                  className="h-9 w-full rounded-md border bg-background px-3 text-sm font-medium outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
-                  disabled={isSaving}
-                  onChange={(event) => setTitleValue(event.target.value)}
-                  value={titleValue}
-                />
-              </label>
+            <div className="min-w-0">
+              <CardTitle className="text-base">Details</CardTitle>
             </div>
             <span
               className={cn(
-                "mt-5 inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium",
+                "inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium",
                 status.className,
               )}
             >
               <StatusIcon className="h-3 w-3" aria-hidden="true" />
               {status.label}
             </span>
+          </div>
+          <div className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2">
+            <span className="inline-flex h-9 items-center rounded-md border bg-muted/25 px-2.5 text-xs font-medium text-muted-foreground">
+              {columnLabels[node.type]}
+            </span>
+            <label className="min-w-0">
+              <span className="sr-only">{columnLabels[node.type]} title</span>
+              <input
+                className="h-9 w-full rounded-md border bg-background px-3 text-sm font-medium outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+                disabled={isSaving}
+                onChange={(event) => setTitleValue(event.target.value)}
+                value={titleValue}
+              />
+            </label>
           </div>
         </CardHeader>
         <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 pb-6 pt-3">
