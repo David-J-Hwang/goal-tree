@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowUturnLeftIcon,
   ExclamationTriangleIcon,
@@ -53,6 +53,7 @@ export function TrashBoard({
   const [restoringId, setRestoringId] = useState("");
   const [deletingId, setDeletingId] = useState("");
   const [confirmingDeleteId, setConfirmingDeleteId] = useState("");
+  const confirmDeleteButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const trashedItems = useMemo(() => getTrashedItems(nodes), [nodes]);
 
@@ -67,6 +68,32 @@ export function TrashBoard({
   const taskCount = trashedItems.filter((item) => item.type === "task").length;
   const blockedRestoreCount = trashedItems.filter((item) => item.parentTrashed).length;
   const isMutating = Boolean(restoringId || deletingId);
+
+  useEffect(() => {
+    if (!confirmingDeleteId) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target;
+
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      if (confirmDeleteButtonRef.current?.contains(target)) {
+        return;
+      }
+
+      setConfirmingDeleteId("");
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [confirmingDeleteId]);
 
   async function handleRestore(item: TrashedItem) {
     if (item.parentTrashed) {
@@ -181,12 +208,17 @@ export function TrashBoard({
                     isConfirmingDelete={confirmingDeleteId === item.id}
                     isDeleting={deletingId === item.id}
                     isMutating={isMutating}
-                    isRestoring={restoringId === item.id}
-                    item={item}
-                    key={item.id}
-                    onDelete={() => handleDelete(item)}
-                    onRestore={() => handleRestore(item)}
-                  />
+                  isRestoring={restoringId === item.id}
+                  item={item}
+                  key={item.id}
+                  onConfirmDeleteButtonRef={(element) => {
+                    if (confirmingDeleteId === item.id) {
+                      confirmDeleteButtonRef.current = element;
+                    }
+                  }}
+                  onDelete={() => handleDelete(item)}
+                  onRestore={() => handleRestore(item)}
+                />
                 ))
               ) : (
                 <div className="flex min-h-40 items-center justify-center rounded-md border border-dashed px-4 text-center text-sm text-muted-foreground">
@@ -262,6 +294,7 @@ function TrashItemCard({
   isMutating,
   isRestoring,
   item,
+  onConfirmDeleteButtonRef,
   onDelete,
   onRestore,
 }: {
@@ -270,6 +303,7 @@ function TrashItemCard({
   isMutating: boolean;
   isRestoring: boolean;
   item: TrashedItem;
+  onConfirmDeleteButtonRef: (element: HTMLButtonElement | null) => void;
   onDelete: () => void;
   onRestore: () => void;
 }) {
@@ -319,6 +353,7 @@ function TrashItemCard({
                 : "border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 dark:border-red-800/40 dark:bg-red-950/25 dark:text-red-300/85 dark:hover:bg-red-950/40 dark:hover:text-red-200",
             )}
             disabled={isMutating && !isDeleting}
+            ref={onConfirmDeleteButtonRef}
             size="sm"
             variant="outline"
             onClick={onDelete}
