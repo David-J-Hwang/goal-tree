@@ -78,85 +78,87 @@ export function WhatIveDoneBoard({
 
   return (
     <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8">
-      <header className="flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">Goaltree</p>
-          <h1 className="mt-1 text-2xl font-semibold">What I&apos;ve Done</h1>
-        </div>
-        <div className="flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
-          <TrophyIcon className="h-4 w-4" aria-hidden="true" />
-          <span>{completions.length} completed tasks</span>
-        </div>
-      </header>
+      <div className="mx-auto max-w-[1440px]">
+        <header className="flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Goaltree</p>
+            <h1 className="mt-1 text-2xl font-semibold">What I&apos;ve Done</h1>
+          </div>
+          <div className="flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
+            <TrophyIcon className="h-4 w-4" aria-hidden="true" />
+            <span>{completions.length} completed tasks</span>
+          </div>
+        </header>
 
-      <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {summaryItems.map((item) => (
-          <SummaryTile
-            detail={item.detail}
-            key={item.label}
-            label={item.label}
-            value={item.value}
-          />
-        ))}
-      </section>
+        <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {summaryItems.map((item) => (
+            <SummaryTile
+              detail={item.detail}
+              key={item.label}
+              label={item.label}
+              value={item.value}
+            />
+          ))}
+        </section>
 
-      <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
-        <Card className="rounded-lg shadow-none">
-          <CardHeader className="border-b p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <CardTitle className="text-base">Completion Log</CardTitle>
-                <CardDescription className="mt-1">
-                  Completed Tasks grouped by {viewMode}
-                </CardDescription>
+        <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
+          <Card className="rounded-lg shadow-none">
+            <CardHeader className="border-b p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <CardTitle className="text-base">Completion Log</CardTitle>
+                  <CardDescription className="mt-1">
+                    Completed Tasks grouped by {viewMode}
+                  </CardDescription>
+                </div>
+                <div className="inline-flex rounded-md border bg-muted/50 p-1">
+                  {viewModes.map((mode) => (
+                    <button
+                      className={cn(
+                        "rounded px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors",
+                        viewMode === mode.value &&
+                          "bg-background text-foreground shadow-sm",
+                      )}
+                      key={mode.value}
+                      onClick={() => setViewMode(mode.value)}
+                      type="button"
+                    >
+                      {mode.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="inline-flex rounded-md border bg-muted/50 p-1">
-                {viewModes.map((mode) => (
-                  <button
-                    className={cn(
-                      "rounded px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors",
-                      viewMode === mode.value &&
-                        "bg-background text-foreground shadow-sm",
-                    )}
-                    key={mode.value}
-                    onClick={() => setViewMode(mode.value)}
-                    type="button"
-                  >
-                    {mode.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-5 p-4">
-            {groupedCompletions.length > 0 ? (
-              groupedCompletions.map((group) => (
-                <CompletionGroup group={group} key={group.key} />
-              ))
-            ) : (
-              <div className="flex min-h-40 flex-col items-center justify-center rounded-md border border-dashed px-4 text-center">
-                <p className="text-sm font-medium">No completed Tasks yet</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Complete Tasks from Dashboard or Workspace to build your log.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent className="space-y-5 p-4">
+              {groupedCompletions.length > 0 ? (
+                groupedCompletions.map((group) => (
+                  <CompletionGroup group={group} key={group.key} />
+                ))
+              ) : (
+                <div className="flex min-h-40 flex-col items-center justify-center rounded-md border border-dashed px-4 text-center">
+                  <p className="text-sm font-medium">No completed Tasks yet</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Complete Tasks from Dashboard or Workspace to build your log.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-        <div className="grid gap-4">
-          <ContributionPanel
-            description="Completed work grouped by the Goal it supports"
-            items={goalContributions}
-            title="Goal Contribution"
-          />
-          <ContributionPanel
-            description="Completed work grouped by the Plan it moved forward"
-            items={planContributions}
-            title="Plan Contribution"
-          />
-        </div>
-      </section>
+          <div className="grid gap-4">
+            <ContributionPanel
+              description="Completed work grouped by the Goal it supports"
+              items={goalContributions}
+              title="Goal Contribution"
+            />
+            <ContributionPanel
+              description="Completed work grouped by the Plan it moved forward"
+              items={planContributions}
+              title="Plan Contribution"
+            />
+          </div>
+        </section>
+      </div>
     </main>
   );
 }
