@@ -218,9 +218,9 @@ export function DashboardBoard({
   }
 
   return (
-    <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-[1440px]">
-        <header className="flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
+    <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8 xl:h-[calc(100dvh-3.5rem-1px)] xl:min-h-0 xl:overflow-hidden">
+      <div className="mx-auto flex min-h-0 max-w-[1440px] flex-col xl:h-full">
+        <header className="flex shrink-0 flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-medium text-muted-foreground">Goaltree</p>
             <h1 className="mt-1 text-2xl font-semibold">Dashboard</h1>
@@ -231,7 +231,7 @@ export function DashboardBoard({
           </div>
         </header>
 
-        <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="mt-5 grid shrink-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {summaryItems.map((item) => (
             <SummaryTile
               detail={item.detail}
@@ -242,7 +242,7 @@ export function DashboardBoard({
           ))}
         </section>
 
-        <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.85fr)]">
+        <section className="mt-4 grid gap-4 xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.85fr)]">
           <TodayTodoPanel
             errorMessage={todoError}
             todos={todos}
@@ -251,7 +251,7 @@ export function DashboardBoard({
             onToggleTodo={handleToggleTodo}
           />
 
-          <div className="grid gap-4">
+          <div className="grid gap-4 xl:min-h-0 xl:grid-rows-3">
             <ThisWeekFocusPanel items={focusItems} />
             {showOptionalPanels ? (
               <OptionalDashboardPanels
@@ -338,8 +338,8 @@ function TodayTodoPanel({
   }
 
   return (
-    <Card className="min-h-[34rem] rounded-lg shadow-none">
-      <CardHeader className="border-b p-4">
+    <Card className="flex min-h-[34rem] flex-col overflow-hidden rounded-lg shadow-none xl:h-full xl:min-h-0">
+      <CardHeader className="shrink-0 border-b p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
             <CardTitle className="text-base">Today TODO</CardTitle>
@@ -356,7 +356,7 @@ function TodayTodoPanel({
         </div>
       </CardHeader>
 
-      <CardContent className="p-3">
+      <CardContent className="min-h-0 flex-1 overflow-y-auto p-3">
         {errorMessage ? (
           <p className="mb-3 rounded-md border border-destructive/25 bg-destructive/5 px-3 py-2 text-sm text-destructive">
             {errorMessage}
@@ -513,12 +513,12 @@ function SortableTodoRow({
 
 function ThisWeekFocusPanel({ items }: { items: FocusItem[] }) {
   return (
-    <Card className="rounded-lg shadow-none">
-      <CardHeader className="border-b p-4">
+    <Card className="flex min-h-0 flex-col overflow-hidden rounded-lg shadow-none">
+      <CardHeader className="shrink-0 border-b p-4">
         <CardTitle className="text-base">This Week Focus</CardTitle>
         <CardDescription className="mt-1">{items.length} active priorities</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4 p-4">
+      <CardContent className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
         {items.length > 0 ? (
           items.map((item) => (
             <div key={item.id} className="space-y-2">
@@ -559,7 +559,7 @@ function OptionalDashboardPanels({
   completionItems: InsightItem[];
 }) {
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
+    <>
       <InsightPanel
         description={`${completionItems.length} completed`}
         icon={ArrowPathIcon}
@@ -572,7 +572,7 @@ function OptionalDashboardPanels({
         items={blockedItems}
         title="Blocked"
       />
-    </div>
+    </>
   );
 }
 
@@ -588,8 +588,8 @@ function InsightPanel({
   items: InsightItem[];
 }) {
   return (
-    <Card className="rounded-lg shadow-none">
-      <CardHeader className="border-b p-4">
+    <Card className="flex min-h-0 flex-col overflow-hidden rounded-lg shadow-none">
+      <CardHeader className="shrink-0 border-b p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
             <CardTitle className="text-base">{title}</CardTitle>
@@ -598,7 +598,7 @@ function InsightPanel({
           <Icon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
         </div>
       </CardHeader>
-      <CardContent className="space-y-3 p-4">
+      <CardContent className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
         {items.length > 0 ? (
           items.map((item) => (
             <Link
