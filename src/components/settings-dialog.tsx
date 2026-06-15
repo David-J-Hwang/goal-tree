@@ -437,10 +437,10 @@ export function SettingsDialog() {
               className="rounded-md border bg-muted/25 p-3"
               onSubmit={handleAddCategory}
             >
-              <div className="grid gap-2 sm:grid-cols-[3rem_minmax(0,1fr)_auto]">
+              <div className="grid gap-2 sm:grid-cols-[2.5rem_minmax(0,1fr)_auto]">
                 <input
                   aria-label="New category color"
-                  className="h-10 w-full rounded-md border bg-background p-1"
+                  className="size-10 rounded-md border bg-background p-1"
                   disabled={isAddingCategory || isLoading}
                   onChange={(event) => setNewCategoryColor(event.target.value)}
                   type="color"
@@ -464,12 +464,12 @@ export function SettingsDialog() {
               {categories.length > 0 ? (
                 categories.map((category) => (
                   <div
-                    className="grid gap-2 rounded-md border bg-background p-3 sm:grid-cols-[3rem_minmax(0,1fr)_auto_auto]"
+                    className="grid gap-2 rounded-md border bg-background p-3 sm:grid-cols-[2.5rem_minmax(0,1fr)_auto_auto]"
                     key={category.id}
                   >
                     <input
                       aria-label={`${category.name} color`}
-                      className="h-10 w-full rounded-md border bg-background p-1"
+                      className="size-10 rounded-md border bg-background p-1"
                       disabled={isLoading || savingCategoryId === category.id}
                       onChange={(event) =>
                         updateCategoryDraft(category.id, {
