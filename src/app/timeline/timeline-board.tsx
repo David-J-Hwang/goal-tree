@@ -93,84 +93,86 @@ export function TimelineBoard({ initialNodes }: { initialNodes: GoalTreeNode[] }
 
   return (
     <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8">
-      <header className="flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">Goaltree</p>
-          <h1 className="mt-1 text-2xl font-semibold">Timeline</h1>
-        </div>
-        <div className="flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
-          <CalendarDaysIcon className="h-4 w-4" aria-hidden="true" />
-          <span>{rangeViewLabel(rangeView)}</span>
-        </div>
-      </header>
+      <div className="mx-auto max-w-[1440px]">
+        <header className="flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Goaltree</p>
+            <h1 className="mt-1 text-2xl font-semibold">Timeline</h1>
+          </div>
+          <div className="flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
+            <CalendarDaysIcon className="h-4 w-4" aria-hidden="true" />
+            <span>{rangeViewLabel(rangeView)}</span>
+          </div>
+        </header>
 
-      <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryTile label="Visible" value={String(visibleItems.length)} detail={`${nodeType} items`} />
-        <SummaryTile label="Ranges" value={String(rangeItems.length)} detail="multi-day items" />
-        <SummaryTile
-          label="Upcoming"
-          value={String(countItems(timelineItems, nodeType, "upcoming"))}
-          detail="planned items"
-        />
-        <SummaryTile
-          label="Done"
-          value={String(countItems(timelineItems, nodeType, "done"))}
-          detail="completed items"
-        />
-      </section>
+        <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <SummaryTile label="Visible" value={String(visibleItems.length)} detail={`${nodeType} items`} />
+          <SummaryTile label="Ranges" value={String(rangeItems.length)} detail="multi-day items" />
+          <SummaryTile
+            label="Upcoming"
+            value={String(countItems(timelineItems, nodeType, "upcoming"))}
+            detail="planned items"
+          />
+          <SummaryTile
+            label="Done"
+            value={String(countItems(timelineItems, nodeType, "done"))}
+            detail="completed items"
+          />
+        </section>
 
-      <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
-        <Card className="rounded-lg shadow-none">
-          <CardHeader className="border-b p-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-              <div>
-                <CardTitle className="text-base">Timeline Track</CardTitle>
-                <CardDescription className="mt-1">
-                  {timelineMode === "done" ? "Actual date ranges" : "Planned date ranges"}
-                </CardDescription>
+        <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
+          <Card className="rounded-lg shadow-none">
+            <CardHeader className="border-b p-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <CardTitle className="text-base">Timeline Track</CardTitle>
+                  <CardDescription className="mt-1">
+                    {timelineMode === "done" ? "Actual date ranges" : "Planned date ranges"}
+                  </CardDescription>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <SegmentedControl
+                    items={timelineModes}
+                    value={timelineMode}
+                    onChange={setTimelineMode}
+                  />
+                  <SegmentedControl
+                    items={nodeTypeViews}
+                    value={nodeType}
+                    onChange={setNodeType}
+                  />
+                  <SegmentedControl
+                    items={rangeViews}
+                    value={rangeView}
+                    onChange={setRangeView}
+                  />
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <SegmentedControl
-                  items={timelineModes}
-                  value={timelineMode}
-                  onChange={setTimelineMode}
-                />
-                <SegmentedControl
-                  items={nodeTypeViews}
-                  value={nodeType}
-                  onChange={setNodeType}
-                />
-                <SegmentedControl
-                  items={rangeViews}
-                  value={rangeView}
-                  onChange={setRangeView}
-                />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-4">
-            {groupedItems.length > 0 ? (
-              <div className="space-y-6">
-                {groupedItems.map((group) => (
-                  <TimelineGroup group={group} key={group.key} mode={timelineMode} />
-                ))}
-              </div>
-            ) : (
-              <div className="flex min-h-40 flex-col items-center justify-center rounded-md border border-dashed px-4 text-center">
-                <p className="text-sm font-medium">No timeline items yet</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Add planned or actual dates in Workspace to build this view.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent className="p-4">
+              {groupedItems.length > 0 ? (
+                <div className="space-y-6">
+                  {groupedItems.map((group) => (
+                    <TimelineGroup group={group} key={group.key} mode={timelineMode} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex min-h-40 flex-col items-center justify-center rounded-md border border-dashed px-4 text-center">
+                  <p className="text-sm font-medium">No timeline items yet</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Add planned or actual dates in Workspace to build this view.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-        <div className="grid gap-4">
-          <RangeOverviewPanel items={rangeItems} mode={timelineMode} nodeType={nodeType} />
-          <LegendPanel />
-        </div>
-      </section>
+          <div className="grid gap-4">
+            <RangeOverviewPanel items={rangeItems} mode={timelineMode} nodeType={nodeType} />
+            <LegendPanel />
+          </div>
+        </section>
+      </div>
     </main>
   );
 }
