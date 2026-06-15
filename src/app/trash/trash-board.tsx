@@ -182,11 +182,11 @@ export function TrashBoard({
           </div>
         </header>
 
-        <section className="mt-5 grid shrink-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <SummaryTile label="All" value={String(trashedItems.length)} detail="trashed items" />
-          <SummaryTile label="Goals" value={String(goalCount)} detail="top-level items" />
-          <SummaryTile label="Plans" value={String(planCount)} detail="under goals" />
-          <SummaryTile label="Tasks" value={String(taskCount)} detail="actions" />
+        <section className="mt-5 grid shrink-0 grid-cols-4 gap-2 sm:gap-3">
+          <SummaryTile label="All" value={String(trashedItems.length)} />
+          <SummaryTile label="Goals" value={String(goalCount)} />
+          <SummaryTile label="Plans" value={String(planCount)} />
+          <SummaryTile label="Tasks" value={String(taskCount)} />
         </section>
 
         <section className="mt-4 grid gap-4 xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
@@ -247,20 +247,19 @@ export function TrashBoard({
 function SummaryTile({
   label,
   value,
-  detail,
 }: {
   label: string;
   value: string;
-  detail: string;
 }) {
   return (
-    <Card className="rounded-lg shadow-none">
-      <CardContent className="flex items-end justify-between gap-3 p-4">
-        <div>
-          <p className="text-xs font-medium uppercase text-muted-foreground">{label}</p>
-          <p className="mt-2 text-2xl font-semibold">{value}</p>
+    <Card className="min-w-0 rounded-lg shadow-none">
+      <CardContent className="flex min-w-0 flex-col gap-1 p-3 sm:p-4">
+        <div className="min-w-0">
+          <p className="truncate text-[10px] font-medium uppercase text-muted-foreground sm:text-xs">
+            {label}
+          </p>
+          <p className="mt-1 text-xl font-semibold sm:mt-2 sm:text-2xl">{value}</p>
         </div>
-        <p className="pb-1 text-right text-xs text-muted-foreground">{detail}</p>
       </CardContent>
     </Card>
   );
