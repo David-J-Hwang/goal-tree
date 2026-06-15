@@ -40,6 +40,12 @@ const filters: Array<{ value: TrashFilter; label: string }> = [
   { value: "task", label: "Task" },
 ];
 
+const nodeTypeLabels: Record<NodeType, string> = {
+  goal: "Goal",
+  plan: "Plan",
+  task: "Task",
+};
+
 export function TrashBoard({
   initialNodes,
   userId,
@@ -308,6 +314,7 @@ function TrashItemCard({
   onRestore: () => void;
 }) {
   const restoreBlocked = Boolean(item.parentTrashed);
+  const breadcrumb = getBreadcrumb(item);
 
   return (
     <article className="rounded-lg border bg-background p-3">
@@ -318,9 +325,11 @@ function TrashItemCard({
             <h2 className="text-sm font-medium leading-5">{item.title}</h2>
             <StatusBadge status={item.status} />
           </div>
-          <p className="mt-2 truncate text-xs text-muted-foreground">
-            {getBreadcrumb(item)}
-          </p>
+          {breadcrumb ? (
+            <p className="mt-2 truncate text-xs text-muted-foreground">
+              {breadcrumb}
+            </p>
+          ) : null}
           <p className="mt-2 text-xs text-muted-foreground">
             Moved to trash: {formatTimestamp(item.trashedAt)}
           </p>
@@ -423,7 +432,7 @@ function PolicyRow({ label, value }: { label: string; value: string }) {
 function TypeBadge({ type }: { type: NodeType }) {
   return (
     <span className="rounded-full border bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
-      {type}
+      {nodeTypeLabels[type]}
     </span>
   );
 }
@@ -460,7 +469,7 @@ function StatusBadge({ status }: { status: NodeStatus }) {
 
 function getBreadcrumb(item: TrashedItem) {
   if (item.type === "goal") {
-    return "Goal";
+    return "";
   }
 
   if (item.type === "plan") {
