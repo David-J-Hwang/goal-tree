@@ -7,7 +7,6 @@ import {
   CalendarDaysIcon,
   CheckCircleIcon,
   Squares2X2Icon,
-  TrophyIcon,
 } from "@heroicons/react/24/outline";
 
 import {
@@ -81,10 +80,6 @@ export function WhatIveDoneBoard({
           <div>
             <p className="text-sm font-medium text-muted-foreground">Goaltree</p>
             <h1 className="mt-1 text-2xl font-semibold">What I&apos;ve Done</h1>
-          </div>
-          <div className="flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
-            <TrophyIcon className="h-4 w-4" aria-hidden="true" />
-            <span>{completions.length} completed tasks</span>
           </div>
         </header>
 
