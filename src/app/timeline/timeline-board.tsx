@@ -17,13 +17,13 @@ import {
   startOfYear,
 } from "date-fns";
 import {
+  CalendarDateRangeIcon,
   CalendarDaysIcon,
   CheckCircleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   ClockIcon,
-  FlagIcon,
-  QueueListIcon,
+  InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 
 import { Button } from "@/components/ui/button";
@@ -127,8 +127,8 @@ export function TimelineBoard({ initialNodes }: { initialNodes: GoalTreeNode[] }
   }
 
   return (
-    <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-[1440px]">
+    <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8 xl:h-[calc(100dvh-3.5rem-1px)] xl:min-h-0 xl:overflow-hidden">
+      <div className="mx-auto flex min-h-0 max-w-[1440px] flex-col xl:h-full">
         <header className="flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-medium text-muted-foreground">Goaltree</p>
@@ -151,8 +151,8 @@ export function TimelineBoard({ initialNodes }: { initialNodes: GoalTreeNode[] }
           ))}
         </section>
 
-        <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
-          <Card className="flex h-[36rem] min-h-0 flex-col overflow-hidden rounded-lg shadow-none">
+        <section className="mt-4 grid gap-4 xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
+          <Card className="flex h-[36rem] min-h-0 flex-col overflow-hidden rounded-lg shadow-none xl:h-full">
             <CardHeader className="shrink-0 border-b p-4">
               <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
                 <div className="min-w-0">
@@ -202,7 +202,7 @@ export function TimelineBoard({ initialNodes }: { initialNodes: GoalTreeNode[] }
             </CardContent>
           </Card>
 
-          <div className="grid gap-4">
+          <div className="grid gap-4 xl:min-h-0 xl:grid-rows-2">
             <RangeOverviewPanel items={rangeItems} mode={timelineMode} nodeType={nodeType} />
             <LegendPanel />
           </div>
@@ -431,7 +431,7 @@ function RangeOverviewPanel({
   nodeType: TimelineNodeType;
 }) {
   return (
-    <Card className="flex h-64 min-h-0 flex-col overflow-hidden rounded-lg shadow-none">
+    <Card className="flex h-64 min-h-0 flex-col overflow-hidden rounded-lg shadow-none xl:h-full">
       <CardHeader className="shrink-0 border-b p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -440,7 +440,7 @@ function RangeOverviewPanel({
               {getNodeTypeLabel(nodeType)} spanning two or more days
             </CardDescription>
           </div>
-          <QueueListIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+          <CalendarDateRangeIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
         </div>
       </CardHeader>
       <CardContent className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
@@ -484,14 +484,14 @@ function RangeOverviewPanel({
 
 function LegendPanel() {
   return (
-    <Card className="flex h-64 min-h-0 flex-col overflow-hidden rounded-lg shadow-none">
+    <Card className="flex h-64 min-h-0 flex-col overflow-hidden rounded-lg shadow-none xl:h-full">
       <CardHeader className="shrink-0 border-b p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
             <CardTitle className="text-base">Timeline Legend</CardTitle>
             <CardDescription className="mt-1">How to read this page</CardDescription>
           </div>
-          <FlagIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+          <InformationCircleIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
         </div>
       </CardHeader>
       <CardContent className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4 text-sm text-muted-foreground">
