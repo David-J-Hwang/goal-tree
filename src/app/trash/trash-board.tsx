@@ -136,9 +136,9 @@ export function TrashBoard({
   }
 
   return (
-    <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-[1440px]">
-        <header className="flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
+    <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8 xl:h-[calc(100dvh-3.5rem-1px)] xl:min-h-0 xl:overflow-hidden">
+      <div className="mx-auto flex min-h-0 max-w-[1440px] flex-col xl:h-full">
+        <header className="flex shrink-0 flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-medium text-muted-foreground">Goaltree</p>
             <h1 className="mt-1 text-2xl font-semibold">Trash</h1>
@@ -149,16 +149,16 @@ export function TrashBoard({
           </div>
         </header>
 
-        <section className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="mt-5 grid shrink-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <SummaryTile label="All" value={String(trashedItems.length)} detail="trashed items" />
           <SummaryTile label="Goals" value={String(goalCount)} detail="top-level items" />
           <SummaryTile label="Plans" value={String(planCount)} detail="under goals" />
           <SummaryTile label="Tasks" value={String(taskCount)} detail="actions" />
         </section>
 
-        <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
-          <Card className="rounded-lg shadow-none">
-            <CardHeader className="border-b p-4">
+        <section className="mt-4 grid gap-4 xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
+          <Card className="flex min-h-0 flex-col overflow-hidden rounded-lg shadow-none">
+            <CardHeader className="shrink-0 border-b p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <CardTitle className="text-base">Trashed Items</CardTitle>
@@ -169,7 +169,7 @@ export function TrashBoard({
                 <SegmentedControl items={filters} value={filter} onChange={setFilter} />
               </div>
             </CardHeader>
-            <CardContent className="space-y-3 p-4">
+            <CardContent className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
               {actionError ? (
                 <p className="rounded-md border border-destructive/25 bg-destructive/5 px-3 py-2 text-sm text-destructive">
                   {actionError}
@@ -196,7 +196,7 @@ export function TrashBoard({
             </CardContent>
           </Card>
 
-          <div className="grid gap-4">
+          <div className="grid gap-4 xl:min-h-0 xl:grid-rows-2">
             <RestorePolicyPanel blockedRestoreCount={blockedRestoreCount} />
             <PermanentDeletePanel />
           </div>
@@ -334,8 +334,8 @@ function TrashItemCard({
 
 function RestorePolicyPanel({ blockedRestoreCount }: { blockedRestoreCount: number }) {
   return (
-    <Card className="rounded-lg shadow-none">
-      <CardHeader className="border-b p-4">
+    <Card className="flex min-h-0 flex-col overflow-hidden rounded-lg shadow-none">
+      <CardHeader className="shrink-0 border-b p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
             <CardTitle className="text-base">Restore Rules</CardTitle>
@@ -346,7 +346,7 @@ function RestorePolicyPanel({ blockedRestoreCount }: { blockedRestoreCount: numb
           <InformationCircleIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
         </div>
       </CardHeader>
-      <CardContent className="space-y-3 p-4 text-sm text-muted-foreground">
+      <CardContent className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4 text-sm text-muted-foreground">
         <PolicyRow label="Goal" value="Restores its child Plans and Tasks" />
         <PolicyRow label="Plan" value="Restore parent Goal first if trashed" />
         <PolicyRow label="Task" value="Restore parent Plan first if trashed" />
@@ -357,8 +357,8 @@ function RestorePolicyPanel({ blockedRestoreCount }: { blockedRestoreCount: numb
 
 function PermanentDeletePanel() {
   return (
-    <Card className="rounded-lg shadow-none">
-      <CardHeader className="border-b p-4">
+    <Card className="flex min-h-0 flex-col overflow-hidden rounded-lg shadow-none">
+      <CardHeader className="shrink-0 border-b p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
             <CardTitle className="text-base">Permanent Delete</CardTitle>
@@ -367,7 +367,7 @@ function PermanentDeletePanel() {
           <ExclamationTriangleIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
         </div>
       </CardHeader>
-      <CardContent className="space-y-3 p-4 text-sm text-muted-foreground">
+      <CardContent className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4 text-sm text-muted-foreground">
         <PolicyRow label="Trash" value="Hidden from normal screens" />
         <PolicyRow label="Paused" value="Still alive and can be resumed" />
         <PolicyRow label="Delete" value="Needs confirmation before DB removal" />
