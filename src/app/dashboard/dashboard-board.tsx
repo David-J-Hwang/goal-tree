@@ -20,6 +20,7 @@ import {
 } from "@dnd-kit/sortable";
 import {
   ArrowPathIcon,
+  ArrowTopRightOnSquareIcon,
   CalendarDaysIcon,
   CheckIcon,
   ChevronLeftIcon,
@@ -91,6 +92,7 @@ export function DashboardBoard({
   const [nodes, setNodes] = useState(initialNodes);
   const [todayTodos, setTodayTodos] = useState(initialTodayTodos);
   const [updatingTodoId, setUpdatingTodoId] = useState("");
+  const [movingToTodayTaskId, setMovingToTodayTaskId] = useState("");
   const [todoError, setTodoError] = useState("");
   const [selectedTodoDate, setSelectedTodoDate] = useState(initialTodayDate);
   const oldestTodoDate = useMemo(
@@ -104,6 +106,15 @@ export function DashboardBoard({
   const selectedTodoItems = useMemo(
     () => getTodoItems(todayTodos, nodes, selectedTodoDate),
     [nodes, selectedTodoDate, todayTodos],
+  );
+  const todayTaskIds = useMemo(
+    () =>
+      new Set(
+        todayTodos
+          .filter((todo) => todo.date === initialTodayDate)
+          .map((todo) => todo.taskId),
+      ),
+    [initialTodayDate, todayTodos],
   );
   const focusItems = useMemo(() => getFocusItems(nodes), [nodes]);
   const blockedItems = useMemo(() => getBlockedItems(nodes), [nodes]);
@@ -230,6 +241,50 @@ export function DashboardBoard({
     }
   }
 
+  async function handleAddTodoToToday(taskId: string) {
+    const task = nodes.find((node) => node.id === taskId);
+
+    if (!task || task.type !== "task") {
+      setTodoError("Task was not found.");
+      return;
+    }
+
+    if (todayTaskIds.has(taskId)) {
+      return;
+    }
+
+    setMovingToTodayTaskId(taskId);
+    setTodoError("");
+
+    const supabase = createSupabaseBrowserClient();
+    const { data, error } = await supabase
+      .from("today_todos")
+      .insert({
+        user_id: userId,
+        task_id: taskId,
+        date: initialTodayDate,
+        sort_order: getNextTodoSortOrder(todayTodos, initialTodayDate),
+      })
+      .select(todayTodoSelectColumns)
+      .single()
+      .returns<TodayTodoRow>();
+
+    if (error) {
+      setTodoError(error.message);
+      setMovingToTodayTaskId("");
+      return;
+    }
+
+    if (!data) {
+      setTodoError("Today TODO was not returned.");
+      setMovingToTodayTaskId("");
+      return;
+    }
+
+    setTodayTodos((currentTodos) => [...currentTodos, mapTodayTodoRow(data)]);
+    setMovingToTodayTaskId("");
+  }
+
   function handleMoveTodoDate(direction: -1 | 1) {
     const nextDate = addDaysToDateString(selectedTodoDate, direction);
 
@@ -270,8 +325,11 @@ export function DashboardBoard({
             oldestDate={oldestTodoDate}
             selectedDate={selectedTodoDate}
             todayDate={initialTodayDate}
+            todayTaskIds={todayTaskIds}
             todos={selectedTodoItems}
+            movingToTodayTaskId={movingToTodayTaskId}
             updatingTodoId={updatingTodoId}
+            onAddToToday={handleAddTodoToToday}
             onDateChange={setSelectedTodoDate}
             onMoveDate={handleMoveTodoDate}
             onReorderTodos={handleReorderTodos}
@@ -319,8 +377,11 @@ function TodayTodoPanel({
   oldestDate,
   selectedDate,
   todayDate,
+  todayTaskIds,
   todos,
+  movingToTodayTaskId,
   updatingTodoId,
+  onAddToToday,
   onDateChange,
   onMoveDate,
   onReorderTodos,
@@ -330,8 +391,11 @@ function TodayTodoPanel({
   oldestDate: string;
   selectedDate: string;
   todayDate: string;
+  todayTaskIds: Set<string>;
   todos: TodoItem[];
+  movingToTodayTaskId: string;
   updatingTodoId: string;
+  onAddToToday: (taskId: string) => Promise<void>;
   onDateChange: (date: string) => void;
   onMoveDate: (direction: -1 | 1) => void;
   onReorderTodos: (orderedIds: string[]) => Promise<void>;
@@ -339,7 +403,7 @@ function TodayTodoPanel({
 }) {
   const [isReordering, setIsReordering] = useState(false);
   const isToday = selectedDate === todayDate;
-  const canEdit = isToday;
+  const canToggle = isToday;
   const canMovePrevious = selectedDate > oldestDate;
   const canMoveNext = selectedDate < todayDate;
   const sensors = useSensors(
@@ -354,10 +418,6 @@ function TodayTodoPanel({
   );
 
   async function handleDragEnd(event: DragEndEvent) {
-    if (!canEdit) {
-      return;
-    }
-
     const { active, over } = event;
 
     if (!over || active.id === over.id) {
@@ -442,6 +502,7 @@ function TodayTodoPanel({
         ) : null}
         {todos.length > 0 ? (
           <DndContext
+            id="dashboard-todos"
             collisionDetection={closestCenter}
             modifiers={sortableStackModifiers}
             sensors={sensors}
@@ -452,14 +513,17 @@ function TodayTodoPanel({
               strategy={verticalListSortingStrategy}
             >
               <div className="space-y-2">
-                {todos.map((todo, index) => (
+                {todos.map((todo) => (
                   <SortableTodoRow
-                    index={index}
-                    canEdit={canEdit}
+                    canToggle={canToggle}
+                    isInToday={todayTaskIds.has(todo.taskId)}
+                    isMovingToToday={movingToTodayTaskId === todo.taskId}
                     isReordering={isReordering}
                     isUpdating={updatingTodoId === todo.id}
+                    isToday={isToday}
                     key={todo.id}
                     todo={todo}
+                    onAddToToday={() => onAddToToday(todo.taskId)}
                     onToggle={() => onToggleTodo(todo.id)}
                   />
                 ))}
@@ -485,17 +549,23 @@ function TodayTodoPanel({
 
 function SortableTodoRow({
   todo,
-  index,
-  canEdit,
+  canToggle,
+  isInToday,
+  isMovingToToday,
   isReordering,
   isUpdating,
+  isToday,
+  onAddToToday,
   onToggle,
 }: {
   todo: TodoItem;
-  index: number;
-  canEdit: boolean;
+  canToggle: boolean;
+  isInToday: boolean;
+  isMovingToToday: boolean;
   isReordering: boolean;
   isUpdating: boolean;
+  isToday: boolean;
+  onAddToToday: () => void;
   onToggle: () => void;
 }) {
   const {
@@ -507,7 +577,7 @@ function SortableTodoRow({
     isDragging,
   } = useSortable({
     id: todo.id,
-    disabled: !canEdit || isUpdating || isReordering,
+    disabled: isUpdating || isReordering || isMovingToToday,
     transition: {
       duration: 140,
       easing: "cubic-bezier(0.2, 0, 0, 1)",
@@ -536,10 +606,9 @@ function SortableTodoRow({
         aria-label={`Reorder ${todo.title}`}
         className={cn(
           "mt-0.5 flex h-7 w-7 touch-none cursor-grab items-center justify-center rounded text-muted-foreground transition hover:bg-muted hover:text-foreground active:cursor-grabbing",
-          !canEdit && "cursor-default opacity-50 hover:bg-transparent",
-          canEdit && (isUpdating || isReordering) && "cursor-wait opacity-60",
+          (isUpdating || isReordering || isMovingToToday) && "cursor-wait opacity-60",
         )}
-        disabled={!canEdit || isUpdating || isReordering}
+        disabled={isUpdating || isReordering || isMovingToToday}
         type="button"
         {...attributes}
         {...listeners}
@@ -553,10 +622,10 @@ function SortableTodoRow({
           todo.done
             ? "border-primary bg-primary text-primary-foreground"
             : "border-input hover:border-primary/70 hover:bg-primary/5",
-          !canEdit && "cursor-default opacity-70",
+          !canToggle && "cursor-default opacity-70",
           isUpdating && "cursor-wait opacity-70",
         )}
-        disabled={!canEdit || isUpdating}
+        disabled={!canToggle || isUpdating}
         onClick={onToggle}
         type="button"
       >
@@ -581,16 +650,33 @@ function SortableTodoRow({
         </p>
       </div>
 
-      <div className="flex items-center gap-1">
-        <span className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-          {index + 1}
-        </span>
-        <Button asChild size="icon" variant="ghost">
+      <div className="flex items-center justify-end gap-1 self-center">
+        {!isToday ? (
+          <Button
+            className={cn(
+              "h-8 px-2 text-xs",
+              isInToday &&
+                "border-primary/25 bg-primary/5 text-primary hover:bg-primary/5",
+            )}
+            disabled={isInToday || isMovingToToday}
+            onClick={onAddToToday}
+            type="button"
+            variant="outline"
+          >
+            {isMovingToToday ? "Adding" : isInToday ? "In Today" : "Add to Today"}
+          </Button>
+        ) : null}
+        <Button
+          asChild
+          className="h-8 w-8 text-muted-foreground hover:bg-muted hover:text-foreground"
+          size="icon"
+          variant="ghost"
+        >
           <Link
             aria-label={`Open ${todo.title} in workspace`}
             href={getWorkspaceNodeHref(todo.taskId)}
           >
-            <ChevronRightIcon className="h-4 w-4" aria-hidden="true" />
+            <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden="true" />
           </Link>
         </Button>
       </div>
@@ -778,6 +864,14 @@ function getTodoItems(
     })
     .filter((todo): todo is TodoItem => Boolean(todo))
     .sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+function getNextTodoSortOrder(todos: TodayTodo[], date: string) {
+  return (
+    todos
+      .filter((todo) => todo.date === date)
+      .reduce((currentMax, todo) => Math.max(currentMax, todo.sortOrder), 0) + 1
+  );
 }
 
 function getFocusItems(nodes: GoalTreeNode[]): FocusItem[] {
