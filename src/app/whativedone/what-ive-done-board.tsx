@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { endOfWeek, format, isWithinInterval, parseISO, startOfWeek } from "date-fns";
+import { endOfWeek, isWithinInterval, startOfWeek } from "date-fns";
 import {
   CalendarDaysIcon,
   CheckCircleIcon,
@@ -63,8 +63,8 @@ export function WhatIveDoneBoard({
   );
 
   const groupedCompletions = useMemo(
-    () => groupCompletions(completions, viewMode),
-    [completions, viewMode],
+    () => getCurrentPeriodCompletionGroups(completions, viewMode, initialTodayDate),
+    [completions, initialTodayDate, viewMode],
   );
   const goalContributions = useMemo(
     () => getContributions(completions, "goal"),
@@ -106,7 +106,7 @@ export function WhatIveDoneBoard({
                 <div>
                   <CardTitle className="text-base">Completion Log</CardTitle>
                   <CardDescription className="mt-1">
-                    Completed Tasks grouped by {viewMode}
+                    Completed Tasks in current {viewMode}
                   </CardDescription>
                 </div>
                 <div className="grid w-full grid-cols-4 rounded-md border bg-muted/50 p-1 sm:w-auto sm:inline-flex">
@@ -128,18 +128,9 @@ export function WhatIveDoneBoard({
               </div>
             </CardHeader>
             <CardContent className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4">
-              {groupedCompletions.length > 0 ? (
-                groupedCompletions.map((group) => (
-                  <CompletionGroup group={group} key={group.key} />
-                ))
-              ) : (
-                <div className="flex min-h-40 flex-col items-center justify-center rounded-md border border-dashed px-4 text-center">
-                  <p className="text-sm font-medium">No completed Tasks yet</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Complete Tasks from Dashboard or Workspace to build your log.
-                  </p>
-                </div>
-              )}
+              {groupedCompletions.map((group) => (
+                <CompletionGroup group={group} key={group.key} />
+              ))}
             </CardContent>
           </Card>
 
@@ -196,9 +187,18 @@ function CompletionGroup({
         </span>
       </div>
       <div className="space-y-2">
-        {group.items.map((completion) => (
-          <CompletionCard completion={completion} key={completion.id} />
-        ))}
+        {group.items.length > 0 ? (
+          group.items.map((completion) => (
+            <CompletionCard completion={completion} key={completion.id} />
+          ))
+        ) : (
+          <div className="flex min-h-40 flex-col items-center justify-center rounded-md border border-dashed px-4 text-center">
+            <p className="text-sm font-medium">No completed Tasks in this period</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Complete Tasks from Dashboard or Workspace to build your log.
+            </p>
+          </div>
+        )}
       </div>
     </section>
   );
@@ -324,7 +324,7 @@ function getCompletions(
 }
 
 function getSummaryItems(completions: Completion[], today: string) {
-  const currentDate = parseISO(today);
+  const currentDate = parseLocalDateString(today);
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
   const currentMonth = today.slice(0, 7);
@@ -333,7 +333,7 @@ function getSummaryItems(completions: Completion[], today: string) {
     (completion) => completion.completedAt === today,
   ).length;
   const weekCount = completions.filter((completion) =>
-    isWithinInterval(parseISO(completion.completedAt), {
+    isWithinInterval(parseLocalDateString(completion.completedAt), {
       start: weekStart,
       end: weekEnd,
     }),
@@ -353,37 +353,50 @@ function getSummaryItems(completions: Completion[], today: string) {
   ];
 }
 
-function groupCompletions(items: Completion[], viewMode: ViewMode) {
-  const groups = new Map<string, Completion[]>();
+function getCurrentPeriodCompletionGroups(
+  items: Completion[],
+  viewMode: ViewMode,
+  today: string,
+) {
+  const currentKey = getPeriodKey(today, viewMode);
+  const groupItems = items
+    .filter((item) => getPeriodKey(item.completedAt, viewMode) === currentKey)
+    .sort((first, second) => second.completedAt.localeCompare(first.completedAt));
 
-  items.forEach((item) => {
-    const date = parseISO(item.completedAt);
-    const key =
-      viewMode === "day"
-        ? format(date, "yyyy-MM-dd")
-        : viewMode === "week"
-          ? getLocalDateString(startOfWeek(date, { weekStartsOn: 1 }))
-          : viewMode === "month"
-            ? format(date, "yyyy-MM")
-            : format(date, "yyyy");
+  return [
+    {
+      key: currentKey,
+      label: getGroupLabel(currentKey, viewMode),
+      items: groupItems,
+    },
+  ];
+}
 
-    groups.set(key, [...(groups.get(key) ?? []), item]);
-  });
+function getPeriodKey(dateValue: string, viewMode: ViewMode) {
+  if (viewMode === "day") {
+    return dateValue;
+  }
 
-  return Array.from(groups.entries())
-    .sort(([firstKey], [secondKey]) => secondKey.localeCompare(firstKey))
-    .map(([key, groupItems]) => ({
-      key,
-      label: getGroupLabel(key, viewMode),
-      items: groupItems.sort((first, second) =>
-        second.completedAt.localeCompare(first.completedAt),
-      ),
-    }));
+  if (viewMode === "month") {
+    return dateValue.slice(0, 7);
+  }
+
+  if (viewMode === "year") {
+    return dateValue.slice(0, 4);
+  }
+
+  const date = parseLocalDateString(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return dateValue;
+  }
+
+  return getLocalDateString(startOfWeek(date, { weekStartsOn: 1 }));
 }
 
 function getGroupLabel(key: string, viewMode: ViewMode) {
   if (viewMode === "day") {
-    return key;
+    return formatDateLabel(key);
   }
 
   if (viewMode === "month") {
@@ -392,12 +405,25 @@ function getGroupLabel(key: string, viewMode: ViewMode) {
   }
 
   if (viewMode === "week") {
-    const weekStart = parseISO(key);
-    const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
-    return `${format(weekStart, "yyyy.MM.dd")} - ${format(weekEnd, "yyyy.MM.dd")}`;
+    const weekEnd = addDaysToDateString(key, 6);
+    return `${formatDateLabel(key)} - ${formatDateLabel(weekEnd)}`;
   }
 
   return key;
+}
+
+function formatDateLabel(dateValue: string) {
+  const date = parseLocalDateString(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return dateValue;
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}.${month}.${day}`;
 }
 
 function getContributions(items: Completion[], property: "goal" | "plan") {
@@ -445,4 +471,26 @@ function getLocalDateString(date: Date) {
   const day = String(date.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
+}
+
+function parseLocalDateString(dateValue: string) {
+  const [year, month, day] = dateValue.split("-").map(Number);
+
+  if (!year || !month || !day) {
+    return new Date(Number.NaN);
+  }
+
+  return new Date(year, month - 1, day);
+}
+
+function addDaysToDateString(dateValue: string, amount: number) {
+  const date = parseLocalDateString(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return dateValue;
+  }
+
+  date.setDate(date.getDate() + amount);
+
+  return getLocalDateString(date);
 }
