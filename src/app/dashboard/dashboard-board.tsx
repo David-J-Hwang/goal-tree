@@ -452,7 +452,7 @@ function TodayTodoPanel({
               {todos.filter((todo) => !todo.done).length} open tasks
             </CardDescription>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid w-full grid-cols-[4rem_minmax(0,1fr)] items-center gap-2 sm:flex sm:w-auto">
             <Button
               className={cn("h-[42px] w-16", isToday && "invisible")}
               disabled={isToday}
@@ -462,10 +462,10 @@ function TodayTodoPanel({
             >
               Today
             </Button>
-            <div className="inline-flex items-center rounded-md border bg-muted/50 p-1">
+            <div className="inline-flex min-w-0 items-center rounded-md border bg-muted/50 p-1 sm:w-auto">
               <Button
                 aria-label="View previous day"
-                className="h-8 w-8 text-muted-foreground hover:bg-background hover:text-foreground"
+                className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-background hover:text-foreground"
                 disabled={!canMovePrevious}
                 onClick={() => onMoveDate(-1)}
                 size="icon"
@@ -474,12 +474,12 @@ function TodayTodoPanel({
               >
                 <ChevronLeftIcon className="h-4 w-4" aria-hidden="true" />
               </Button>
-              <span className="min-w-32 px-2 text-center text-sm font-medium">
+              <span className="min-w-0 flex-1 px-2 text-center text-sm font-medium sm:min-w-32 sm:flex-none">
                 {formatKoreanDateLabel(selectedDate)}
               </span>
               <Button
                 aria-label="View next day"
-                className="h-8 w-8 text-muted-foreground hover:bg-background hover:text-foreground"
+                className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-background hover:text-foreground"
                 disabled={!canMoveNext}
                 onClick={() => onMoveDate(1)}
                 size="icon"
