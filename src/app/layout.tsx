@@ -8,6 +8,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Goaltree",
   description: "Goal, plan, and task workspace for personal execution.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 const themeInitScript = `
