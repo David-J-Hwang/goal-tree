@@ -898,7 +898,6 @@ function SortableNodeCard({
     });
   const status = statusMeta[node.status];
   const StatusIcon = status.icon;
-  const isCompactStatusBadge = node.type === "goal" || node.type === "plan";
 
   const style = {
     position: "relative" as const,
@@ -950,16 +949,15 @@ function SortableNodeCard({
               </h3>
             </div>
             <span
-              aria-label={isCompactStatusBadge ? status.label : undefined}
-              title={isCompactStatusBadge ? status.label : undefined}
+              aria-label={status.label}
+              title={status.label}
               className={cn(
                 "inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium",
-                isCompactStatusBadge && "h-6 w-6 justify-center px-0",
+                "h-6 w-6 justify-center px-0",
                 status.className,
               )}
             >
               <StatusIcon className="h-3 w-3" aria-hidden="true" />
-              {isCompactStatusBadge ? null : status.label}
             </span>
           </div>
           <ProgressBar value={progress} className="mt-3" />
