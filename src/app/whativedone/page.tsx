@@ -21,6 +21,7 @@ export default async function WhatIveDonePage() {
     <WhatIveDoneBoard
       initialCategories={whatIveDoneData.categories}
       initialNodes={whatIveDoneData.nodes}
+      initialTodayDate={whatIveDoneData.todayDate}
     />
   );
 }

@@ -20,7 +20,7 @@ import { getWorkspaceNodeHref } from "@/lib/goaltree/workspace-links";
 import { cn } from "@/lib/utils";
 import type { GoalTreeNode, PlanCategory } from "@/types/domain";
 
-type ViewMode = "day" | "month" | "year";
+type ViewMode = "day" | "week" | "month" | "year";
 
 type Completion = {
   id: string;
@@ -42,6 +42,7 @@ type Contribution = {
 
 const viewModes: Array<{ value: ViewMode; label: string }> = [
   { value: "day", label: "Day" },
+  { value: "week", label: "Week" },
   { value: "month", label: "Month" },
   { value: "year", label: "Year" },
 ];
@@ -49,9 +50,11 @@ const viewModes: Array<{ value: ViewMode; label: string }> = [
 export function WhatIveDoneBoard({
   initialCategories,
   initialNodes,
+  initialTodayDate,
 }: {
   initialCategories: PlanCategory[];
   initialNodes: GoalTreeNode[];
+  initialTodayDate: string;
 }) {
   const [viewMode, setViewMode] = useState<ViewMode>("day");
   const completions = useMemo(
@@ -71,7 +74,10 @@ export function WhatIveDoneBoard({
     () => getContributions(completions, "plan"),
     [completions],
   );
-  const summaryItems = useMemo(() => getSummaryItems(completions), [completions]);
+  const summaryItems = useMemo(
+    () => getSummaryItems(completions, initialTodayDate),
+    [completions, initialTodayDate],
+  );
 
   return (
     <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8 xl:h-[calc(100dvh-3.5rem-1px)] xl:min-h-0 xl:overflow-hidden">
@@ -103,13 +109,13 @@ export function WhatIveDoneBoard({
                     Completed Tasks grouped by {viewMode}
                   </CardDescription>
                 </div>
-                <div className="inline-flex rounded-md border bg-muted/50 p-1">
+                <div className="grid w-full grid-cols-4 rounded-md border bg-muted/50 p-1 sm:w-auto sm:inline-flex">
                   {viewModes.map((mode) => (
                     <button
                       className={cn(
-                        "rounded px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors",
+                        "rounded px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors sm:px-3",
                         viewMode === mode.value &&
-                          "bg-background text-foreground shadow-sm",
+                          "bg-primary text-primary-foreground shadow-sm",
                       )}
                       key={mode.value}
                       onClick={() => setViewMode(mode.value)}
@@ -317,8 +323,7 @@ function getCompletions(
     });
 }
 
-function getSummaryItems(completions: Completion[]) {
-  const today = getLocalDateString(new Date());
+function getSummaryItems(completions: Completion[], today: string) {
   const currentDate = parseISO(today);
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
@@ -356,9 +361,11 @@ function groupCompletions(items: Completion[], viewMode: ViewMode) {
     const key =
       viewMode === "day"
         ? format(date, "yyyy-MM-dd")
-        : viewMode === "month"
-          ? format(date, "yyyy-MM")
-          : format(date, "yyyy");
+        : viewMode === "week"
+          ? getLocalDateString(startOfWeek(date, { weekStartsOn: 1 }))
+          : viewMode === "month"
+            ? format(date, "yyyy-MM")
+            : format(date, "yyyy");
 
     groups.set(key, [...(groups.get(key) ?? []), item]);
   });
@@ -382,6 +389,12 @@ function getGroupLabel(key: string, viewMode: ViewMode) {
   if (viewMode === "month") {
     const [year, month] = key.split("-");
     return `${year}.${month}`;
+  }
+
+  if (viewMode === "week") {
+    const weekStart = parseISO(key);
+    const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
+    return `${format(weekStart, "yyyy.MM.dd")} - ${format(weekEnd, "yyyy.MM.dd")}`;
   }
 
   return key;
