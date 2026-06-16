@@ -97,7 +97,7 @@ const statusMeta: Record<
     label: "진행중",
     icon: Clock3,
     className:
-      "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800/40 dark:bg-blue-950/25 dark:text-blue-300/80",
+      "border-blue-300/70 bg-blue-50 text-blue-700 dark:border-blue-600/55 dark:bg-blue-900/25 dark:text-blue-300/90",
   },
   blocked: {
     label: "막힘",
