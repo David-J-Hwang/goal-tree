@@ -26,6 +26,7 @@ import {
   PauseCircle,
   Plus,
   Search,
+  X,
   ListTodo,
   Trash2,
 } from "lucide-react";
@@ -162,6 +163,9 @@ export function WorkspaceBoard({
   const [selectedGoalId, setSelectedGoalId] = useState(initialSelection.goalId);
   const [selectedPlanId, setSelectedPlanId] = useState(initialSelection.planId);
   const [selectedNodeId, setSelectedNodeId] = useState(initialSelection.nodeId);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchTerm = searchQuery.trim();
+  const isSearchMode = searchTerm.length > 0;
 
   const goals = useMemo(() => getSortedChildren(nodes, "goal", null), [nodes]);
   const plans = useMemo(
@@ -172,6 +176,13 @@ export function WorkspaceBoard({
     () => getSortedChildren(nodes, "task", selectedPlanId),
     [nodes, selectedPlanId],
   );
+  const searchResults = useMemo(
+    () => getSearchResults(nodes, planCategories, searchTerm),
+    [nodes, planCategories, searchTerm],
+  );
+  const visibleGoals = isSearchMode ? searchResults.goals : goals;
+  const visiblePlans = isSearchMode ? searchResults.plans : plans;
+  const visibleTasks = isSearchMode ? searchResults.tasks : tasks;
 
   const selectedNode =
     nodes.find((node) => node.id === selectedNodeId && isNodeVisible(node, nodes)) ??
@@ -216,16 +227,11 @@ export function WorkspaceBoard({
   }, [initialSelectedNodeId]);
 
   function handleSelect(node: WorkspaceNode) {
-    setSelectedNodeId(node.id);
+    const nextSelection = getSelectionForNode(nodes, node.id);
 
-    if (node.type === "goal") {
-      setSelectedGoalId(node.id);
-      setSelectedPlanId("");
-    }
-
-    if (node.type === "plan") {
-      setSelectedPlanId(node.id);
-    }
+    setSelectedGoalId(nextSelection.goalId);
+    setSelectedPlanId(nextSelection.planId);
+    setSelectedNodeId(nextSelection.nodeId);
   }
 
   async function handleReorder(type: NodeType, parentId: string | null, orderedIds: string[]) {
@@ -453,55 +459,102 @@ export function WorkspaceBoard({
             <p className="text-sm font-medium text-muted-foreground">Goaltree</p>
             <h1 className="mt-1 text-2xl font-semibold">Workspace</h1>
           </div>
-          <div className="flex w-full items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm lg:w-80">
-            <Search className="h-4 w-4" aria-hidden="true" />
-            <span>Search Goal, Plan, Task</span>
+          <div className="flex w-full items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm transition focus-within:border-primary/60 focus-within:ring-1 focus-within:ring-primary/30 lg:w-80">
+            <Search className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <input
+              aria-label="Search Goal, Plan, Task"
+              className="min-w-0 flex-1 bg-transparent text-foreground outline-none placeholder:text-muted-foreground [&::-webkit-search-cancel-button]:hidden"
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search Goal, Plan, Task"
+              type="search"
+              value={searchQuery}
+            />
+            {searchQuery ? (
+              <button
+                aria-label="Clear search"
+                className="rounded p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                onClick={() => setSearchQuery("")}
+                type="button"
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
+              </button>
+            ) : null}
           </div>
         </header>
 
         <section className="mt-5 grid gap-4 xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(230px,1fr)_minmax(260px,1fr)_minmax(280px,1fr)_360px] 2xl:grid-cols-[minmax(300px,380px)_minmax(360px,460px)_minmax(320px,420px)_minmax(340px,400px)] 2xl:justify-center">
           <WorkspaceColumn
             type="goal"
+            allNodes={nodes}
             parentId={null}
             title="Goals"
-            nodes={goals}
+            nodes={visibleGoals}
             selectedId={selectedGoalId}
             categories={planCategories}
-            emptyMessage="No Goal cards yet"
+            emptyMessage={isSearchMode ? "No matching Goals" : "No Goal cards yet"}
+            isSearchMode={isSearchMode}
             onCreate={handleCreateNode}
             onSelect={handleSelect}
             onReorder={handleReorder}
-            summary={`${goals.length} active goals`}
+            summary={
+              isSearchMode
+                ? formatResultCount(visibleGoals.length)
+                : `${goals.length} active goals`
+            }
           />
           <WorkspaceColumn
             type="plan"
+            allNodes={nodes}
             parentId={selectedGoalId}
             title="Plans"
-            nodes={plans}
+            nodes={visiblePlans}
             selectedId={selectedPlanId}
             categories={planCategories}
+            isSearchMode={isSearchMode}
             onCreate={handleCreateNode}
             onSelect={handleSelect}
             onReorder={handleReorder}
             emptyMessage={
-              selectedGoalId ? "No Plan cards yet" : "Select a goal card to view plans"
+              isSearchMode
+                ? "No matching Plans"
+                : selectedGoalId
+                  ? "No Plan cards yet"
+                  : "Select a goal card to view plans"
             }
-            summary={selectedGoal ? selectedGoal.title : "No goal selected"}
+            summary={
+              isSearchMode
+                ? formatResultCount(visiblePlans.length)
+                : selectedGoal
+                  ? selectedGoal.title
+                  : "No goal selected"
+            }
           />
           <WorkspaceColumn
             type="task"
+            allNodes={nodes}
             parentId={selectedPlanId}
             title="Tasks"
-            nodes={tasks}
+            nodes={visibleTasks}
             selectedId={selectedNodeId}
             categories={planCategories}
+            isSearchMode={isSearchMode}
             onCreate={handleCreateNode}
             onSelect={handleSelect}
             onReorder={handleReorder}
             emptyMessage={
-              selectedPlanId ? undefined : "Select a plan card to view tasks"
+              isSearchMode
+                ? "No matching Tasks"
+                : selectedPlanId
+                  ? undefined
+                  : "Select a plan card to view tasks"
             }
-            summary={selectedPlan ? selectedPlan.title : "No plan selected"}
+            summary={
+              isSearchMode
+                ? formatResultCount(visibleTasks.length)
+                : selectedPlan
+                  ? selectedPlan.title
+                  : "No plan selected"
+            }
           />
           <DetailPanel
             node={selectedNode}
@@ -531,6 +584,7 @@ export function WorkspaceBoard({
 }
 
 function WorkspaceColumn({
+  allNodes,
   type,
   parentId,
   title,
@@ -539,10 +593,12 @@ function WorkspaceColumn({
   selectedId,
   categories,
   emptyMessage,
+  isSearchMode,
   onCreate,
   onSelect,
   onReorder,
 }: {
+  allNodes: WorkspaceNode[];
   type: NodeType;
   parentId: string | null;
   title: string;
@@ -551,6 +607,7 @@ function WorkspaceColumn({
   selectedId: string;
   categories: PlanCategory[];
   emptyMessage?: string;
+  isSearchMode: boolean;
   onCreate: (input: CreateNodeInput) => Promise<void>;
   onSelect: (node: WorkspaceNode) => void;
   onReorder: (
@@ -566,7 +623,7 @@ function WorkspaceColumn({
   const [isReordering, setIsReordering] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [reorderErrorMessage, setReorderErrorMessage] = useState("");
-  const canAdd = type === "goal" || Boolean(parentId);
+  const canAdd = !isSearchMode && (type === "goal" || Boolean(parentId));
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -578,7 +635,22 @@ function WorkspaceColumn({
     }),
   );
 
+  useEffect(() => {
+    if (!isSearchMode) {
+      return;
+    }
+
+    setIsAdding(false);
+    setTitleValue("");
+    setErrorMessage("");
+    setReorderErrorMessage("");
+  }, [isSearchMode]);
+
   async function handleDragEnd(event: DragEndEvent) {
+    if (isSearchMode) {
+      return;
+    }
+
     const { active, over } = event;
 
     if (!over || active.id === over.id) {
@@ -654,6 +726,7 @@ function WorkspaceColumn({
             <CardDescription className="mt-1 line-clamp-1">{summary}</CardDescription>
           </div>
           <Button
+            className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
             size="icon"
             variant="ghost"
             aria-label={`Add ${columnLabels[type]}`}
@@ -673,7 +746,7 @@ function WorkspaceColumn({
             {reorderErrorMessage}
           </p>
         ) : null}
-        {isAdding ? (
+        {!isSearchMode && isAdding ? (
           <AddNodeForm
             type={type}
             titleValue={titleValue}
@@ -711,7 +784,8 @@ function WorkspaceColumn({
                     node={node}
                     selected={node.id === selectedId}
                     category={categories.find((category) => category.id === node.categoryId)}
-                    progress={getNodeProgress(node, nodes)}
+                    progress={getNodeProgress(node, allNodes)}
+                    isReorderDisabled={isSearchMode}
                     onSelect={() => onSelect(node)}
                   />
                 ))}
@@ -803,17 +877,20 @@ function SortableNodeCard({
   selected,
   category,
   progress,
+  isReorderDisabled,
   onSelect,
 }: {
   node: WorkspaceNode;
   selected: boolean;
   category?: PlanCategory;
   progress: number;
+  isReorderDisabled: boolean;
   onSelect: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({
       id: node.id,
+      disabled: isReorderDisabled,
       transition: {
         duration: 120,
         easing: "cubic-bezier(0.2, 0, 0, 1)",
@@ -843,8 +920,14 @@ function SortableNodeCard({
     >
       <div className="flex items-start gap-2">
         <button
-          className="mt-0.5 touch-none cursor-grab rounded p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground active:cursor-grabbing"
+          className={cn(
+            "mt-0.5 touch-none rounded p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground",
+            isReorderDisabled
+              ? "cursor-default opacity-50 hover:bg-transparent hover:text-muted-foreground"
+              : "cursor-grab active:cursor-grabbing",
+          )}
           aria-label={`Reorder ${node.title}`}
+          disabled={isReorderDisabled}
           {...attributes}
           {...listeners}
         >
@@ -1482,6 +1565,128 @@ function getSortedChildren(
         isNodeVisible(node, nodes),
     )
     .sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+function getSearchResults(
+  nodes: WorkspaceNode[],
+  categories: PlanCategory[],
+  query: string,
+) {
+  const normalizedQuery = normalizeSearchText(query);
+  const emptyResults = {
+    goals: [] as WorkspaceNode[],
+    plans: [] as WorkspaceNode[],
+    tasks: [] as WorkspaceNode[],
+  };
+
+  if (!normalizedQuery) {
+    return emptyResults;
+  }
+
+  const matchingNodes = nodes.filter(
+    (node) =>
+      isNodeVisible(node, nodes) &&
+      nodeMatchesSearch(node, nodes, categories, normalizedQuery),
+  );
+
+  return {
+    goals: sortSearchNodes(
+      matchingNodes.filter((node) => node.type === "goal"),
+      nodes,
+    ),
+    plans: sortSearchNodes(
+      matchingNodes.filter((node) => node.type === "plan"),
+      nodes,
+    ),
+    tasks: sortSearchNodes(
+      matchingNodes.filter((node) => node.type === "task"),
+      nodes,
+    ),
+  };
+}
+
+function nodeMatchesSearch(
+  node: WorkspaceNode,
+  nodes: WorkspaceNode[],
+  categories: PlanCategory[],
+  normalizedQuery: string,
+) {
+  return getSearchFields(node, nodes, categories).some((field) =>
+    normalizeSearchText(field).includes(normalizedQuery),
+  );
+}
+
+function getSearchFields(
+  node: WorkspaceNode,
+  nodes: WorkspaceNode[],
+  categories: PlanCategory[],
+) {
+  const parentPlan =
+    node.type === "task" ? getVisibleNode(nodes, node.parentId) : undefined;
+  const parentGoal =
+    node.type === "plan"
+      ? getVisibleNode(nodes, node.parentId)
+      : parentPlan
+        ? getVisibleNode(nodes, parentPlan.parentId)
+        : undefined;
+  const category =
+    node.type === "plan"
+      ? categories.find((item) => item.id === node.categoryId)
+      : undefined;
+
+  return [
+    node.title,
+    node.memo,
+    node.importanceReason,
+    node.successCriteriaText,
+    statusMeta[node.status].label,
+    columnLabels[node.type],
+    category?.name,
+    parentGoal?.title,
+    parentPlan?.title,
+  ].filter(Boolean);
+}
+
+function sortSearchNodes(items: WorkspaceNode[], nodes: WorkspaceNode[]) {
+  return [...items].sort((first, second) => {
+    const firstPath = getSearchSortPath(first, nodes);
+    const secondPath = getSearchSortPath(second, nodes);
+    const maxLength = Math.max(firstPath.length, secondPath.length);
+
+    for (let index = 0; index < maxLength; index += 1) {
+      const firstValue = firstPath[index] ?? 0;
+      const secondValue = secondPath[index] ?? 0;
+
+      if (firstValue !== secondValue) {
+        return firstValue - secondValue;
+      }
+    }
+
+    return first.title.localeCompare(second.title, "ko");
+  });
+}
+
+function getSearchSortPath(node: WorkspaceNode, nodes: WorkspaceNode[]) {
+  if (node.type === "goal") {
+    return [node.sortOrder];
+  }
+
+  if (node.type === "plan") {
+    const parentGoal = getVisibleNode(nodes, node.parentId);
+    return [parentGoal?.sortOrder ?? 0, node.sortOrder];
+  }
+
+  const parentPlan = getVisibleNode(nodes, node.parentId);
+  const parentGoal = getVisibleNode(nodes, parentPlan?.parentId);
+  return [parentGoal?.sortOrder ?? 0, parentPlan?.sortOrder ?? 0, node.sortOrder];
+}
+
+function normalizeSearchText(value: unknown) {
+  return String(value ?? "").trim().toLocaleLowerCase();
+}
+
+function formatResultCount(count: number) {
+  return `${count} ${count === 1 ? "result" : "results"}`;
 }
 
 function getNextSortOrder(
