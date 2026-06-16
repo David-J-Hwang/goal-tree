@@ -22,6 +22,7 @@ import {
   ArrowPathIcon,
   CalendarDaysIcon,
   CheckIcon,
+  ChevronLeftIcon,
   ChevronRightIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
@@ -91,26 +92,35 @@ export function DashboardBoard({
   const [todayTodos, setTodayTodos] = useState(initialTodayTodos);
   const [updatingTodoId, setUpdatingTodoId] = useState("");
   const [todoError, setTodoError] = useState("");
-  const todos = useMemo(
+  const [selectedTodoDate, setSelectedTodoDate] = useState(initialTodayDate);
+  const oldestTodoDate = useMemo(
+    () => addDaysToDateString(initialTodayDate, -6),
+    [initialTodayDate],
+  );
+  const todayTodoItems = useMemo(
     () => getTodoItems(todayTodos, nodes, initialTodayDate),
     [initialTodayDate, nodes, todayTodos],
+  );
+  const selectedTodoItems = useMemo(
+    () => getTodoItems(todayTodos, nodes, selectedTodoDate),
+    [nodes, selectedTodoDate, todayTodos],
   );
   const focusItems = useMemo(() => getFocusItems(nodes), [nodes]);
   const blockedItems = useMemo(() => getBlockedItems(nodes), [nodes]);
   const completionItems = useMemo(() => getCompletionItems(nodes), [nodes]);
 
-  const completedCount = todos.filter((todo) => todo.done).length;
-  const blockedCount = todos.filter((todo) => todo.status === "blocked" && !todo.done).length;
-  const openCount = todos.length - completedCount;
+  const completedCount = todayTodoItems.filter((todo) => todo.done).length;
+  const blockedCount = todayTodoItems.filter((todo) => todo.status === "blocked" && !todo.done).length;
+  const openCount = todayTodoItems.length - completedCount;
 
   const summaryItems = useMemo(
     () => [
-      { label: "Today", value: String(todos.length) },
+      { label: "Today", value: String(todayTodoItems.length) },
       { label: "Remaining", value: String(openCount) },
       { label: "Done", value: String(completedCount) },
       { label: "Blocked", value: String(blockedCount) },
     ],
-    [blockedCount, completedCount, openCount, todos.length],
+    [blockedCount, completedCount, openCount, todayTodoItems.length],
   );
   const todayDateLabel = useMemo(
     () => formatKoreanDateLabel(initialTodayDate),
@@ -220,6 +230,16 @@ export function DashboardBoard({
     }
   }
 
+  function handleMoveTodoDate(direction: -1 | 1) {
+    const nextDate = addDaysToDateString(selectedTodoDate, direction);
+
+    if (nextDate < oldestTodoDate || nextDate > initialTodayDate) {
+      return;
+    }
+
+    setSelectedTodoDate(nextDate);
+  }
+
   return (
     <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8 xl:h-[calc(100dvh-3.5rem-1px)] xl:min-h-0 xl:overflow-hidden">
       <div className="mx-auto flex min-h-0 max-w-[1440px] flex-col xl:h-full">
@@ -247,8 +267,13 @@ export function DashboardBoard({
         <section className="mt-4 grid gap-4 xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.85fr)]">
           <TodayTodoPanel
             errorMessage={todoError}
-            todos={todos}
+            oldestDate={oldestTodoDate}
+            selectedDate={selectedTodoDate}
+            todayDate={initialTodayDate}
+            todos={selectedTodoItems}
             updatingTodoId={updatingTodoId}
+            onDateChange={setSelectedTodoDate}
+            onMoveDate={handleMoveTodoDate}
             onReorderTodos={handleReorderTodos}
             onToggleTodo={handleToggleTodo}
           />
@@ -291,18 +316,32 @@ function SummaryTile({
 
 function TodayTodoPanel({
   errorMessage,
+  oldestDate,
+  selectedDate,
+  todayDate,
   todos,
   updatingTodoId,
+  onDateChange,
+  onMoveDate,
   onReorderTodos,
   onToggleTodo,
 }: {
   errorMessage: string;
+  oldestDate: string;
+  selectedDate: string;
+  todayDate: string;
   todos: TodoItem[];
   updatingTodoId: string;
+  onDateChange: (date: string) => void;
+  onMoveDate: (direction: -1 | 1) => void;
   onReorderTodos: (orderedIds: string[]) => Promise<void>;
   onToggleTodo: (id: string) => Promise<void>;
 }) {
   const [isReordering, setIsReordering] = useState(false);
+  const isToday = selectedDate === todayDate;
+  const canEdit = isToday;
+  const canMovePrevious = selectedDate > oldestDate;
+  const canMoveNext = selectedDate < todayDate;
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -315,6 +354,10 @@ function TodayTodoPanel({
   );
 
   async function handleDragEnd(event: DragEndEvent) {
+    if (!canEdit) {
+      return;
+    }
+
     const { active, over } = event;
 
     if (!over || active.id === over.id) {
@@ -341,10 +384,54 @@ function TodayTodoPanel({
   return (
     <Card className="flex min-h-[34rem] flex-col overflow-hidden rounded-lg shadow-none xl:h-full xl:min-h-0">
       <CardHeader className="shrink-0 border-b p-4">
-        <CardTitle className="text-base">Today TODO</CardTitle>
-        <CardDescription className="mt-1">
-          {todos.filter((todo) => !todo.done).length} open tasks
-        </CardDescription>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <CardTitle className="text-base">
+              {isToday ? "Today TODO" : "Daily TODO"}
+            </CardTitle>
+            <CardDescription className="mt-1">
+              {todos.filter((todo) => !todo.done).length} open tasks
+            </CardDescription>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              className={cn("h-[42px] w-16", isToday && "invisible")}
+              disabled={isToday}
+              onClick={() => onDateChange(todayDate)}
+              type="button"
+              variant="outline"
+            >
+              Today
+            </Button>
+            <div className="inline-flex items-center rounded-md border bg-muted/50 p-1">
+              <Button
+                aria-label="View previous day"
+                className="h-8 w-8 text-muted-foreground hover:bg-background hover:text-foreground"
+                disabled={!canMovePrevious}
+                onClick={() => onMoveDate(-1)}
+                size="icon"
+                type="button"
+                variant="ghost"
+              >
+                <ChevronLeftIcon className="h-4 w-4" aria-hidden="true" />
+              </Button>
+              <span className="min-w-32 px-2 text-center text-sm font-medium">
+                {formatKoreanDateLabel(selectedDate)}
+              </span>
+              <Button
+                aria-label="View next day"
+                className="h-8 w-8 text-muted-foreground hover:bg-background hover:text-foreground"
+                disabled={!canMoveNext}
+                onClick={() => onMoveDate(1)}
+                size="icon"
+                type="button"
+                variant="ghost"
+              >
+                <ChevronRightIcon className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            </div>
+          </div>
+        </div>
       </CardHeader>
 
       <CardContent className="min-h-0 flex-1 overflow-y-auto p-3">
@@ -368,6 +455,7 @@ function TodayTodoPanel({
                 {todos.map((todo, index) => (
                   <SortableTodoRow
                     index={index}
+                    canEdit={canEdit}
                     isReordering={isReordering}
                     isUpdating={updatingTodoId === todo.id}
                     key={todo.id}
@@ -380,9 +468,13 @@ function TodayTodoPanel({
           </DndContext>
         ) : (
           <div className="flex min-h-40 flex-col items-center justify-center rounded-md border border-dashed px-4 text-center">
-            <p className="text-sm font-medium">No Today TODO yet</p>
+            <p className="text-sm font-medium">
+              {isToday ? "No Today TODO yet" : "No TODO records for this day"}
+            </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Add Task cards from Workspace to plan today.
+              {isToday
+                ? "Add Task cards from Workspace to plan today."
+                : "Recent TODO records are available for the last 7 days."}
             </p>
           </div>
         )}
@@ -394,12 +486,14 @@ function TodayTodoPanel({
 function SortableTodoRow({
   todo,
   index,
+  canEdit,
   isReordering,
   isUpdating,
   onToggle,
 }: {
   todo: TodoItem;
   index: number;
+  canEdit: boolean;
   isReordering: boolean;
   isUpdating: boolean;
   onToggle: () => void;
@@ -413,7 +507,7 @@ function SortableTodoRow({
     isDragging,
   } = useSortable({
     id: todo.id,
-    disabled: isUpdating || isReordering,
+    disabled: !canEdit || isUpdating || isReordering,
     transition: {
       duration: 140,
       easing: "cubic-bezier(0.2, 0, 0, 1)",
@@ -442,9 +536,10 @@ function SortableTodoRow({
         aria-label={`Reorder ${todo.title}`}
         className={cn(
           "mt-0.5 flex h-7 w-7 touch-none cursor-grab items-center justify-center rounded text-muted-foreground transition hover:bg-muted hover:text-foreground active:cursor-grabbing",
-          (isUpdating || isReordering) && "cursor-wait opacity-60",
+          !canEdit && "cursor-default opacity-50 hover:bg-transparent",
+          canEdit && (isUpdating || isReordering) && "cursor-wait opacity-60",
         )}
-        disabled={isUpdating || isReordering}
+        disabled={!canEdit || isUpdating || isReordering}
         type="button"
         {...attributes}
         {...listeners}
@@ -458,9 +553,10 @@ function SortableTodoRow({
           todo.done
             ? "border-primary bg-primary text-primary-foreground"
             : "border-input hover:border-primary/70 hover:bg-primary/5",
+          !canEdit && "cursor-default opacity-70",
           isUpdating && "cursor-wait opacity-70",
         )}
-        disabled={isUpdating}
+        disabled={!canEdit || isUpdating}
         onClick={onToggle}
         type="button"
       >
@@ -777,6 +873,23 @@ function formatKoreanDateLabel(dateValue: string) {
   const weekday = weekdays[new Date(year, month - 1, day).getDay()];
 
   return `${year}.${String(month).padStart(2, "0")}.${String(day).padStart(2, "0")}(${weekday})`;
+}
+
+function addDaysToDateString(dateValue: string, amount: number) {
+  const [year, month, day] = dateValue.split("-").map(Number);
+
+  if (!year || !month || !day) {
+    return dateValue;
+  }
+
+  const date = new Date(year, month - 1, day);
+  date.setDate(date.getDate() + amount);
+
+  const nextYear = date.getFullYear();
+  const nextMonth = String(date.getMonth() + 1).padStart(2, "0");
+  const nextDay = String(date.getDate()).padStart(2, "0");
+
+  return `${nextYear}-${nextMonth}-${nextDay}`;
 }
 
 function getNodeBreadcrumb(node: GoalTreeNode, nodes: GoalTreeNode[]) {

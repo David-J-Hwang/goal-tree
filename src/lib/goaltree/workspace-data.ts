@@ -54,6 +54,7 @@ export async function getWorkspaceData(
   }
 
   const today = getLocalDateString(new Date());
+  const recentTodoStartDate = addDaysToDateString(today, -6);
   const [
     { data: categoryRows, error: categoriesError },
     { data: nodeRows, error: nodesError },
@@ -83,7 +84,9 @@ export async function getWorkspaceData(
       .from("today_todos")
       .select(todayTodoSelectColumns)
       .eq("user_id", userId)
-      .eq("date", today)
+      .gte("date", recentTodoStartDate)
+      .lte("date", today)
+      .order("date", { ascending: true })
       .order("sort_order", { ascending: true })
       .returns<TodayTodoRow[]>(),
   ]);
@@ -180,4 +183,17 @@ function getLocalDateString(date: Date) {
   const day = String(date.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
+}
+
+function addDaysToDateString(dateValue: string, amount: number) {
+  const [year, month, day] = dateValue.split("-").map(Number);
+
+  if (!year || !month || !day) {
+    return dateValue;
+  }
+
+  const date = new Date(year, month - 1, day);
+  date.setDate(date.getDate() + amount);
+
+  return getLocalDateString(date);
 }
