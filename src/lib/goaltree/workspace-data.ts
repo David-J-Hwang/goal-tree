@@ -55,6 +55,8 @@ export async function getWorkspaceData(
 
   const today = getLocalDateString(new Date());
   const recentTodoStartDate = addDaysToDateString(today, -6);
+  await cleanupExpiredTodayTodos(supabase, userId, recentTodoStartDate);
+
   const [
     { data: categoryRows, error: categoriesError },
     { data: nodeRows, error: nodesError },
@@ -174,6 +176,22 @@ async function createDefaultPlanCategories(
 
   if (insertError) {
     throw new Error(`Failed to initialize plan categories: ${insertError.message}`);
+  }
+}
+
+async function cleanupExpiredTodayTodos(
+  supabase: SupabaseServerClient,
+  userId: string,
+  recentTodoStartDate: string,
+) {
+  const { error } = await supabase
+    .from("today_todos")
+    .delete()
+    .eq("user_id", userId)
+    .lt("date", recentTodoStartDate);
+
+  if (error) {
+    console.error(`Failed to cleanup expired today todos: ${error.message}`);
   }
 }
 
