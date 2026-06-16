@@ -821,7 +821,7 @@ function SortableNodeCard({
     });
   const status = statusMeta[node.status];
   const StatusIcon = status.icon;
-  const isPlanCard = node.type === "plan";
+  const isCompactStatusBadge = node.type === "goal" || node.type === "plan";
 
   const style = {
     position: "relative" as const,
@@ -867,16 +867,16 @@ function SortableNodeCard({
               </h3>
             </div>
             <span
-              aria-label={isPlanCard ? status.label : undefined}
-              title={isPlanCard ? status.label : undefined}
+              aria-label={isCompactStatusBadge ? status.label : undefined}
+              title={isCompactStatusBadge ? status.label : undefined}
               className={cn(
                 "inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium",
-                isPlanCard && "h-6 w-6 justify-center px-0",
+                isCompactStatusBadge && "h-6 w-6 justify-center px-0",
                 status.className,
               )}
             >
               <StatusIcon className="h-3 w-3" aria-hidden="true" />
-              {isPlanCard ? null : status.label}
+              {isCompactStatusBadge ? null : status.label}
             </span>
           </div>
           <ProgressBar value={progress} className="mt-3" />
