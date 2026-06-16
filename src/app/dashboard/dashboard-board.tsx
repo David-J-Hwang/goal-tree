@@ -64,7 +64,6 @@ type FocusItem = {
   id: string;
   title: string;
   goal: string;
-  plan: string;
   progress: number;
   dueLabel: string;
 };
@@ -699,7 +698,7 @@ function ThisWeekFocusPanel({ items }: { items: FocusItem[] }) {
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{item.title}</p>
                   <p className="mt-1 truncate text-xs text-muted-foreground">
-                    {item.goal} / {item.plan}
+                    {item.goal}
                   </p>
                 </div>
                 <span className="shrink-0 rounded-full border bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
@@ -892,7 +891,6 @@ function getFocusItems(nodes: GoalTreeNode[]): FocusItem[] {
         id: plan.id,
         title: plan.title,
         goal: goal?.title ?? "Goal",
-        plan: plan.title,
         progress: getNodeProgress(plan, nodes),
         dueLabel: getDueLabel(plan),
       };
