@@ -8,6 +8,32 @@
 
 ---
 
+## 버전 진행 상황
+
+### v1 완료 기준
+
+2026-06-17 기준, 핵심 MVP 기능을 v1로 둔다.
+
+v1 포함 범위:
+
+- 이메일 로그인 / 회원가입 / 로그아웃
+- 유저별 Supabase 데이터 분리
+- `Goal -> Plan -> Task` 기반 `/workspace`
+- Daily TODO 기반 `/dashboard`
+- 완료 기록 확인용 `/whativedone`
+- 기간 흐름 확인용 `/timeline`
+- 휴지통 관리용 `/trash`
+- 설정 모달: 테마, Plan 카테고리, 실제 날짜 자동입력
+- 데스크탑 / 모바일 주요 UI/UX 정리
+- Vercel 배포 기준 구성
+
+### v1.1 예정
+
+- 자유롭게 아이디어 카드를 작성하는 `/inbox` 또는 `/brainstorm` 페이지 검토
+- 구조화되지 않은 아이디어를 Goal / Plan / Task로 전환하는 기능 검토
+
+---
+
 ## 기술스택
 
 ```txt
@@ -63,11 +89,14 @@ Account: yelcrys4610@naver.com
 ### /dashboard
 
 - 로그인 후 첫 화면이다.
-- 오늘의 TODO 목록을 보여준다.
+- 오늘 기준 Daily TODO 목록을 보여준다.
+- 오늘과 최근 6일의 TODO 기록을 조회할 수 있다.
+- TODO 카드 순서를 드래그 앤 드롭으로 바꿀 수 있다.
 - TODO 완료 처리를 할 수 있다.
 - TODO를 완료하면 연결된 Task도 완료 처리한다.
 - TODO 항목을 클릭하면 `/workspace`로 이동하고, 해당 Task가 선택된 상태로 열린다.
-- 최근 완료한 일, 막힌 일, 이번 주 핵심 항목은 필요하면 요약 컴포넌트로 추가한다.
+- 과거 TODO 항목은 오늘 목록으로 다시 추가할 수 있다.
+- 최근 완료한 일, 막힌 일, This Week Focus를 요약 컴포넌트로 보여준다.
 
 ### /workspace
 
@@ -126,14 +155,16 @@ Task 상세:
 ### /whativedone
 
 - 내가 해낸 일을 확인하는 기록 페이지다.
-- 완료한 Task를 날짜별, 월별, 연별로 확인한다.
+- 완료한 Task를 오늘이 속한 일 / 주 / 월 / 연 단위로 확인한다.
 - 어떤 Goal / Plan에 기여했는지 확인할 수 있도록 만든다.
+- 완료 기록 카드를 클릭하면 `/workspace`에서 해당 Task가 선택된 상태로 열린다.
 
 ### /timeline
 
 - 내가 한 일과 앞으로 할 일을 시간 흐름으로 보는 페이지다.
 - 해낸 일 / 할 일 토글을 제공한다.
-- 월간 / 주간 / 연간 보기 형태를 고려한다.
+- 주간 / 월간 / 연간 보기와 이전 / 다음 기간 이동을 제공한다.
+- Goal / Plan / Task 유형별로 기간 흐름을 확인할 수 있다.
 - 이틀 이상 이어지는 작업 기간을 표시할 수 있어야 한다.
 
 ### /trash
@@ -146,10 +177,10 @@ Task 상세:
 
 ### 앱 설정
 
-- 별도 설정 페이지는 MVP 초반에 만들지 않는다.
-- 상단 앱바에서 설정 모달을 여는 방향으로 시작한다.
+- 별도 설정 페이지 대신 상단 앱바에서 설정 모달을 연다.
 - 상태 변경 시 실제 진행기간 자동입력 기능은 기본 ON으로 둔다.
 - 라이트모드 / 다크모드 전환은 설정 모달에서 제공한다.
+- Plan 카테고리 추가 / 수정 / 삭제는 설정 모달에서 제공한다.
 
 ---
 
@@ -242,7 +273,9 @@ type PlanCategory = {
 
 오늘의 TODO는 Task와 연결한다.
 
-날짜가 바뀌면 오늘 TODO는 새 목록으로 시작한다. 이전 날짜의 TODO는 DB에 기록으로 남기되, 오늘 목록에는 `date = 오늘`인 항목만 표시한다.
+날짜가 바뀌면 오늘 TODO는 새 목록으로 시작한다. 이전 날짜의 TODO는 DB에 기록으로 남기되, Dashboard에서는 오늘 포함 최근 7일 범위 안에서 조회한다.
+
+7일보다 오래된 TodayTodo row는 앱 진입 시 정리한다.
 
 미완료 TODO 이월은 MVP 기본 동작에 포함하지 않는다. 이후 사용자 설정에서 자동 이월을 켜거나, Dashboard에서 "어제 미완료 TODO 가져오기" 버튼을 제공하는 방향을 검토한다.
 
@@ -301,8 +334,11 @@ type UserSettings = {
 
 ## 향후 개발방향
 
+- v1.1: `/inbox` 또는 `/brainstorm` 페이지 추가
+- v1.1: 자유 아이디어 카드를 Goal / Plan / Task로 전환하는 흐름 추가
 - Google 로그인 추가
 - v2에서 별도 비밀번호 재설정 / 수정 페이지 추가
+
 ---
 
 ## 개발 체크리스트
@@ -322,6 +358,8 @@ type UserSettings = {
 - [x] 보류와 휴지통의 의미 구분 채택
 - [x] 상태 변경 시 실제 날짜 자동입력 기본 ON 채택
 - [x] 상단 앱바 설정 모달 방향 채택
+- [x] v1 완료 기준 정리
+- [x] v1.1 자유 아이디어 수집 페이지 방향 채택
 - [x] `README_CODEX.md`에 상세 기획 정리
 - [x] `README.md`를 개발 체크리스트용 문서로 정리
 
@@ -340,6 +378,9 @@ type UserSettings = {
 - [x] 페이지 표시 이름을 `Goaltree`로 통일
 - [x] Goaltree 테마 색상 적용: 초록 primary / 나무줄기 갈색 secondary
 - [x] 다크모드 상태 배지 색상 조정
+- [x] 상단 앱바 현재 페이지 활성 상태 표시
+- [x] 공통 페이지 로딩 UI 추가
+- [x] Goaltree favicon 추가
 
 ### 2. 인증 / 사용자 데이터
 
@@ -401,7 +442,9 @@ type UserSettings = {
 - [x] Task 휴지통 이동 구현
 - [x] Supabase 카드 생성 쓰기 연동
 - [x] 드래그 정렬 결과 Supabase 저장
-- [ ] `/workspace` 검색 기능 구현
+- [x] `/workspace` 검색 기능 구현
+- [x] 검색 결과에서 Goal / Plan / Task 유형별 표시
+- [x] 검색 결과 클릭 시 Detail Panel 선택 상태 복원
 
 ### 5. Detail Panel
 
@@ -433,8 +476,12 @@ type UserSettings = {
 - [x] 테스트용 오늘의 TODO 목록 표시
 - [x] 오늘의 TODO 정렬
 - [x] Supabase 오늘의 TODO 목록 데이터 연결
+- [x] 최근 7일 TODO 기록 조회
+- [x] Dashboard 날짜 이동 UI 구현
 - [x] 오늘의 TODO 완료 처리
 - [x] 오늘의 TODO 완료 시 연결된 Task 완료 처리
+- [x] 과거 TODO를 오늘 TODO로 다시 추가
+- [x] 7일보다 오래된 TodayTodo row 정리
 - [x] TODO 클릭 시 `/workspace`로 이동
 - [x] TODO 클릭 시 해당 Goal / Plan / Task 선택 상태 복원
 - [x] 막힌 Task 요약
@@ -446,8 +493,10 @@ type UserSettings = {
 
 - [x] 테스트용 완료한 Task 목록 표시
 - [x] 날짜별 완료 기록 표시
+- [x] 주별 완료 기록 표시
 - [x] 월별 완료 기록 표시
 - [x] 연별 완료 기록 표시
+- [x] 오늘이 속한 일 / 주 / 월 / 연 기준 Completion Log 표시
 - [x] 완료 기록에서 연결된 Goal / Plan 표시
 - [x] 테스트용 Goal / Plan Contribution 표시
 - [x] Supabase 완료 Task 데이터 연결
@@ -464,6 +513,8 @@ type UserSettings = {
 - [x] 주간 보기
 - [x] 월간 보기
 - [x] 연간 보기
+- [x] 이전 / 다음 기간 이동
+- [x] 상태별 요약 카드 표시
 - [x] 이틀 이상 이어지는 작업 기간 표시
 - [x] 타임라인 항목 클릭 시 `/workspace`로 이동
 - [x] Supabase Timeline 데이터 연결
@@ -478,6 +529,7 @@ type UserSettings = {
 - [x] Goal / Plan / Task 휴지통 이동
 - [x] 휴지통 항목 복원 버튼 표시
 - [x] 휴지통 항목 영구 삭제 버튼 표시
+- [x] All / Goal / Plan / Task 필터 구현
 - [x] 상단 앱바에 Trash 링크 추가
 - [x] 상위 항목이 휴지통에 있는 하위 항목 단독 복원 방지 표시
 - [x] 보류와 휴지통 차이 안내 표시
@@ -491,9 +543,13 @@ type UserSettings = {
 - [x] 설정 모달 안에서 라이트모드 / 다크모드 전환
 - [x] 설정 모달 안에서 Plan 카테고리 추가 / 수정 / 삭제
 - [x] 실제 날짜 자동입력 ON / OFF 설정
+- [x] Plan 카테고리 목록 아코디언 UI 적용
 
 ### 12. MVP 이후 보류 기능
 
+- [ ] v1.1 `/inbox` 또는 `/brainstorm` 페이지
+- [ ] v1.1 자유 아이디어 카드 생성 / 수정 / 삭제
+- [ ] v1.1 아이디어 카드를 Goal / Plan / Task로 전환
 - [ ] Reviews 페이지
 - [ ] Skills 페이지
 - [ ] Projects 페이지
@@ -511,13 +567,13 @@ type UserSettings = {
 
 ### 13. 현 시점 다음 작업
 
-아직 남겨둔 부분:
+v1은 핵심 기능 구현과 주요 UI/UX 정리를 완료한 상태로 둔다.
 
-- `/workspace` 검색 기능은 아직 placeholder 상태
-- 카테고리별 Plan 필터링은 아직 미구현
+다음 버전 후보:
 
 추천 순서:
 
-1. `/workspace` 검색 기능 구현
-2. 카테고리별 Plan 필터링
-3. 설정 모달 세부 QA
+1. v1.1 자유 아이디어 수집 페이지 라우트 확정: `/inbox` 또는 `/brainstorm`
+2. 자유 아이디어 카드 데이터 구조 설계
+3. 아이디어 카드를 `/workspace`의 Goal / Plan / Task로 전환하는 흐름 설계
+4. 카테고리별 Plan 필터링 검토

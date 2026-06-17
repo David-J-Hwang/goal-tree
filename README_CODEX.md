@@ -1082,7 +1082,9 @@ README_CODEX.md
 
 ## 22. 현재 구현 상태
 
-현재 저장소에는 Next.js 기반 초기 앱, Supabase Auth, `/workspace` Supabase 읽기 연결이 구현되어 있다.
+2026-06-17 기준, 이 저장소의 핵심 MVP를 v1로 둔다.
+
+v1은 로그인, Supabase 데이터 연결, `Goal -> Plan -> Task` Workspace, Daily TODO Dashboard, What I've Done, Timeline, Trash, Settings, 데스크탑 / 모바일 주요 UI/UX 정리를 포함한다.
 
 구현된 것:
 
@@ -1152,13 +1154,43 @@ Plan 카테고리 표시
 드래그 카드 상하 경계 제한
 드래그 경계 soft clamp 적용
 목록 카드의 기간 텍스트 제거
+/workspace 검색 기능
+/workspace 검색 결과 Goal / Plan / Task 유형별 표시
+/workspace 검색 결과 클릭 시 선택 상태와 Detail Panel 복원
+/dashboard 최근 7일 Daily TODO 조회
+/dashboard Daily TODO 날짜 이동 UI
+/dashboard 과거 TODO를 오늘 TODO로 다시 추가
+/dashboard 7일보다 오래된 TodayTodo row 앱 진입 시 정리
+/dashboard TodayTodo 카드 / 보조 패널 모바일 스크롤 처리
+/dashboard This Week Focus 카드 정보 정리: Plan 제목 + 연결 Goal
+/whativedone Day / Week / Month / Year segmented control
+/whativedone 오늘이 속한 일 / 주 / 월 / 연 기준 Completion Log 표시
+/whativedone Completion Log 날짜 라벨 포맷 정리
+/whativedone Goal / Plan Contribution 모바일 스크롤 처리
+/timeline Week / Month / Year 기간 이동 UI
+/timeline 상태별 요약 카드: Not Started / In Progress / Blocked / Done
+/timeline Range Tasks / Timeline Legend 아이콘 정리
+/timeline 항목 카드는 직접 /workspace 링크로 동작
+/trash All / Goal / Plan / Task 필터
+/trash Confirm delete 외부 클릭 초기화
+/settings Plan Categories 아코디언 UI
+/settings Plan Categories 모바일 한 줄 편집 레이아웃
+상단 앱바 현재 페이지 active 표시
+모바일 앱바 햄버거 메뉴
+공통 페이지 로딩 UI
+Goaltree favicon
+데스크탑 / 모바일 주요 페이지 반응형 레이아웃 정리
 ```
 
-아직 미연결 단계인 것:
+v1 범위 밖이거나 후속 개선 후보:
 
 ```txt
-검색 입력은 아직 placeholder다.
-카테고리별 Plan 필터링은 아직 없다.
+카테고리별 Plan 필터링
+Reviews 페이지
+Skills 페이지
+비밀번호 재설정 / 수정 페이지
+Google 로그인
+Inbox / Brainstorm 아이디어 수집 페이지
 ```
 
 Login / Auth UI:
@@ -1181,7 +1213,7 @@ Dashboard UI:
 
 ```txt
 /dashboard는 src/app/dashboard/dashboard-board.tsx에 구현되어 있다.
-Today TODO를 가장 큰 패널로 배치했다.
+Daily TODO를 가장 큰 패널로 배치했다.
 This Week Focus를 핵심 보조 패널로 배치했다.
 Blocked / Recent Done은 OptionalDashboardPanels 컴포넌트로 분리했다.
 showOptionalPanels 값을 통해 선택 패널을 쉽게 숨길 수 있다.
@@ -1189,6 +1221,11 @@ Today TODO는 Supabase today_todos 데이터를 사용한다.
 TODO 체크는 today_todos.done을 업데이트하고, 연결된 Task status도 done으로 바꾼다.
 Today TODO는 왼쪽 drag handle로 순서를 바꿀 수 있고, 변경된 순서는 today_todos.sort_order에 저장한다.
 TODO 링크는 /workspace?nodeId=task-id로 이동하고, 해당 Goal / Plan / Task 선택 상태를 복원한다.
+Dashboard는 todayDate 기준 최근 7일의 today_todos를 읽는다.
+날짜 이동 UI로 오늘과 최근 6일의 TODO 기록을 확인할 수 있다.
+오늘이 아닌 날짜의 TODO는 체크 완료를 막고, Add to Today 버튼으로 오늘 목록에 다시 추가할 수 있다.
+7일보다 오래된 today_todos row는 getWorkspaceData 호출 시 lazy cleanup한다.
+This Week Focus는 현재 active Plan 상위 항목을 보여주며, 카드 제목은 Plan 제목, 보조 텍스트는 연결 Goal 제목만 표시한다.
 ```
 
 What I've Done UI:
@@ -1196,7 +1233,10 @@ What I've Done UI:
 ```txt
 /whativedone은 src/app/whativedone/what-ive-done-board.tsx에 구현되어 있다.
 완료한 Task 기록을 보는 기록장 페이지로 만들었다.
-Day / Month / Year segmented control로 완료 기록 그룹을 전환한다.
+Day / Week / Month / Year segmented control로 완료 기록 기준을 전환한다.
+Completion Log는 날짜 이동 기능 없이 오늘이 속한 일 / 주 / 월 / 연 기준 완료 기록을 표시한다.
+Day 라벨은 yyyy.MM.dd 형식이다.
+Week 라벨은 yyyy.MM.dd - yyyy.MM.dd 형식이다.
 완료 Task 카드에는 완료일, 카테고리, Goal / Plan breadcrumb, 메모를 표시한다.
 완료 카드 클릭 시 /workspace?nodeId=task-id로 이동하고, 해당 Task 선택 상태를 복원한다.
 오른쪽에는 Goal Contribution과 Plan Contribution 패널을 배치했다.
@@ -1211,8 +1251,11 @@ Timeline UI:
 Done / Upcoming segmented control로 실제 진행기간과 예정기간 보기를 전환한다.
 Goal / Plan / Task segmented control로 표시할 Node 타입을 전환한다.
 Week / Month / Year segmented control로 타임라인 그룹 기준을 전환한다.
+Week / Month / Year 기준으로 이전 / 다음 기간 이동 버튼을 제공한다.
+상단 요약 카드는 Not Started / In Progress / Blocked / Done 상태별 개수를 보여준다.
 본문은 세로 타임라인 형태로 구성했다.
-각 항목에는 제목, Goal / Plan breadcrumb, 상태, 날짜 범위, workspace 링크를 표시한다.
+각 항목에는 제목, Goal / Plan breadcrumb, 상태, 날짜 범위를 표시한다.
+각 항목 카드 자체가 /workspace?nodeId=node-id 링크로 동작한다.
 Goal / Plan 항목에는 하위 Task 기준으로 계산될 진행률을 표현할 수 있도록 progress bar를 표시한다.
 이틀 이상 이어지는 항목은 RangeBar와 Range 패널에서 별도로 눈에 띄게 표시한다.
 Done 모드는 actualStartDate / actualEndDate를 사용한다.
@@ -1229,6 +1272,7 @@ Trash UI:
 All / Goal / Plan / Task 필터로 휴지통 항목을 볼 수 있다.
 각 항목에는 type, status, 원래 Goal / Plan breadcrumb, trashedAt을 표시한다.
 Restore 버튼과 Delete 버튼을 표시한다.
+Delete는 1차 클릭 후 Confirm delete로 바뀌며, 외부 클릭 시 다시 Delete로 초기화된다.
 상위 Goal 또는 Plan이 휴지통에 있는 하위 항목은 Restore 버튼을 disabled 처리한다.
 복원 제한 이유는 카드 안의 안내 박스로 보여준다.
 오른쪽에는 Restore Rules와 Permanent Delete 안내 패널을 배치했다.
@@ -1278,10 +1322,59 @@ Goal / Plan / Task 카드 드래그 정렬
 설정 모달 내 라이트모드 / 다크모드 전환
 페이지 표시 이름 Goaltree 통일
 초록 primary / 나무줄기 갈색 secondary 색상 방향
+v1 완료 기준: 2026-06-17
 ```
 
 미정:
 
 ```txt
 현재 본격 개발을 막는 큰 미정 사항은 없음
+```
+
+---
+
+## 24. v1.1 후보: Inbox / Brainstorm
+
+v1 이후 첫 후속 기능 후보는 자유 아이디어 수집 페이지다.
+
+배경:
+
+```txt
+현재 /workspace는 Goal -> Plan -> Task 계층이 정리된 상태에서 쓰기 좋다.
+하지만 아직 Goal / Plan / Task로 분류하기 전의 생각, 아이디어, 할 일을 빠르게 적어두는 공간은 없다.
+```
+
+후보 라우트:
+
+```txt
+/inbox
+/brainstorm
+```
+
+현재 판단:
+
+```txt
+/inbox를 더 추천한다.
+이유는 특정 브레인스토밍보다 "아직 정리되지 않은 생각의 수집함"이라는 의미가 넓고, 향후 할 일 / 아이디어 / 메모를 함께 담기 좋기 때문이다.
+페이지 제목이나 섹션명은 Brainstorm 또는 Idea Inbox로 정할 수 있다.
+```
+
+v1.1에서 검토할 기능:
+
+```txt
+자유 아이디어 카드 생성
+아이디어 카드 제목 / 메모 수정
+아이디어 카드 삭제 또는 보관
+아이디어 카드 태그 또는 간단한 상태
+괜찮은 아이디어를 /workspace의 Goal / Plan / Task로 전환
+전환 시 연결할 parent 선택: Goal로 만들기, 특정 Goal 아래 Plan으로 만들기, 특정 Plan 아래 Task로 만들기
+전환된 아이디어를 converted 상태로 남길지, 숨길지 결정
+```
+
+아직 미정:
+
+```txt
+최종 라우트명
+별도 DB 테이블을 만들지, nodes와 분리된 idea/inbox 테이블을 만들지
+전환 후 원본 아이디어를 보관할지 삭제할지
 ```
