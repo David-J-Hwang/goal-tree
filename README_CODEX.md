@@ -1072,8 +1072,8 @@ trashedAt 있음
 README.md
 -> 현재 작업 중인 버전의 개발 진행판
 
-docs/README_vX_Y.md
--> 완료된 버전의 스냅샷
+docs/README_vX_Y_Z.md
+-> 완료된 버전 또는 보관할 계획의 스냅샷
 
 README_CODEX.md
 -> 프로젝트 맥락, 현재 구조, 핵심 설계 결정 인수인계
@@ -1089,7 +1089,7 @@ README_CODEX.md
 -> README.md를 계속 업데이트한다.
 
 3. 버전 완료
--> README.md를 docs/README_vX_Y.md로 복사해 완료 스냅샷으로 보관한다.
+-> README.md를 docs/README_vX_Y_Z.md로 복사해 완료 스냅샷으로 보관한다.
 
 4. 다음 버전 시작
 -> README.md를 다음 버전 진행판으로 다시 정리한다.
@@ -1098,8 +1098,18 @@ README_CODEX.md
 현재 보관된 스냅샷:
 
 ```txt
-docs/README_v1_0.md
--> v1.0 완료 상태
+docs/README_v1_0_0.md
+-> v1.0.0 완료 상태
+
+docs/README_v1_1_0.md
+-> v1.1.0 계획 상태
+```
+
+현재 루트 README 상태:
+
+```txt
+README.md
+-> v1.0.1 patch 작업판
 ```
 
 새로운 Codex 세션은 우선 `README.md`와 `README_CODEX.md`를 함께 읽는다.
@@ -1111,7 +1121,7 @@ README.md
 README_CODEX.md
 -> 왜 그런 구조인지, 전체 앱 맥락이 무엇인지 확인
 
-docs/README_vX_Y.md
+docs/README_vX_Y_Z.md
 -> 과거 완료 버전의 상세 체크리스트가 필요할 때만 참고
 ```
 
@@ -1121,9 +1131,9 @@ docs/README_vX_Y.md
 
 ## 22. 현재 구현 상태
 
-2026-06-17 기준, 이 저장소의 핵심 MVP를 v1로 둔다.
+2026-06-17 기준, 이 저장소의 핵심 MVP를 v1.0.0으로 둔다.
 
-v1은 로그인, Supabase 데이터 연결, `Goal -> Plan -> Task` Workspace, Daily TODO Dashboard, What I've Done, Timeline, Trash, Settings, 데스크탑 / 모바일 주요 UI/UX 정리를 포함한다.
+v1.0.0은 로그인, Supabase 데이터 연결, `Goal -> Plan -> Task` Workspace, Daily TODO Dashboard, What I've Done, Timeline, Trash, Settings, 데스크탑 / 모바일 주요 UI/UX 정리를 포함한다.
 
 구현된 것:
 
@@ -1361,7 +1371,7 @@ Goal / Plan / Task 카드 드래그 정렬
 설정 모달 내 라이트모드 / 다크모드 전환
 페이지 표시 이름 Goaltree 통일
 초록 primary / 나무줄기 갈색 secondary 색상 방향
-v1 완료 기준: 2026-06-17
+v1.0.0 완료 기준: 2026-06-17
 ```
 
 미정:
@@ -1372,9 +1382,9 @@ v1 완료 기준: 2026-06-17
 
 ---
 
-## 24. v1.1 후보: Inbox / Brainstorm
+## 24. v1.1.0 후보: Inbox / Brainstorm
 
-v1 이후 첫 후속 기능 후보는 자유 아이디어 수집 페이지다.
+v1.0.0 이후 첫 후속 기능 후보는 자유 아이디어 수집 페이지다.
 
 배경:
 
@@ -1398,7 +1408,7 @@ v1 이후 첫 후속 기능 후보는 자유 아이디어 수집 페이지다.
 페이지 제목이나 섹션명은 Brainstorm 또는 Idea Inbox로 정할 수 있다.
 ```
 
-v1.1에서 검토할 기능:
+v1.1.0에서 검토할 기능:
 
 ```txt
 자유 아이디어 카드 생성
