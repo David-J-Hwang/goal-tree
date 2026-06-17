@@ -1,0 +1,579 @@
+# Goaltree
+
+## 프로젝트 소개
+
+삶에서 이룰 큰 목표를 `Goal -> Plan -> Task` 구조로 나누고, 오늘의 TODO, 내가 해낸 일, 타임라인으로 진행 상황을 관리하는 개인 목표 관리 앱 프로젝트다.
+
+자세한 기획 메모는 [README_CODEX.md](README_CODEX.md)를 참고한다.
+
+---
+
+## 버전 진행 상황
+
+### v1 완료 기준
+
+2026-06-17 기준, 핵심 MVP 기능을 v1로 둔다.
+
+v1 포함 범위:
+
+- 이메일 로그인 / 회원가입 / 로그아웃
+- 유저별 Supabase 데이터 분리
+- `Goal -> Plan -> Task` 기반 `/workspace`
+- Daily TODO 기반 `/dashboard`
+- 완료 기록 확인용 `/whativedone`
+- 기간 흐름 확인용 `/timeline`
+- 휴지통 관리용 `/trash`
+- 설정 모달: 테마, Plan 카테고리, 실제 날짜 자동입력
+- 데스크탑 / 모바일 주요 UI/UX 정리
+- Vercel 배포 기준 구성
+
+### v1.1 예정
+
+- 자유롭게 아이디어 카드를 작성하는 `/inbox` 또는 `/brainstorm` 페이지 검토
+- 구조화되지 않은 아이디어를 Goal / Plan / Task로 전환하는 기능 검토
+
+---
+
+## 기술스택
+
+```txt
+Frontend/Fullstack: Next.js
+Language: TypeScript
+Styling: Tailwind CSS
+UI Components: shadcn/ui
+Icons: Heroicons
+Database: Supabase PostgreSQL
+Auth: Supabase Auth
+Deployment: Vercel
+Drag & Drop: dnd-kit
+Date: date-fns
+```
+
+선택사항:
+
+```txt
+State: 처음에는 React state 사용, 필요하면 Zustand 검토
+```
+
+Supabase 메모:
+
+```txt
+Account: yelcrys4610@naver.com
+```
+
+---
+
+## 프로젝트 핵심구조
+
+프로젝트는 로그인 기능을 포함하고, 로그인 후 첫 화면은 `/dashboard`로 구성한다.
+
+루트 페이지(`/`)는 `/dashboard`로 리디렉션한다.
+
+주요 페이지:
+
+```txt
+/login
+/dashboard
+/workspace
+/whativedone
+/timeline
+/trash
+```
+
+### /login
+
+- 유저가 로그인하는 페이지다.
+- MVP에서는 이메일 로그인만 사용한다.
+- 유저별로 Goal, Plan, Task, TODO 데이터를 분리해서 저장한다.
+
+### /dashboard
+
+- 로그인 후 첫 화면이다.
+- 오늘 기준 Daily TODO 목록을 보여준다.
+- 오늘과 최근 6일의 TODO 기록을 조회할 수 있다.
+- TODO 카드 순서를 드래그 앤 드롭으로 바꿀 수 있다.
+- TODO 완료 처리를 할 수 있다.
+- TODO를 완료하면 연결된 Task도 완료 처리한다.
+- TODO 항목을 클릭하면 `/workspace`로 이동하고, 해당 Task가 선택된 상태로 열린다.
+- 과거 TODO 항목은 오늘 목록으로 다시 추가할 수 있다.
+- 최근 완료한 일, 막힌 일, This Week Focus를 요약 컴포넌트로 보여준다.
+
+### /workspace
+
+- 이 프로젝트의 핵심 페이지다.
+- macOS Finder의 계층별 보기처럼 `Goal`, `Plan`, `Task`를 3단 카드 구조로 보여준다.
+
+```txt
+[Goal Cards] [Plan Cards] [Task Cards] | [Detail Panel]
+```
+
+- 처음 진입하면 Goal 카드 목록만 보인다.
+- Goal 카드를 클릭하면 해당 Goal에 속한 Plan 카드들이 나타난다.
+- Plan 카드를 클릭하면 해당 Plan에 속한 Task 카드들이 나타난다.
+- Goal, Plan, Task 카드는 같은 섹션 안에서만 드래그 앤 드롭으로 순서를 바꿀 수 있다.
+- 카드 순서가 우선순위를 나타낸다.
+- 카드를 다른 섹션으로 이동하는 기능은 금지한다.
+- 검색 기능은 별도 페이지가 아니라 `/workspace` 안에 통합한다.
+- Detail Panel은 3단 구조와 분리해서 오른쪽에 표시한다.
+
+### /workspace Detail Panel
+
+선택한 카드 종류에 따라 상세 내용을 다르게 보여준다.
+
+Goal 상세:
+
+- 제목
+- 왜 중요한지
+- 성공기준
+- 예정기간
+- 실제 진행기간
+- 상태: 시작전 / 진행중 / 완료 / 보류 / 막힘
+- 진행률
+- 메모
+
+Plan 상세:
+
+- 제목
+- 연결된 Goal
+- 카테고리
+- 상태: 시작전 / 진행중 / 완료 / 보류 / 막힘
+- 예정기간
+- 실제 진행기간
+- 진행률
+- 메모
+
+Task 상세:
+
+- 제목
+- 연결된 Plan
+- 상태: 시작전 / 진행중 / 완료 / 보류 / 막힘
+- 예정기간
+- 실제 진행기간
+- 오늘의 TODO 목록에 추가 / 제거
+- 메모
+
+### /whativedone
+
+- 내가 해낸 일을 확인하는 기록 페이지다.
+- 완료한 Task를 오늘이 속한 일 / 주 / 월 / 연 단위로 확인한다.
+- 어떤 Goal / Plan에 기여했는지 확인할 수 있도록 만든다.
+- 완료 기록 카드를 클릭하면 `/workspace`에서 해당 Task가 선택된 상태로 열린다.
+
+### /timeline
+
+- 내가 한 일과 앞으로 할 일을 시간 흐름으로 보는 페이지다.
+- 해낸 일 / 할 일 토글을 제공한다.
+- 주간 / 월간 / 연간 보기와 이전 / 다음 기간 이동을 제공한다.
+- Goal / Plan / Task 유형별로 기간 흐름을 확인할 수 있다.
+- 이틀 이상 이어지는 작업 기간을 표시할 수 있어야 한다.
+
+### /trash
+
+- 휴지통에 들어간 Goal, Plan, Task를 관리하는 페이지다.
+- 삭제 버튼을 누르면 바로 영구 삭제하지 않고 휴지통으로 이동한다.
+- 휴지통에서는 복원하거나 영구 삭제할 수 있다.
+- 상위 항목이 휴지통에 있으면 하위 항목도 일반 화면에서 숨긴다.
+- MVP에서는 상위 항목이 휴지통에 있는 하위 항목을 단독 복원하지 않는다.
+
+### 앱 설정
+
+- 별도 설정 페이지 대신 상단 앱바에서 설정 모달을 연다.
+- 상태 변경 시 실제 진행기간 자동입력 기능은 기본 ON으로 둔다.
+- 라이트모드 / 다크모드 전환은 설정 모달에서 제공한다.
+- Plan 카테고리 추가 / 수정 / 삭제는 설정 모달에서 제공한다.
+
+---
+
+## 프로젝트 데이터구조
+
+### Node
+
+`Goal`, `Plan`, `Task`는 공통 Node 구조로 관리한다.
+
+```ts
+type Node = {
+  id: string;
+  userId: string;
+
+  type: "goal" | "plan" | "task";
+  parentId: string | null;
+
+  title: string;
+  memo?: string | null;
+
+  status:
+    | "not_started"
+    | "in_progress"
+    | "blocked"
+    | "done"
+    | "paused";
+
+  plannedStartDate?: string | null;
+  plannedEndDate?: string | null;
+  actualStartDate?: string | null;
+  actualEndDate?: string | null;
+
+  importanceReason?: string | null;
+  successCriteriaText?: string | null;
+  categoryId?: string | null;
+
+  sortOrder: number;
+
+  createdAt: string;
+  updatedAt: string;
+  trashedAt?: string | null;
+};
+```
+
+사용 방식:
+
+```txt
+Goal
+-> parentId: null
+-> importanceReason, successCriteriaText 사용
+
+Plan
+-> parentId: Goal id
+-> categoryId 사용
+
+Task
+-> parentId: Plan id
+```
+
+### PlanCategory
+
+Plan은 유저가 직접 만든 카테고리로 분류한다.
+
+신규 유저에게는 기본 카테고리를 먼저 생성하고, 이후 유저가 직접 추가 / 수정 / 삭제할 수 있게 만든다.
+
+```ts
+type PlanCategory = {
+  id: string;
+  userId: string;
+  name: string;
+  color?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+```
+
+예시:
+
+```txt
+웹개발
+공부
+외부활동
+콘텐츠
+사업
+건강
+기타
+```
+
+### TodayTodo
+
+오늘의 TODO는 Task와 연결한다.
+
+날짜가 바뀌면 오늘 TODO는 새 목록으로 시작한다. 이전 날짜의 TODO는 DB에 기록으로 남기되, Dashboard에서는 오늘 포함 최근 7일 범위 안에서 조회한다.
+
+7일보다 오래된 TodayTodo row는 앱 진입 시 정리한다.
+
+미완료 TODO 이월은 MVP 기본 동작에 포함하지 않는다. 이후 사용자 설정에서 자동 이월을 켜거나, Dashboard에서 "어제 미완료 TODO 가져오기" 버튼을 제공하는 방향을 검토한다.
+
+```ts
+type TodayTodo = {
+  id: string;
+  userId: string;
+  taskId: string;
+  date: string;
+  sortOrder: number;
+  done: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+```
+
+### UserSettings
+
+유저별 앱 설정은 추후 설정 모달에서 관리한다.
+
+```ts
+type UserSettings = {
+  userId: string;
+  autoFillActualDatesOnStatusChange: boolean;
+};
+```
+
+---
+
+## 진행률 계산
+
+- Goal 진행률: 해당 Goal에 속한 계산 대상 Task 중 완료된 Task 비율
+- Plan 진행률: 해당 Plan에 속한 계산 대상 Task 중 완료된 Task 비율
+- Task 진행률: MVP에서는 상태 기준으로 표시
+- 분모 포함: 시작전, 진행중, 막힘, 완료
+- 분모 제외: 보류, 휴지통
+- 분자 포함: 완료
+
+진행률은 직접 저장하기보다 Task 상태를 기준으로 계산한다.
+
+---
+
+## 날짜 / 상태 정책
+
+- 예정기간과 실제 진행기간은 날짜 단위로 관리한다.
+- 생성일, 수정일, 휴지통 이동일은 timestamp로 관리한다.
+- 시작전 -> 진행중: 실제 시작일이 비어 있으면 오늘 날짜 자동입력
+- 진행중 / 막힘 -> 완료: 실제 종료일을 오늘 날짜로 자동입력
+- 완료 -> 진행중: 실제 종료일을 비운다.
+- 오늘 TODO 완료: 연결된 Task도 완료 처리한다.
+- 날짜가 바뀌면 오늘 TODO는 새 빈 목록으로 시작한다.
+- 미완료 TODO 이월은 향후 사용자 설정 또는 수동 가져오기 기능으로 검토한다.
+- 보류는 언젠가 다시 활성화할 항목이고, 휴지통은 삭제 예정 항목이다.
+
+---
+
+## 향후 개발방향
+
+- v1.1: `/inbox` 또는 `/brainstorm` 페이지 추가
+- v1.1: 자유 아이디어 카드를 Goal / Plan / Task로 전환하는 흐름 추가
+- Google 로그인 추가
+- v2에서 별도 비밀번호 재설정 / 수정 페이지 추가
+
+---
+
+## 개발 체크리스트
+
+### 0. 기획 / 문서
+
+- [x] 프로젝트 핵심 방향 정리
+- [x] `Goal -> Plan -> Task` 구조 채택
+- [x] `/dashboard`, `/workspace`, `/whativedone`, `/timeline`, `/trash` 페이지 구조 채택
+- [x] 루트 페이지(`/`)를 `/dashboard`로 리디렉션하는 방향 채택
+- [x] 로그인 기능 추가 방향 채택
+- [x] MVP 로그인 provider를 이메일 로그인으로 채택
+- [x] 핵심 기술스택 채택
+- [x] shadcn/ui 채택
+- [x] 오늘 TODO 완료 시 Task 완료 처리 채택
+- [x] 휴지통 페이지와 복원 / 영구삭제 규칙 채택
+- [x] 보류와 휴지통의 의미 구분 채택
+- [x] 상태 변경 시 실제 날짜 자동입력 기본 ON 채택
+- [x] 상단 앱바 설정 모달 방향 채택
+- [x] v1 완료 기준 정리
+- [x] v1.1 자유 아이디어 수집 페이지 방향 채택
+- [x] `README_CODEX.md`에 상세 기획 정리
+- [x] `README.md`를 개발 체크리스트용 문서로 정리
+
+### 1. 프로젝트 초기 세팅
+
+- [x] 프로젝트 생성
+- [x] shadcn/ui 초기 설정
+- [x] 기본 shadcn/ui 컴포넌트 추가
+- [x] 기본 라우팅 구조 생성
+- [x] 공통 레이아웃 생성
+- [x] 상단 앱바 생성
+- [x] 네비게이션 구성
+- [x] 라이트모드 / 다크모드 토글 구현
+- [x] Heroicons 설치
+- [x] 기본 스타일 시스템 구성
+- [x] 페이지 표시 이름을 `Goaltree`로 통일
+- [x] Goaltree 테마 색상 적용: 초록 primary / 나무줄기 갈색 secondary
+- [x] 다크모드 상태 배지 색상 조정
+- [x] 상단 앱바 현재 페이지 활성 상태 표시
+- [x] 공통 페이지 로딩 UI 추가
+- [x] Goaltree favicon 추가
+
+### 2. 인증 / 사용자 데이터
+
+- [x] 로그인 provider 확정
+- [x] 테스트용 `/login` 페이지 구현
+- [x] 이메일 로그인 / 회원가입 UI 전환
+- [x] Supabase Auth 실제 연결
+- [x] 로그인 후 `/dashboard`로 이동
+- [x] 로그아웃 기능 구현
+- [x] 인증되지 않은 사용자의 주요 페이지 접근 제한
+- [x] 주요 데이터 테이블에 `user_id` 필드 구성
+- [x] Supabase RLS로 유저별 데이터 접근 제한 처리
+- [x] `/workspace` 데이터 요청에 로그인 유저 데이터 연결
+- [x] 다른 주요 페이지 데이터 요청에 로그인 유저 데이터 연결
+
+### 3. 데이터 모델
+
+- [x] Node TypeScript 타입 초안 구현
+- [x] PlanCategory TypeScript 타입 초안 구현
+- [x] TodayTodo TypeScript 타입 초안 구현
+- [x] UserSettings TypeScript 타입 초안 구현
+- [x] Supabase 초기 SQL 스키마 파일 작성
+- [x] 상태값 타입 구현: 시작전 / 진행중 / 막힘 / 완료 / 보류
+- [x] 예정기간 필드 타입 구현
+- [x] 실제 진행기간 필드 타입 구현
+- [x] 휴지통 이동 시간 필드 타입 구현
+- [x] `sortOrder` 필드 타입 구현
+- [x] Supabase SQL Editor에서 초기 스키마 실행
+- [x] Supabase DB 테이블 구현
+- [x] Supabase DB 관계 / 제약 설정
+- [x] Supabase authenticated role 권한 grant SQL 파일 작성
+- [x] Supabase SQL Editor에서 authenticated role 권한 grant 실행
+
+### 4. /workspace
+
+- [x] 테스트용 Goal 카드 섹션 구현
+- [x] 테스트용 Plan 카드 섹션 구현
+- [x] 테스트용 Task 카드 섹션 구현
+- [x] Goal 클릭 시 연결된 Plan 표시
+- [x] Plan 클릭 시 연결된 Task 표시
+- [x] 선택된 카드 UI 표시
+- [x] 같은 섹션 안에서 카드 드래그 정렬 구현
+- [x] 다른 섹션으로 카드 이동 금지
+- [x] 드래그 핸들 방식 적용
+- [x] 드래그 카드 좌우 이동 제한
+- [x] 드래그 카드 상하 경계 제한
+- [x] 드래그 경계 soft clamp 적용
+- [x] 목록 카드 기간 텍스트 제거
+- [x] Supabase 데이터 읽기 연동
+- [x] 빈 Goal / Plan / Task 상태 표시
+- [x] Goal 생성 구현
+- [x] Goal 수정 구현: 제목 / 메모 / 상태 / 날짜 / 왜 중요한지 / 성공기준
+- [x] Goal 휴지통 이동 구현
+- [x] Plan 생성 구현
+- [x] Plan 수정 구현: 제목 / 메모 / 상태 / 날짜 / 카테고리
+- [x] Plan 휴지통 이동 구현
+- [x] Task 생성 구현
+- [x] Task 수정 구현: 제목 / 메모 / 상태 / 날짜
+- [x] Task 휴지통 이동 구현
+- [x] Supabase 카드 생성 쓰기 연동
+- [x] 드래그 정렬 결과 Supabase 저장
+- [x] `/workspace` 검색 기능 구현
+- [x] 검색 결과에서 Goal / Plan / Task 유형별 표시
+- [x] 검색 결과 클릭 시 Detail Panel 선택 상태 복원
+
+### 5. Detail Panel
+
+- [x] 테스트용 Goal 상세패널 구현
+- [x] 테스트용 Plan 상세패널 구현
+- [x] 테스트용 Task 상세패널 구현
+- [x] Goal 진행률 표시
+- [x] Plan 진행률 표시
+- [x] 제목 입력 / 수정 기능 구현
+- [x] 메모 입력 / 수정 기능 구현
+- [x] 상태 변경 기능 구현
+- [x] 날짜 입력 / 수정 기능 구현
+- [x] Goal 왜 중요한지 / 성공기준 입력 / 수정 기능 구현
+- [x] Plan 카테고리 변경 기능 구현
+- [x] 상태 변경 시 실제 날짜 자동입력 구현
+- [x] Task를 오늘의 TODO에 추가 / 제거
+
+### 6. Plan 카테고리
+
+- [x] 테스트용 기본 카테고리 표시
+- [x] 신규 유저 기본 카테고리 자동 생성
+- [x] 유저 직접 카테고리 추가
+- [x] 카테고리 수정 / 삭제
+- [x] Plan에 카테고리 연결
+- [ ] 카테고리별 Plan 필터링
+
+### 7. /dashboard
+
+- [x] 테스트용 오늘의 TODO 목록 표시
+- [x] 오늘의 TODO 정렬
+- [x] Supabase 오늘의 TODO 목록 데이터 연결
+- [x] 최근 7일 TODO 기록 조회
+- [x] Dashboard 날짜 이동 UI 구현
+- [x] 오늘의 TODO 완료 처리
+- [x] 오늘의 TODO 완료 시 연결된 Task 완료 처리
+- [x] 과거 TODO를 오늘 TODO로 다시 추가
+- [x] 7일보다 오래된 TodayTodo row 정리
+- [x] TODO 클릭 시 `/workspace`로 이동
+- [x] TODO 클릭 시 해당 Goal / Plan / Task 선택 상태 복원
+- [x] 막힌 Task 요약
+- [x] 최근 완료한 Task 요약
+- [x] 이번 주 핵심 항목 요약
+- [x] 선택 컴포넌트 제거하기 쉽게 분리
+
+### 8. /whativedone
+
+- [x] 테스트용 완료한 Task 목록 표시
+- [x] 날짜별 완료 기록 표시
+- [x] 주별 완료 기록 표시
+- [x] 월별 완료 기록 표시
+- [x] 연별 완료 기록 표시
+- [x] 오늘이 속한 일 / 주 / 월 / 연 기준 Completion Log 표시
+- [x] 완료 기록에서 연결된 Goal / Plan 표시
+- [x] 테스트용 Goal / Plan Contribution 표시
+- [x] Supabase 완료 Task 데이터 연결
+- [x] 실제 Goal / Plan Contribution 계산
+- [x] 완료 기록 클릭 시 `/workspace`로 이동
+- [x] 완료 기록 클릭 시 해당 Task 선택 상태 복원
+
+### 9. /timeline
+
+- [x] 테스트용 예정된 Task 표시
+- [x] 테스트용 완료된 Task 표시
+- [x] 해낸 일 / 할 일 토글
+- [x] Goal / Plan / Task 유형 전환
+- [x] 주간 보기
+- [x] 월간 보기
+- [x] 연간 보기
+- [x] 이전 / 다음 기간 이동
+- [x] 상태별 요약 카드 표시
+- [x] 이틀 이상 이어지는 작업 기간 표시
+- [x] 타임라인 항목 클릭 시 `/workspace`로 이동
+- [x] Supabase Timeline 데이터 연결
+- [x] 실제 Goal / Plan / Task 예정기간 표시
+- [x] 실제 Goal / Plan / Task 실제 진행기간 표시
+- [x] 타임라인 항목 클릭 시 해당 Goal / Plan / Task 선택 상태 복원
+
+### 10. /trash
+
+- [x] 휴지통 목록 표시
+- [x] Supabase 휴지통 목록 데이터 연결
+- [x] Goal / Plan / Task 휴지통 이동
+- [x] 휴지통 항목 복원 버튼 표시
+- [x] 휴지통 항목 영구 삭제 버튼 표시
+- [x] All / Goal / Plan / Task 필터 구현
+- [x] 상단 앱바에 Trash 링크 추가
+- [x] 상위 항목이 휴지통에 있는 하위 항목 단독 복원 방지 표시
+- [x] 보류와 휴지통 차이 안내 표시
+- [x] 실제 휴지통 복원 기능 구현
+- [x] 실제 휴지통 영구 삭제 기능 구현
+
+### 11. 앱 설정 모달
+
+- [x] 상단 앱바 설정 진입점 구현
+- [x] 설정 모달 구현
+- [x] 설정 모달 안에서 라이트모드 / 다크모드 전환
+- [x] 설정 모달 안에서 Plan 카테고리 추가 / 수정 / 삭제
+- [x] 실제 날짜 자동입력 ON / OFF 설정
+- [x] Plan 카테고리 목록 아코디언 UI 적용
+
+### 12. MVP 이후 보류 기능
+
+- [ ] v1.1 `/inbox` 또는 `/brainstorm` 페이지
+- [ ] v1.1 자유 아이디어 카드 생성 / 수정 / 삭제
+- [ ] v1.1 아이디어 카드를 Goal / Plan / Task로 전환
+- [ ] Reviews 페이지
+- [ ] Skills 페이지
+- [ ] Projects 페이지
+- [ ] Actions 페이지
+- [ ] Search / All Nodes 페이지
+- [ ] 비밀번호 재설정 / 수정 페이지
+- [ ] Goal 성공기준 체크리스트
+- [ ] Plan 설명 / 목적 필드
+- [ ] Task 세부 체크리스트
+- [ ] 마인드맵 / 그래프 시각화
+- [ ] 알림
+- [ ] 캘린더 연동
+- [ ] 협업 기능
+- [ ] 결제
+
+### 13. 현 시점 다음 작업
+
+v1은 핵심 기능 구현과 주요 UI/UX 정리를 완료한 상태로 둔다.
+
+다음 버전 후보:
+
+추천 순서:
+
+1. v1.1 자유 아이디어 수집 페이지 라우트 확정: `/inbox` 또는 `/brainstorm`
+2. 자유 아이디어 카드 데이터 구조 설계
+3. 아이디어 카드를 `/workspace`의 Goal / Plan / Task로 전환하는 흐름 설계
+4. 카테고리별 Plan 필터링 검토
