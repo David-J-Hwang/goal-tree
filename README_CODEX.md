@@ -1153,6 +1153,8 @@ Settings 모달의 Plan Categories 카드를 드래그 앤 드롭으로 정렬
 Plans / Tasks 카드의 연결 노드를 다른 카드로 교체하는 기능 추가
 ```
 
+페이지 공통 높이 / 하단 여백 프레임은 `src/lib/page-layout.ts`의 `appPageMainClassName`, `appPageContentClassName`에서 관리한다. `/dashboard`, `/workspace`, `/whativedone`, `/timeline`, `/trash`와 `PageLoadingShell`이 이 값을 공유한다.
+
 구현된 것:
 
 ```txt

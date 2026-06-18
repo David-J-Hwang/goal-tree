@@ -1,6 +1,10 @@
 import type { ReactNode } from "react";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  appPageContentClassName,
+  appPageMainClassName,
+} from "@/lib/page-layout";
 import { cn } from "@/lib/utils";
 
 export function PageLoadingShell({
@@ -15,9 +19,9 @@ export function PageLoadingShell({
   title: string;
 }) {
   return (
-    <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8 xl:h-[calc(100dvh-3.5rem-1px)] xl:min-h-0 xl:overflow-hidden">
+    <main className={appPageMainClassName}>
       <span className="sr-only">Loading {title}</span>
-      <div className={cn("mx-auto flex min-h-0 flex-col xl:h-full", maxWidth)}>
+      <div className={cn(appPageContentClassName, maxWidth)}>
         <header className="flex shrink-0 flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-medium text-muted-foreground">Goaltree</p>

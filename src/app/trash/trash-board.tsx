@@ -17,6 +17,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { mapNodeRow, nodeSelectColumns, type NodeRow } from "@/lib/goaltree/node-rows";
+import {
+  appPageContentClassName,
+  appPageMainClassName,
+} from "@/lib/page-layout";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import type { GoalTreeNode, NodeStatus, NodeType } from "@/types/domain";
@@ -169,8 +173,8 @@ export function TrashBoard({
   }
 
   return (
-    <main className="min-h-[calc(100vh-3.5rem)] bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8 xl:h-[calc(100dvh-3.5rem-1px)] xl:min-h-0 xl:overflow-hidden">
-      <div className="mx-auto flex min-h-0 max-w-[1440px] flex-col xl:h-full">
+    <main className={appPageMainClassName}>
+      <div className={cn(appPageContentClassName, "max-w-[1440px]")}>
         <header className="flex shrink-0 flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-medium text-muted-foreground">Goaltree</p>
