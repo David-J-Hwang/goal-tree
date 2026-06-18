@@ -79,7 +79,7 @@ v1.1.0의 `/brainstorm` 계획은 [docs/README_v1_1_0.md](docs/README_v1_1_0.md)
 - [x] 테마 쿠키 동기화로 `/login` 첫 진입 시 light -> dark 깜빡임 완화
 - [x] 모든 페이지에서 위 / 아래 여백 밸런스가 맞도록 페이지 하단 여백 조정
 - [ ] `/settings` 모달의 Plan Categories 카드들을 드래그 앤 드롭으로 정렬
-- [ ] `/workspace` 카드 추가 상태에서 컴포넌트 밖을 클릭하면 Cancel과 동일하게 추가 폼 닫기
+- [x] `/workspace` 카드 추가 상태에서 컴포넌트 밖을 클릭하면 Cancel과 동일하게 추가 폼 닫기
 - [ ] Plans / Tasks 카드의 연결 노드를 다른 카드로 교체하는 기능 추가
 
 ### QA / 확인
@@ -112,7 +112,7 @@ v1.1.0의 `/brainstorm` 계획은 [docs/README_v1_1_0.md](docs/README_v1_1_0.md)
 - [x] 전체 페이지 하단 여백 조정
 - [ ] Settings Plan Categories 드래그 정렬
 - [x] `/workspace` 검색창 레이아웃 수정
-- [ ] `/workspace` 카드 추가 폼 외부 클릭 cancel
+- [x] `/workspace` 카드 추가 폼 외부 클릭 cancel
 - [ ] Plans / Tasks 연결 노드 교체
 - [ ] 삭제 confirm 중 입력 비활성화 QA 및 필요 시 패치
 

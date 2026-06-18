@@ -1,6 +1,13 @@
 "use client";
 
-import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type FormEvent,
+  type RefObject,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   closestCenter,
   DndContext,
@@ -629,6 +636,8 @@ function WorkspaceColumn({
   const [isReordering, setIsReordering] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [reorderErrorMessage, setReorderErrorMessage] = useState("");
+  const addButtonRef = useRef<HTMLButtonElement | null>(null);
+  const addFormRef = useRef<HTMLFormElement | null>(null);
   const canAdd = !isSearchMode && (type === "goal" || Boolean(parentId));
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -651,6 +660,38 @@ function WorkspaceColumn({
     setErrorMessage("");
     setReorderErrorMessage("");
   }, [isSearchMode]);
+
+  useEffect(() => {
+    if (!isAdding || isSubmitting) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target;
+
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      if (addFormRef.current?.contains(target)) {
+        return;
+      }
+
+      if (addButtonRef.current?.contains(target)) {
+        return;
+      }
+
+      setIsAdding(false);
+      setTitleValue("");
+      setErrorMessage("");
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [isAdding, isSubmitting]);
 
   async function handleDragEnd(event: DragEndEvent) {
     if (isSearchMode) {
@@ -732,6 +773,7 @@ function WorkspaceColumn({
             <CardDescription className="mt-1 line-clamp-1">{summary}</CardDescription>
           </div>
           <Button
+            ref={addButtonRef}
             className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
             size="icon"
             variant="ghost"
@@ -754,6 +796,7 @@ function WorkspaceColumn({
         ) : null}
         {!isSearchMode && isAdding ? (
           <AddNodeForm
+            formRef={addFormRef}
             type={type}
             titleValue={titleValue}
             categoryId={categoryId}
@@ -805,6 +848,7 @@ function WorkspaceColumn({
 }
 
 function AddNodeForm({
+  formRef,
   type,
   titleValue,
   categoryId,
@@ -816,6 +860,7 @@ function AddNodeForm({
   onSubmit,
   onTitleChange,
 }: {
+  formRef: RefObject<HTMLFormElement | null>;
   type: NodeType;
   titleValue: string;
   categoryId: string;
@@ -828,7 +873,11 @@ function AddNodeForm({
   onTitleChange: (value: string) => void;
 }) {
   return (
-    <form className="mb-3 rounded-md border bg-muted/30 p-3" onSubmit={onSubmit}>
+    <form
+      className="mb-3 rounded-md border bg-muted/30 p-3"
+      onSubmit={onSubmit}
+      ref={formRef}
+    >
       <label className="block">
         <span className="text-xs font-medium text-muted-foreground">
           {columnLabels[type]} title
