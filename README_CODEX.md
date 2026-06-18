@@ -1150,13 +1150,15 @@ Settings 모달의 Plan Categories 카드를 드래그 앤 드롭으로 정렬
 /workspace 데스크탑 전체화면 검색창 레이아웃 수정
 /workspace 카드 추가 상태에서 외부 클릭 시 Cancel과 동일하게 추가 폼 닫기
 /workspace 카드 trash 이동 요청 중 다른 편집 컴포넌트 잠금
-/trash의 삭제 요청 중 다른 입력 비활성화 여부 QA 및 필요 시 패치
+/trash 카드 영구삭제 요청 중 필터 / Restore / Delete 버튼 잠금
 Plans / Tasks 카드의 연결 노드를 다른 카드로 교체하는 기능 추가
 ```
 
 페이지 공통 높이 / 하단 여백 프레임은 `src/lib/page-layout.ts`의 `appPageMainClassName`, `appPageContentClassName`에서 관리한다. `/dashboard`, `/workspace`, `/whativedone`, `/timeline`, `/trash`와 `PageLoadingShell`이 이 값을 공유한다.
 
 `/workspace`에서 Move to trash를 한 번 눌러 Confirm trash 대기 상태가 되었을 때는 외부 클릭으로 다시 취소할 수 있어야 하므로 다른 입력을 잠그지 않는다. 사용자가 Confirm trash를 눌러 실제 trash 이동 요청이 진행되는 동안에만 검색창, 카드 추가, 드래그 핸들, Detail Panel 입력과 저장 / Today TODO 버튼을 잠근다.
+
+`/trash`에서도 같은 원칙을 따른다. Delete를 한 번 눌러 Confirm delete 대기 상태가 되었을 때는 외부 클릭으로 Delete 상태로 되돌릴 수 있다. 사용자가 Confirm delete를 눌러 실제 영구삭제 요청이 진행되는 동안에는 All / Goal / Plan / Task 필터, Restore 버튼, Delete / Confirm delete 버튼을 잠그고, 요청 완료 후 다시 활성화한다. 삭제 실패 시 Confirm delete 상태는 초기화한다.
 
 구현된 것:
 

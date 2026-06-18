@@ -64,6 +64,7 @@ export function TrashBoard({
   const [deletingId, setDeletingId] = useState("");
   const [confirmingDeleteId, setConfirmingDeleteId] = useState("");
   const confirmDeleteButtonRef = useRef<HTMLButtonElement | null>(null);
+  const mutationLockRef = useRef(false);
 
   const trashedItems = useMemo(() => getTrashedItems(nodes), [nodes]);
 
@@ -80,7 +81,7 @@ export function TrashBoard({
   const isMutating = Boolean(restoringId || deletingId);
 
   useEffect(() => {
-    if (!confirmingDeleteId) {
+    if (!confirmingDeleteId || isMutating) {
       return;
     }
 
@@ -103,13 +104,14 @@ export function TrashBoard({
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [confirmingDeleteId]);
+  }, [confirmingDeleteId, isMutating]);
 
   async function handleRestore(item: TrashedItem) {
-    if (item.parentTrashed) {
+    if (item.parentTrashed || mutationLockRef.current) {
       return;
     }
 
+    mutationLockRef.current = true;
     setRestoringId(item.id);
     setActionError("");
     setConfirmingDeleteId("");
@@ -127,12 +129,14 @@ export function TrashBoard({
     if (error) {
       setActionError(error.message);
       setRestoringId("");
+      mutationLockRef.current = false;
       return;
     }
 
     if (!data) {
       setActionError("Restored node was not returned.");
       setRestoringId("");
+      mutationLockRef.current = false;
       return;
     }
 
@@ -141,15 +145,21 @@ export function TrashBoard({
       currentNodes.map((node) => (node.id === restoredNode.id ? restoredNode : node)),
     );
     setRestoringId("");
+    mutationLockRef.current = false;
   }
 
   async function handleDelete(item: TrashedItem) {
+    if (mutationLockRef.current) {
+      return;
+    }
+
     if (confirmingDeleteId !== item.id) {
       setConfirmingDeleteId(item.id);
       setActionError("");
       return;
     }
 
+    mutationLockRef.current = true;
     setDeletingId(item.id);
     setActionError("");
 
@@ -163,6 +173,8 @@ export function TrashBoard({
     if (error) {
       setActionError(error.message);
       setDeletingId("");
+      setConfirmingDeleteId("");
+      mutationLockRef.current = false;
       return;
     }
 
@@ -170,6 +182,7 @@ export function TrashBoard({
     setNodes((currentNodes) => currentNodes.filter((node) => !removedIds.has(node.id)));
     setDeletingId("");
     setConfirmingDeleteId("");
+    mutationLockRef.current = false;
   }
 
   return (
@@ -203,7 +216,12 @@ export function TrashBoard({
                     {visibleItems.length} items in this view
                   </CardDescription>
                 </div>
-                <SegmentedControl items={filters} value={filter} onChange={setFilter} />
+                <SegmentedControl
+                  disabled={isMutating}
+                  items={filters}
+                  value={filter}
+                  onChange={setFilter}
+                />
               </div>
             </CardHeader>
             <CardContent className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
@@ -218,17 +236,17 @@ export function TrashBoard({
                     isConfirmingDelete={confirmingDeleteId === item.id}
                     isDeleting={deletingId === item.id}
                     isMutating={isMutating}
-                  isRestoring={restoringId === item.id}
-                  item={item}
-                  key={item.id}
-                  onConfirmDeleteButtonRef={(element) => {
-                    if (confirmingDeleteId === item.id) {
-                      confirmDeleteButtonRef.current = element;
-                    }
-                  }}
-                  onDelete={() => handleDelete(item)}
-                  onRestore={() => handleRestore(item)}
-                />
+                    isRestoring={restoringId === item.id}
+                    item={item}
+                    key={item.id}
+                    onConfirmDeleteButtonRef={(element) => {
+                      if (confirmingDeleteId === item.id) {
+                        confirmDeleteButtonRef.current = element;
+                      }
+                    }}
+                    onDelete={() => handleDelete(item)}
+                    onRestore={() => handleRestore(item)}
+                  />
                 ))
               ) : (
                 <div className="flex min-h-40 items-center justify-center rounded-md border border-dashed px-4 text-center text-sm text-muted-foreground">
@@ -270,10 +288,12 @@ function SummaryTile({
 }
 
 function SegmentedControl<TValue extends string>({
+  disabled = false,
   items,
   value,
   onChange,
 }: {
+  disabled?: boolean;
   items: Array<{ value: TValue; label: string }>;
   value: TValue;
   onChange: (value: TValue) => void;
@@ -285,7 +305,9 @@ function SegmentedControl<TValue extends string>({
           className={cn(
             "rounded px-2 py-1.5 text-sm font-medium text-muted-foreground transition-colors sm:px-3",
             value === item.value && "bg-primary text-primary-foreground shadow-sm",
+            disabled && "cursor-not-allowed opacity-60",
           )}
+          disabled={disabled}
           key={item.value}
           onClick={() => onChange(item.value)}
           type="button"
@@ -364,7 +386,7 @@ function TrashItemCard({
                 ? "border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground"
                 : "border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 dark:border-red-800/40 dark:bg-red-950/25 dark:text-red-300/85 dark:hover:bg-red-950/40 dark:hover:text-red-200",
             )}
-            disabled={isMutating && !isDeleting}
+            disabled={isMutating}
             ref={onConfirmDeleteButtonRef}
             size="sm"
             variant="outline"
