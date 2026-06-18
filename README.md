@@ -84,7 +84,7 @@ v1.1.0의 `/brainstorm` 계획은 [docs/README_v1_1_0.md](docs/README_v1_1_0.md)
 
 ### QA / 확인
 
-- [ ] `/workspace` 카드 삭제 confirm 상태에서 다른 컴포넌트 입력이 비활성화되는지 확인하고 필요 시 패치
+- [x] `/workspace` 카드 trash 이동 요청 중 다른 편집 컴포넌트가 비활성화되도록 패치
 - [ ] `/trash` 카드 삭제 confirm 상태에서 다른 컴포넌트 입력이 비활성화되는지 확인하고 필요 시 패치
 
 ### 문서
@@ -113,8 +113,9 @@ v1.1.0의 `/brainstorm` 계획은 [docs/README_v1_1_0.md](docs/README_v1_1_0.md)
 - [ ] Settings Plan Categories 드래그 정렬
 - [x] `/workspace` 검색창 레이아웃 수정
 - [x] `/workspace` 카드 추가 폼 외부 클릭 cancel
+- [x] `/workspace` 카드 trash 이동 요청 중 편집 컴포넌트 잠금
 - [ ] Plans / Tasks 연결 노드 교체
-- [ ] 삭제 confirm 중 입력 비활성화 QA 및 필요 시 패치
+- [ ] `/trash` 삭제 요청 중 입력 비활성화 QA 및 필요 시 패치
 
 ### 2. 검증
 

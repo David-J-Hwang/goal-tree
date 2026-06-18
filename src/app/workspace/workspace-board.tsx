@@ -175,6 +175,8 @@ export function WorkspaceBoard({
   const [selectedPlanId, setSelectedPlanId] = useState(initialSelection.planId);
   const [selectedNodeId, setSelectedNodeId] = useState(initialSelection.nodeId);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isTrashMutationInProgress, setIsTrashMutationInProgress] =
+    useState(false);
   const searchTerm = searchQuery.trim();
   const isSearchMode = searchTerm.length > 0;
 
@@ -475,7 +477,8 @@ export function WorkspaceBoard({
               <Search className="h-4 w-4 shrink-0" aria-hidden="true" />
               <input
                 aria-label="Search Goal, Plan, Task"
-                className="min-w-0 flex-1 bg-transparent text-foreground outline-none placeholder:text-muted-foreground [&::-webkit-search-cancel-button]:hidden"
+                className="min-w-0 flex-1 bg-transparent text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-search-cancel-button]:hidden"
+                disabled={isTrashMutationInProgress}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="Search Goal, Plan, Task"
                 type="search"
@@ -484,7 +487,8 @@ export function WorkspaceBoard({
               {searchQuery ? (
                 <button
                   aria-label="Clear search"
-                  className="rounded p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                  className="rounded p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
+                  disabled={isTrashMutationInProgress}
                   onClick={() => setSearchQuery("")}
                   type="button"
                 >
@@ -505,6 +509,7 @@ export function WorkspaceBoard({
             selectedId={selectedGoalId}
             categories={planCategories}
             emptyMessage={isSearchMode ? "No matching Goals" : "No Goal cards yet"}
+            isWorkspaceLocked={isTrashMutationInProgress}
             isSearchMode={isSearchMode}
             onCreate={handleCreateNode}
             onSelect={handleSelect}
@@ -523,6 +528,7 @@ export function WorkspaceBoard({
             nodes={visiblePlans}
             selectedId={selectedPlanId}
             categories={planCategories}
+            isWorkspaceLocked={isTrashMutationInProgress}
             isSearchMode={isSearchMode}
             onCreate={handleCreateNode}
             onSelect={handleSelect}
@@ -550,6 +556,7 @@ export function WorkspaceBoard({
             nodes={visibleTasks}
             selectedId={selectedNodeId}
             categories={planCategories}
+            isWorkspaceLocked={isTrashMutationInProgress}
             isSearchMode={isSearchMode}
             onCreate={handleCreateNode}
             onSelect={handleSelect}
@@ -583,7 +590,9 @@ export function WorkspaceBoard({
                   todo.date === initialTodayDate,
               )
             }
+            isWorkspaceLocked={isTrashMutationInProgress}
             onMoveNodeToTrash={handleMoveNodeToTrash}
+            onTrashMutationChange={setIsTrashMutationInProgress}
             onToggleTodayTodo={handleToggleTodayTodo}
             onUpdateNode={handleUpdateNode}
             autoFillActualDatesOnStatusChange={
@@ -606,6 +615,7 @@ function WorkspaceColumn({
   selectedId,
   categories,
   emptyMessage,
+  isWorkspaceLocked,
   isSearchMode,
   onCreate,
   onSelect,
@@ -620,6 +630,7 @@ function WorkspaceColumn({
   selectedId: string;
   categories: PlanCategory[];
   emptyMessage?: string;
+  isWorkspaceLocked: boolean;
   isSearchMode: boolean;
   onCreate: (input: CreateNodeInput) => Promise<void>;
   onSelect: (node: WorkspaceNode) => void;
@@ -638,7 +649,8 @@ function WorkspaceColumn({
   const [reorderErrorMessage, setReorderErrorMessage] = useState("");
   const addButtonRef = useRef<HTMLButtonElement | null>(null);
   const addFormRef = useRef<HTMLFormElement | null>(null);
-  const canAdd = !isSearchMode && (type === "goal" || Boolean(parentId));
+  const canAdd =
+    !isWorkspaceLocked && !isSearchMode && (type === "goal" || Boolean(parentId));
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -662,7 +674,7 @@ function WorkspaceColumn({
   }, [isSearchMode]);
 
   useEffect(() => {
-    if (!isAdding || isSubmitting) {
+    if (!isAdding || isSubmitting || isWorkspaceLocked) {
       return;
     }
 
@@ -691,10 +703,10 @@ function WorkspaceColumn({
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [isAdding, isSubmitting]);
+  }, [isAdding, isSubmitting, isWorkspaceLocked]);
 
   async function handleDragEnd(event: DragEndEvent) {
-    if (isSearchMode) {
+    if (isSearchMode || isWorkspaceLocked) {
       return;
     }
 
@@ -738,9 +750,11 @@ function WorkspaceColumn({
 
     if (!canAdd) {
       setErrorMessage(
-        type === "plan"
-          ? "Select a goal before adding a plan."
-          : "Select a plan before adding a task.",
+        isWorkspaceLocked
+          ? "Wait until the current trash action is finished."
+          : type === "plan"
+            ? "Select a goal before adding a plan."
+            : "Select a plan before adding a task.",
       );
       return;
     }
@@ -803,6 +817,7 @@ function WorkspaceColumn({
             categories={categories}
             errorMessage={errorMessage}
             isSubmitting={isSubmitting}
+            isWorkspaceLocked={isWorkspaceLocked}
             onCategoryChange={setCategoryId}
             onCancel={() => {
               setIsAdding(false);
@@ -834,7 +849,7 @@ function WorkspaceColumn({
                     selected={node.id === selectedId}
                     category={categories.find((category) => category.id === node.categoryId)}
                     progress={getNodeProgress(node, allNodes)}
-                    isReorderDisabled={isSearchMode}
+                    isReorderDisabled={isSearchMode || isWorkspaceLocked}
                     onSelect={() => onSelect(node)}
                   />
                 ))}
@@ -855,6 +870,7 @@ function AddNodeForm({
   categories,
   errorMessage,
   isSubmitting,
+  isWorkspaceLocked,
   onCancel,
   onCategoryChange,
   onSubmit,
@@ -867,6 +883,7 @@ function AddNodeForm({
   categories: PlanCategory[];
   errorMessage: string;
   isSubmitting: boolean;
+  isWorkspaceLocked: boolean;
   onCancel: () => void;
   onCategoryChange: (value: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -885,7 +902,7 @@ function AddNodeForm({
         <input
           className="mt-1.5 h-9 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
           autoFocus
-          disabled={isSubmitting}
+          disabled={isSubmitting || isWorkspaceLocked}
           onChange={(event) => onTitleChange(event.target.value)}
           placeholder={`New ${columnLabels[type]}`}
           value={titleValue}
@@ -897,7 +914,7 @@ function AddNodeForm({
           <span className="text-xs font-medium text-muted-foreground">Category</span>
           <select
             className="mt-1.5 h-9 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isWorkspaceLocked}
             onChange={(event) => onCategoryChange(event.target.value)}
             value={categoryId}
           >
@@ -916,10 +933,16 @@ function AddNodeForm({
       ) : null}
 
       <div className="mt-3 flex justify-end gap-2">
-        <Button disabled={isSubmitting} size="sm" type="button" variant="ghost" onClick={onCancel}>
+        <Button
+          disabled={isSubmitting || isWorkspaceLocked}
+          size="sm"
+          type="button"
+          variant="ghost"
+          onClick={onCancel}
+        >
           Cancel
         </Button>
-        <Button disabled={isSubmitting} size="sm" type="submit">
+        <Button disabled={isSubmitting || isWorkspaceLocked} size="sm" type="submit">
           {isSubmitting ? "Adding" : "Add"}
         </Button>
       </div>
@@ -1030,7 +1053,9 @@ function DetailPanel({
   nodes,
   categories,
   isSelectedTaskInTodayTodo,
+  isWorkspaceLocked,
   onMoveNodeToTrash,
+  onTrashMutationChange,
   onToggleTodayTodo,
   onUpdateNode,
 }: {
@@ -1041,7 +1066,9 @@ function DetailPanel({
   nodes: WorkspaceNode[];
   categories: PlanCategory[];
   isSelectedTaskInTodayTodo: boolean;
+  isWorkspaceLocked: boolean;
   onMoveNodeToTrash: (nodeId: string) => Promise<void>;
+  onTrashMutationChange: (isMovingToTrash: boolean) => void;
   onToggleTodayTodo: (taskId: string) => Promise<void>;
   onUpdateNode: (input: UpdateNodeInput) => Promise<void>;
 }) {
@@ -1141,7 +1168,7 @@ function DetailPanel({
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!node) {
+    if (!node || isWorkspaceLocked) {
       return;
     }
 
@@ -1205,7 +1232,7 @@ function DetailPanel({
   }
 
   async function handleToggleTodayTodo() {
-    if (!node || node.type !== "task") {
+    if (!node || node.type !== "task" || isWorkspaceLocked) {
       return;
     }
 
@@ -1242,6 +1269,7 @@ function DetailPanel({
     }
 
     setIsMovingToTrash(true);
+    onTrashMutationChange(true);
     setSaveError("");
     setSaveMessage("");
 
@@ -1254,6 +1282,7 @@ function DetailPanel({
       setIsConfirmingTrash(false);
     } finally {
       setIsMovingToTrash(false);
+      onTrashMutationChange(false);
     }
   }
 
@@ -1277,6 +1306,7 @@ function DetailPanel({
   const normalizedMemo = memoValue.trim();
   const normalizedImportanceReason = importanceReasonValue.trim();
   const normalizedSuccessCriteria = successCriteriaValue.trim();
+  const isDetailInputDisabled = isSaving || isWorkspaceLocked;
   const hasChanges =
     titleValue.trim() !== node.title ||
     normalizedMemo !== (node.memo ?? "") ||
@@ -1316,7 +1346,7 @@ function DetailPanel({
               <span className="sr-only">{columnLabels[node.type]} title</span>
               <input
                 className="h-9 w-full rounded-md border bg-background px-3 text-sm font-medium outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
-                disabled={isSaving}
+                disabled={isDetailInputDisabled}
                 onChange={(event) => setTitleValue(event.target.value)}
                 value={titleValue}
               />
@@ -1333,7 +1363,7 @@ function DetailPanel({
           <DetailSection title="Status">
             <select
               className="h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
-              disabled={isSaving}
+              disabled={isDetailInputDisabled}
               onChange={(event) => setStatusValue(event.target.value as NodeStatus)}
               value={statusValue}
             >
@@ -1360,7 +1390,7 @@ function DetailPanel({
                   ? "bg-secondary hover:bg-secondary/80"
                   : "bg-accent text-accent-foreground hover:bg-accent/80",
               )}
-              disabled={isSaving || isMovingToTrash || isUpdatingTodayTodo}
+              disabled={isDetailInputDisabled || isMovingToTrash || isUpdatingTodayTodo}
               type="button"
               variant={isSelectedTaskInTodayTodo ? "secondary" : "outline"}
               onClick={handleToggleTodayTodo}
@@ -1378,7 +1408,7 @@ function DetailPanel({
             <>
               <DetailSection title="Why it matters">
                 <DetailTextArea
-                  disabled={isSaving}
+                  disabled={isDetailInputDisabled}
                   onChange={setImportanceReasonValue}
                   placeholder="Add a reason"
                   value={importanceReasonValue}
@@ -1386,7 +1416,7 @@ function DetailPanel({
               </DetailSection>
               <DetailSection title="Success criteria">
                 <DetailTextArea
-                  disabled={isSaving}
+                  disabled={isDetailInputDisabled}
                   onChange={setSuccessCriteriaValue}
                   placeholder="Add success criteria"
                   value={successCriteriaValue}
@@ -1402,7 +1432,7 @@ function DetailPanel({
                 <span className="text-xs font-medium text-muted-foreground">Category</span>
                 <select
                   className="mt-1.5 h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
-                  disabled={isSaving}
+                  disabled={isDetailInputDisabled}
                   onChange={(event) => setCategoryIdValue(event.target.value)}
                   value={categoryIdValue}
                 >
@@ -1419,7 +1449,7 @@ function DetailPanel({
 
           <DetailSection title="Dates">
             <DateRangeFields
-              disabled={isSaving}
+              disabled={isDetailInputDisabled}
               endValue={plannedEndDateValue}
               label="Planned"
               onEndChange={setPlannedEndDateValue}
@@ -1427,7 +1457,7 @@ function DetailPanel({
               startValue={plannedStartDateValue}
             />
             <DateRangeFields
-              disabled={isSaving}
+              disabled={isDetailInputDisabled}
               endValue={actualEndDateValue}
               label="Actual"
               onEndChange={setActualEndDateValue}
@@ -1439,7 +1469,7 @@ function DetailPanel({
           <DetailSection className="flex min-h-0 flex-1 flex-col" title="Memo">
             <DetailTextArea
               className="flex-1"
-              disabled={isSaving}
+              disabled={isDetailInputDisabled}
               onChange={setMemoValue}
               placeholder="Add a memo"
               value={memoValue}
@@ -1485,7 +1515,7 @@ function DetailPanel({
           </Button>
           {hasChanges ? (
             <Button
-              disabled={isSaving || isMovingToTrash || isUpdatingTodayTodo}
+              disabled={isDetailInputDisabled || isMovingToTrash || isUpdatingTodayTodo}
               size="sm"
               type="submit"
             >

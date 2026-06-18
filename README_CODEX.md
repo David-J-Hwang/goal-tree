@@ -1149,11 +1149,14 @@ v1.0.1 패치 범위:
 Settings 모달의 Plan Categories 카드를 드래그 앤 드롭으로 정렬
 /workspace 데스크탑 전체화면 검색창 레이아웃 수정
 /workspace 카드 추가 상태에서 외부 클릭 시 Cancel과 동일하게 추가 폼 닫기
-/workspace와 /trash의 삭제 confirm 상태에서 다른 입력 비활성화 여부 QA 및 필요 시 패치
+/workspace 카드 trash 이동 요청 중 다른 편집 컴포넌트 잠금
+/trash의 삭제 요청 중 다른 입력 비활성화 여부 QA 및 필요 시 패치
 Plans / Tasks 카드의 연결 노드를 다른 카드로 교체하는 기능 추가
 ```
 
 페이지 공통 높이 / 하단 여백 프레임은 `src/lib/page-layout.ts`의 `appPageMainClassName`, `appPageContentClassName`에서 관리한다. `/dashboard`, `/workspace`, `/whativedone`, `/timeline`, `/trash`와 `PageLoadingShell`이 이 값을 공유한다.
+
+`/workspace`에서 Move to trash를 한 번 눌러 Confirm trash 대기 상태가 되었을 때는 외부 클릭으로 다시 취소할 수 있어야 하므로 다른 입력을 잠그지 않는다. 사용자가 Confirm trash를 눌러 실제 trash 이동 요청이 진행되는 동안에만 검색창, 카드 추가, 드래그 핸들, Detail Panel 입력과 저장 / Today TODO 버튼을 잠근다.
 
 구현된 것:
 
