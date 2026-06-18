@@ -76,6 +76,7 @@ v1.1.0의 `/brainstorm` 계획은 [docs/README_v1_1_0.md](docs/README_v1_1_0.md)
 ### UI / UX
 
 - [x] `/login` 페이지 로드 시 skeleton component 표시
+- [x] 테마 쿠키 동기화로 `/login` 첫 진입 시 light -> dark 깜빡임 완화
 - [ ] 모든 페이지에서 위 / 아래 여백 밸런스가 맞도록 페이지 하단 여백 조정
 - [ ] `/settings` 모달의 Plan Categories 카드들을 드래그 앤 드롭으로 정렬
 - [ ] `/workspace` 카드 추가 상태에서 컴포넌트 밖을 클릭하면 Cancel과 동일하게 추가 폼 닫기
@@ -107,6 +108,7 @@ v1.1.0의 `/brainstorm` 계획은 [docs/README_v1_1_0.md](docs/README_v1_1_0.md)
 ### 1. 패치 구현
 
 - [x] `/login` skeleton component
+- [x] 테마 쿠키 동기화 및 초기 렌더링 테마 안정화
 - [ ] 전체 페이지 하단 여백 조정
 - [ ] Settings Plan Categories 드래그 정렬
 - [ ] `/workspace` 검색창 레이아웃 수정

@@ -715,7 +715,9 @@ autoFillActualDatesOnStatusChange = true
 설정 모달에서 light / dark theme을 전환한다.
 설정 모달에서 Plan category를 추가 / 수정 / 삭제한다.
 설정 모달에서 autoFillActualDatesOnStatusChange 값을 변경한다.
-테마 선택은 localStorage의 goaltree-theme에 저장한다.
+테마 선택은 localStorage의 goaltree-theme와 goaltree-theme cookie에 함께 저장한다.
+RootLayout은 goaltree-theme cookie를 읽어 첫 서버 렌더링부터 html.light / html.dark 클래스를 적용한다.
+cookie가 아직 없는 첫 방문자는 CSS prefers-color-scheme fallback으로 초기 배경색 깜빡임을 줄인다.
 저장된 테마가 없으면 시스템 prefers-color-scheme 값을 따른다.
 Tailwind darkMode는 class 전략을 사용한다.
 html.dark 클래스와 CSS 변수 토큰으로 전체 색상을 전환한다.

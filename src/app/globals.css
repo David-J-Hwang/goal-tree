@@ -48,6 +48,30 @@
     --ring: 142 58% 52%;
   }
 
+  @media (prefers-color-scheme: dark) {
+    :root:not(.light) {
+      --background: 220 15% 9%;
+      --foreground: 210 32% 92%;
+      --card: 220 13% 12%;
+      --card-foreground: 210 32% 92%;
+      --popover: 220 13% 12%;
+      --popover-foreground: 210 32% 92%;
+      --primary: 142 58% 52%;
+      --primary-foreground: 145 80% 8%;
+      --secondary: 28 24% 22%;
+      --secondary-foreground: 32 34% 84%;
+      --muted: 217 16% 17%;
+      --muted-foreground: 215 20% 66%;
+      --accent: 173 70% 38%;
+      --accent-foreground: 210 40% 98%;
+      --destructive: 0 72% 51%;
+      --destructive-foreground: 210 40% 98%;
+      --border: 217 14% 22%;
+      --input: 217 14% 22%;
+      --ring: 142 58% 52%;
+    }
+  }
+
   * {
     @apply border-border;
   }

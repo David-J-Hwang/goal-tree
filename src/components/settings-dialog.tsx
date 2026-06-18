@@ -31,12 +31,10 @@ import {
   type UserSettingsRow,
 } from "@/lib/goaltree/user-settings-rows";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { isTheme, themeStorageKey, type Theme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { PlanCategory, UserSettings } from "@/types/domain";
 
-type Theme = "light" | "dark";
-
-const themeStorageKey = "goaltree-theme";
 const categorySelectColumns = "id,user_id,name,color,created_at,updated_at";
 const defaultCategoryColor = "#16a34a";
 
@@ -232,6 +230,7 @@ export function SettingsDialog() {
   function handleThemeChange(nextTheme: Theme) {
     setTheme(nextTheme);
     window.localStorage.setItem(themeStorageKey, nextTheme);
+    setThemeCookie(nextTheme);
     applyTheme(nextTheme);
   }
 
@@ -766,8 +765,21 @@ function ThemeButton({
 }
 
 function getStoredTheme() {
+  const cookieTheme = getThemeCookie();
+
+  if (cookieTheme) {
+    window.localStorage.setItem(themeStorageKey, cookieTheme);
+    return cookieTheme;
+  }
+
   const storedTheme = window.localStorage.getItem(themeStorageKey);
-  return storedTheme === "light" || storedTheme === "dark" ? storedTheme : null;
+
+  if (isTheme(storedTheme)) {
+    setThemeCookie(storedTheme);
+    return storedTheme;
+  }
+
+  return null;
 }
 
 function getSystemTheme(): Theme {
@@ -777,6 +789,28 @@ function getSystemTheme(): Theme {
 }
 
 function applyTheme(theme: Theme) {
+  document.documentElement.classList.toggle("light", theme === "light");
   document.documentElement.classList.toggle("dark", theme === "dark");
   document.documentElement.style.colorScheme = theme;
+}
+
+function getThemeCookie() {
+  const cookie = document.cookie
+    .split("; ")
+    .find((currentCookie) => currentCookie.startsWith(`${themeStorageKey}=`));
+
+  if (!cookie) {
+    return null;
+  }
+
+  const [, value] = cookie.split("=");
+  const theme = decodeURIComponent(value ?? "");
+
+  return isTheme(theme) ? theme : null;
+}
+
+function setThemeCookie(theme: Theme) {
+  document.cookie = `${themeStorageKey}=${encodeURIComponent(
+    theme,
+  )}; Path=/; Max-Age=31536000; SameSite=Lax`;
 }
