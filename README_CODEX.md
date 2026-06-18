@@ -1135,6 +1135,22 @@ docs/README_vX_Y_Z.md
 
 v1.0.0은 로그인, Supabase 데이터 연결, `Goal -> Plan -> Task` Workspace, Daily TODO Dashboard, What I've Done, Timeline, Trash, Settings, 데스크탑 / 모바일 주요 UI/UX 정리를 포함한다.
 
+2026-06-18 기준 현재 루트 `README.md`는 v1.0.1 patch 작업판이다.
+
+v1.0.1은 v1.1.0의 `/brainstorm` 기능으로 넘어가기 전, v1.0.0 테스트 중 발견한 작은 버그와 UI/UX를 정리하는 안정화 패치다.
+
+v1.0.1 패치 범위:
+
+```txt
+/login 페이지 로드 시 skeleton component 표시
+모든 페이지에서 상단 / 하단 여백 밸런스 조정
+Settings 모달의 Plan Categories 카드를 드래그 앤 드롭으로 정렬
+/workspace 데스크탑 전체화면 검색창 레이아웃 수정
+/workspace 카드 추가 상태에서 외부 클릭 시 Cancel과 동일하게 추가 폼 닫기
+/workspace와 /trash의 삭제 confirm 상태에서 다른 입력 비활성화 여부 QA 및 필요 시 패치
+Plans / Tasks 카드의 연결 노드를 다른 카드로 교체하는 기능 추가
+```
+
 구현된 것:
 
 ```txt

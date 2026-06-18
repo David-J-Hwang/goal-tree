@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRightIcon,
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { LoginSkeleton } from "./login-skeleton";
 
 type AuthMode = "signin" | "signup";
 type Feedback = {
@@ -35,12 +36,21 @@ const authModes: Array<{ value: AuthMode; label: string }> = [
 
 export function LoginBoard() {
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return <LoginSkeleton />;
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
