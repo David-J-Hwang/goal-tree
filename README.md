@@ -80,7 +80,6 @@ v1.1.0의 `/brainstorm` 계획은 [docs/README_v1_1_0.md](docs/README_v1_1_0.md)
 - [x] 모든 페이지에서 위 / 아래 여백 밸런스가 맞도록 페이지 하단 여백 조정
 - [x] `/settings` 모달의 Plan Categories 카드들을 드래그 앤 드롭으로 정렬
 - [x] `/workspace` 카드 추가 상태에서 컴포넌트 밖을 클릭하면 Cancel과 동일하게 추가 폼 닫기
-- [ ] Plans / Tasks 카드의 연결 노드를 다른 카드로 교체하는 기능 추가
 
 ### QA / 확인
 
@@ -115,7 +114,6 @@ v1.1.0의 `/brainstorm` 계획은 [docs/README_v1_1_0.md](docs/README_v1_1_0.md)
 - [x] `/workspace` 카드 추가 폼 외부 클릭 cancel
 - [x] `/workspace` 카드 trash 이동 요청 중 편집 컴포넌트 잠금
 - [x] `/trash` 카드 영구삭제 요청 중 필터 / 버튼 잠금
-- [ ] Plans / Tasks 연결 노드 교체
 
 ### 2. 검증
 
@@ -141,6 +139,7 @@ v1.1.0에서는 `/brainstorm` 페이지를 추가하는 방향을 검토한다.
 
 - 트리구조에 넣기 전 자유 카드 작성
 - 괜찮은 카드를 `/workspace`의 Goal / Plan / Task로 전환
+- Plans / Tasks 카드의 연결 노드를 다른 카드로 교체
 - 구조화되지 않은 생각을 빠르게 보관하고 나중에 정리
 
 v1.1.0 계획 상세는 [docs/README_v1_1_0.md](docs/README_v1_1_0.md)를 참고한다.

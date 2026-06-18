@@ -95,6 +95,8 @@ Page title candidate: Brainstorm 또는 Idea Inbox
 - 아이디어 카드를 특정 Goal 아래 Plan으로 전환
 - 아이디어 카드를 특정 Plan 아래 Task로 전환
 - 전환 후 원본 아이디어를 유지할지, 숨길지, 삭제할지 결정
+- 기존 Plan 카드를 다른 Goal 아래로 연결 변경
+- 기존 Task 카드를 다른 Plan 아래로 연결 변경
 
 ### 데이터 구조 검토
 
@@ -129,6 +131,7 @@ Option B: nodes 테이블에 inbox 타입 추가
 - [ ] 페이지 제목 확정: `Inbox`, `Brainstorm`, `Idea Inbox` 중 선택
 - [ ] 카드 필드 확정
 - [ ] 전환 후 원본 아이디어 처리 방식 결정
+- [ ] 기존 Plan / Task 연결 노드 교체 UX 확정
 
 ### 2. 데이터 모델
 
@@ -158,6 +161,8 @@ Option B: nodes 테이블에 inbox 타입 추가
 - [ ] Goal로 전환 기능 구현
 - [ ] Plan으로 전환 기능 구현
 - [ ] Task로 전환 기능 구현
+- [ ] 기존 Plan 연결 Goal 교체 기능 구현
+- [ ] 기존 Task 연결 Plan 교체 기능 구현
 - [ ] 전환 후 `/workspace` 선택 상태 복원 연결
 
 ### 5. 검증

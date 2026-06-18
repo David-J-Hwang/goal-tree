@@ -1151,7 +1151,6 @@ Settings 모달의 Plan Categories 카드를 드래그 앤 드롭으로 정렬
 /workspace 카드 추가 상태에서 외부 클릭 시 Cancel과 동일하게 추가 폼 닫기
 /workspace 카드 trash 이동 요청 중 다른 편집 컴포넌트 잠금
 /trash 카드 영구삭제 요청 중 필터 / Restore / Delete 버튼 잠금
-Plans / Tasks 카드의 연결 노드를 다른 카드로 교체하는 기능 추가
 ```
 
 페이지 공통 높이 / 하단 여백 프레임은 `src/lib/page-layout.ts`의 `appPageMainClassName`, `appPageContentClassName`에서 관리한다. `/dashboard`, `/workspace`, `/whativedone`, `/timeline`, `/trash`와 `PageLoadingShell`이 이 값을 공유한다.
@@ -1444,6 +1443,8 @@ v1.1.0에서 검토할 기능:
 아이디어 카드 태그 또는 간단한 상태
 괜찮은 아이디어를 /workspace의 Goal / Plan / Task로 전환
 전환 시 연결할 parent 선택: Goal로 만들기, 특정 Goal 아래 Plan으로 만들기, 특정 Plan 아래 Task로 만들기
+기존 Plan 카드의 연결 Goal 교체
+기존 Task 카드의 연결 Plan 교체
 전환된 아이디어를 converted 상태로 남길지, 숨길지 결정
 ```
 
