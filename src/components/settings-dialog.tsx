@@ -4,12 +4,29 @@ import {
   type ComponentType,
   type FormEvent,
   type ReactNode,
+  type RefObject,
   useEffect,
   useRef,
   useState,
 } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
+import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import {
   ChevronDownIcon,
   Cog6ToothIcon,
@@ -19,12 +36,14 @@ import {
   TrashIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
+import { GripVertical } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
   mapPlanCategoryRow,
   type PlanCategoryRow,
 } from "@/lib/goaltree/node-rows";
+import { sortableStackModifiers } from "@/lib/dnd/sortable-stack-modifier";
 import {
   mapUserSettingsRow,
   userSettingsSelectColumns,
@@ -35,7 +54,7 @@ import { isTheme, themeStorageKey, type Theme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { PlanCategory, UserSettings } from "@/types/domain";
 
-const categorySelectColumns = "id,user_id,name,color,created_at,updated_at";
+const categorySelectColumns = "id,user_id,name,color,sort_order,created_at,updated_at";
 const defaultCategoryColor = "#16a34a";
 
 export function SettingsDialog() {
@@ -54,11 +73,22 @@ export function SettingsDialog() {
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [savingCategoryId, setSavingCategoryId] = useState("");
   const [deletingCategoryId, setDeletingCategoryId] = useState("");
+  const [isReorderingCategories, setIsReorderingCategories] = useState(false);
   const [pendingDeleteCategoryId, setPendingDeleteCategoryId] = useState("");
   const [isUpdatingAutomation, setIsUpdatingAutomation] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const pendingDeleteButtonRef = useRef<HTMLButtonElement | null>(null);
+  const categorySensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 2,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
 
   useEffect(() => {
     setIsMounted(true);
@@ -172,6 +202,7 @@ export function SettingsDialog() {
         .from("plan_categories")
         .select(categorySelectColumns)
         .eq("user_id", user.id)
+        .order("sort_order", { ascending: true })
         .order("created_at", { ascending: true })
         .returns<PlanCategoryRow[]>(),
       supabase
@@ -256,6 +287,7 @@ export function SettingsDialog() {
         user_id: userId,
         name: trimmedName,
         color: newCategoryColor,
+        sort_order: getNextCategorySortOrder(categories),
       })
       .select(categorySelectColumns)
       .single()
@@ -415,6 +447,70 @@ export function SettingsDialog() {
     setPendingDeleteCategoryId("");
   }
 
+  async function handleCategoryDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id || isCategoryMutationInProgress) {
+      return;
+    }
+
+    const oldIndex = categories.findIndex((category) => category.id === active.id);
+    const newIndex = categories.findIndex((category) => category.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) {
+      return;
+    }
+
+    const previousCategories = categories;
+    const previousSavedCategories = savedCategories;
+    const nextCategories = normalizeCategorySortOrder(
+      arrayMove(categories, oldIndex, newIndex),
+    );
+    const orderedIds = nextCategories.map((category) => category.id);
+    const nextSavedCategories = normalizeCategorySortOrder(
+      orderedIds
+        .map((id) => savedCategories.find((category) => category.id === id))
+        .filter((category): category is PlanCategory => Boolean(category)),
+    );
+
+    setCategories(nextCategories);
+    setPendingDeleteCategoryId("");
+    setIsReorderingCategories(true);
+    setErrorMessage("");
+    setStatusMessage("");
+
+    const supabase = createSupabaseBrowserClient();
+    const updates = nextCategories.map((category) =>
+      supabase
+        .from("plan_categories")
+        .update({ sort_order: category.sortOrder })
+        .eq("id", category.id)
+        .eq("user_id", userId),
+    );
+    const results = await Promise.all(updates);
+    const failedResult = results.find((result) => result.error);
+
+    if (failedResult?.error) {
+      setCategories(previousCategories);
+      setSavedCategories(previousSavedCategories);
+      setErrorMessage(failedResult.error.message);
+      setIsReorderingCategories(false);
+      return;
+    }
+
+    setSavedCategories(nextSavedCategories);
+    setStatusMessage("Category order saved.");
+    setIsReorderingCategories(false);
+    router.refresh();
+  }
+
+  const isCategoryMutationInProgress = Boolean(
+    isLoading ||
+      isAddingCategory ||
+      savingCategoryId ||
+      deletingCategoryId ||
+      isReorderingCategories,
+  );
   const canAddCategory = Boolean(newCategoryName.trim());
 
   function hasCategoryChanges(category: PlanCategory) {
@@ -520,20 +616,20 @@ export function SettingsDialog() {
                   <input
                     aria-label="New category color"
                     className="size-10 rounded-md border bg-background p-1"
-                    disabled={isAddingCategory || isLoading}
+                    disabled={isCategoryMutationInProgress}
                     onChange={(event) => setNewCategoryColor(event.target.value)}
                     type="color"
                     value={newCategoryColor}
                   />
                   <input
                     className="h-10 rounded-md border bg-background px-3 text-sm outline-none transition placeholder:text-muted-foreground focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
-                    disabled={isAddingCategory || isLoading}
+                    disabled={isCategoryMutationInProgress}
                     onChange={(event) => setNewCategoryName(event.target.value)}
                     placeholder="Add new category"
                     value={newCategoryName}
                   />
                   {canAddCategory ? (
-                    <Button disabled={isAddingCategory || isLoading} type="submit">
+                    <Button disabled={isCategoryMutationInProgress} type="submit">
                       <PlusIcon className="h-4 w-4" aria-hidden="true" />
                       {isAddingCategory ? "Adding" : "Add"}
                     </Button>
@@ -543,90 +639,43 @@ export function SettingsDialog() {
 
               <div className="space-y-2">
                 {categories.length > 0 ? (
-                  categories.map((category) => {
-                    const hasChanges = hasCategoryChanges(category);
-
-                    return (
-                      <div
-                        className={cn(
-                          "grid gap-2 rounded-md border bg-background p-3",
-                          hasChanges
-                            ? "grid-cols-[2.5rem_minmax(0,1fr)_auto_auto]"
-                            : "grid-cols-[2.5rem_minmax(0,1fr)_auto]",
-                        )}
-                        key={category.id}
-                      >
-                        <input
-                          aria-label={`${category.name} color`}
-                          className="size-10 rounded-md border bg-background p-1"
-                          disabled={isLoading || savingCategoryId === category.id}
-                          onChange={(event) =>
-                            updateCategoryDraft(category.id, {
-                              color: event.target.value,
-                            })
-                          }
-                          type="color"
-                          value={category.color ?? defaultCategoryColor}
-                        />
-                        <input
-                          className="h-10 rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
-                          disabled={isLoading || savingCategoryId === category.id}
-                          onChange={(event) =>
-                            updateCategoryDraft(category.id, {
-                              name: event.target.value,
-                            })
-                          }
-                          value={category.name}
-                        />
-                        {hasChanges ? (
-                          <Button
-                            disabled={
-                              isLoading ||
-                              savingCategoryId === category.id ||
-                              deletingCategoryId === category.id
+                  <DndContext
+                    id="settings-plan-categories"
+                    sensors={categorySensors}
+                    collisionDetection={closestCenter}
+                    modifiers={sortableStackModifiers}
+                    onDragEnd={handleCategoryDragEnd}
+                  >
+                    <SortableContext
+                      items={categories.map((category) => category.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="space-y-2">
+                        {categories.map((category) => (
+                          <SortableCategoryRow
+                            category={category}
+                            defaultColor={defaultCategoryColor}
+                            deleteButtonRef={
+                              pendingDeleteCategoryId === category.id
+                                ? pendingDeleteButtonRef
+                                : null
                             }
-                            onClick={() => handleUpdateCategory(category)}
-                            type="button"
-                            variant="outline"
-                          >
-                            {savingCategoryId === category.id ? "Saving" : "Save"}
-                          </Button>
-                        ) : null}
-                        <Button
-                          className={cn(
-                            pendingDeleteCategoryId === category.id
-                              ? "border-destructive bg-destructive px-3 text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground"
-                              : "size-10 border-destructive/35 px-0 text-destructive hover:bg-destructive/10 hover:text-destructive",
-                          )}
-                          aria-label={
-                            pendingDeleteCategoryId === category.id
-                              ? `Confirm delete ${category.name}`
-                              : `Delete ${category.name}`
-                          }
-                          disabled={
-                            isLoading ||
-                            savingCategoryId === category.id ||
-                            deletingCategoryId === category.id
-                          }
-                          onClick={() => handleDeleteCategory(category)}
-                          ref={
-                            pendingDeleteCategoryId === category.id
-                              ? pendingDeleteButtonRef
-                              : null
-                          }
-                          type="button"
-                          variant="outline"
-                        >
-                          <TrashIcon className="h-4 w-4" aria-hidden="true" />
-                          {deletingCategoryId === category.id
-                            ? "Deleting"
-                            : pendingDeleteCategoryId === category.id
-                              ? "Confirm"
-                              : null}
-                        </Button>
+                            hasChanges={hasCategoryChanges(category)}
+                            isDeleting={deletingCategoryId === category.id}
+                            isPendingDelete={pendingDeleteCategoryId === category.id}
+                            isReorderDisabled={isCategoryMutationInProgress}
+                            isSaving={savingCategoryId === category.id}
+                            key={category.id}
+                            onDelete={() => handleDeleteCategory(category)}
+                            onSave={() => handleUpdateCategory(category)}
+                            onUpdate={(values) =>
+                              updateCategoryDraft(category.id, values)
+                            }
+                          />
+                        ))}
                       </div>
-                    );
-                  })
+                    </SortableContext>
+                  </DndContext>
                 ) : (
                   <p className="rounded-md border border-dashed px-3 py-6 text-center text-sm text-muted-foreground">
                     No categories yet
@@ -738,6 +787,133 @@ function SettingsSection({
   );
 }
 
+function SortableCategoryRow({
+  category,
+  defaultColor,
+  deleteButtonRef,
+  hasChanges,
+  isDeleting,
+  isPendingDelete,
+  isReorderDisabled,
+  isSaving,
+  onDelete,
+  onSave,
+  onUpdate,
+}: {
+  category: PlanCategory;
+  defaultColor: string;
+  deleteButtonRef: RefObject<HTMLButtonElement | null> | null;
+  hasChanges: boolean;
+  isDeleting: boolean;
+  isPendingDelete: boolean;
+  isReorderDisabled: boolean;
+  isSaving: boolean;
+  onDelete: () => void;
+  onSave: () => void;
+  onUpdate: (values: Partial<Pick<PlanCategory, "name" | "color">>) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({
+      id: category.id,
+      disabled: isReorderDisabled,
+      transition: {
+        duration: 120,
+        easing: "cubic-bezier(0.2, 0, 0, 1)",
+      },
+    });
+
+  const style = {
+    position: "relative" as const,
+    transform: transform ? `translate3d(0, ${Math.round(transform.y)}px, 0)` : undefined,
+    transition: isDragging ? "none" : transition,
+    zIndex: isDragging ? 50 : undefined,
+    willChange: "transform",
+  };
+  const isRowDisabled = isSaving || isDeleting || isReorderDisabled;
+
+  return (
+    <div
+      className={cn(
+        "grid gap-2 rounded-md border bg-background p-3 shadow-sm transition-colors",
+        hasChanges
+          ? "grid-cols-[2rem_2.5rem_minmax(0,1fr)_auto_auto]"
+          : "grid-cols-[2rem_2.5rem_minmax(0,1fr)_auto]",
+        isDragging && "shadow-md ring-1 ring-primary/30",
+      )}
+      ref={setNodeRef}
+      style={style}
+    >
+      <button
+        aria-label={`Reorder ${category.name}`}
+        className={cn(
+          "flex h-10 w-8 touch-none items-center justify-center rounded text-muted-foreground transition hover:bg-muted hover:text-foreground",
+          isReorderDisabled
+            ? "cursor-default opacity-50 hover:bg-transparent hover:text-muted-foreground"
+            : "cursor-grab active:cursor-grabbing",
+        )}
+        disabled={isReorderDisabled}
+        type="button"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4" aria-hidden="true" />
+      </button>
+      <input
+        aria-label={`${category.name} color`}
+        className="size-10 rounded-md border bg-background p-1"
+        disabled={isRowDisabled}
+        onChange={(event) =>
+          onUpdate({
+            color: event.target.value,
+          })
+        }
+        type="color"
+        value={category.color ?? defaultColor}
+      />
+      <input
+        className="h-10 rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+        disabled={isRowDisabled}
+        onChange={(event) =>
+          onUpdate({
+            name: event.target.value,
+          })
+        }
+        value={category.name}
+      />
+      {hasChanges ? (
+        <Button
+          disabled={isRowDisabled}
+          onClick={onSave}
+          type="button"
+          variant="outline"
+        >
+          {isSaving ? "Saving" : "Save"}
+        </Button>
+      ) : null}
+      <Button
+        aria-label={
+          isPendingDelete
+            ? `Confirm delete ${category.name}`
+            : `Delete ${category.name}`
+        }
+        className={cn(
+          isPendingDelete
+            ? "border-destructive bg-destructive px-3 text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground"
+            : "size-10 border-destructive/35 px-0 text-destructive hover:bg-destructive/10 hover:text-destructive",
+        )}
+        disabled={isRowDisabled}
+        onClick={onDelete}
+        ref={deleteButtonRef}
+        type="button"
+        variant="outline"
+      >
+        <TrashIcon className="h-4 w-4" aria-hidden="true" />
+        {isDeleting ? "Deleting" : isPendingDelete ? "Confirm" : null}
+      </Button>
+    </div>
+  );
+}
+
 function ThemeButton({
   active,
   icon: Icon,
@@ -813,4 +989,15 @@ function setThemeCookie(theme: Theme) {
   document.cookie = `${themeStorageKey}=${encodeURIComponent(
     theme,
   )}; Path=/; Max-Age=31536000; SameSite=Lax`;
+}
+
+function normalizeCategorySortOrder(categories: PlanCategory[]) {
+  return categories.map((category, index) => ({
+    ...category,
+    sortOrder: index + 1,
+  }));
+}
+
+function getNextCategorySortOrder(categories: PlanCategory[]) {
+  return Math.max(0, ...categories.map((category) => category.sortOrder)) + 1;
 }

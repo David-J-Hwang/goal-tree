@@ -65,8 +65,9 @@ export async function getWorkspaceData(
   ] = await Promise.all([
     supabase
       .from("plan_categories")
-      .select("id,user_id,name,color,created_at,updated_at")
+      .select("id,user_id,name,color,sort_order,created_at,updated_at")
       .eq("user_id", userId)
+      .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true })
       .returns<PlanCategoryRow[]>(),
     supabase
@@ -167,10 +168,11 @@ async function createDefaultPlanCategories(
   }
 
   const { error: insertError } = await supabase.from("plan_categories").insert(
-    defaultPlanCategories.map((category) => ({
+    defaultPlanCategories.map((category, index) => ({
       user_id: userId,
       name: category.name,
       color: category.color,
+      sort_order: index + 1,
     })),
   );
 

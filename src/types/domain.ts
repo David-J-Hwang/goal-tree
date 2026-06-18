@@ -33,6 +33,7 @@ export type PlanCategory = {
   userId: string;
   name: string;
   color?: string | null;
+  sortOrder: number;
   createdAt: string;
   updatedAt: string;
 };

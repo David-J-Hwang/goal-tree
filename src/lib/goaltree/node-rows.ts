@@ -26,6 +26,7 @@ export type PlanCategoryRow = {
   user_id: string;
   name: string;
   color: string | null;
+  sort_order: number;
   created_at: string;
   updated_at: string;
 };
@@ -66,6 +67,7 @@ export function mapPlanCategoryRow(row: PlanCategoryRow): PlanCategory {
     userId: row.user_id,
     name: row.name,
     color: row.color,
+    sortOrder: row.sort_order,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
