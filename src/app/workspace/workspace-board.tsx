@@ -458,31 +458,33 @@ export function WorkspaceBoard({
   return (
     <main className={appPageMainClassName}>
       <div className={cn(appPageContentClassName, "max-w-[1800px]")}>
-        <header className="shrink-0 flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Goaltree</p>
-            <h1 className="mt-1 text-2xl font-semibold">Workspace</h1>
-          </div>
-          <div className="flex w-full items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm transition focus-within:border-primary/60 focus-within:ring-1 focus-within:ring-primary/30 lg:w-80">
-            <Search className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <input
-              aria-label="Search Goal, Plan, Task"
-              className="min-w-0 flex-1 bg-transparent text-foreground outline-none placeholder:text-muted-foreground [&::-webkit-search-cancel-button]:hidden"
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search Goal, Plan, Task"
-              type="search"
-              value={searchQuery}
-            />
-            {searchQuery ? (
-              <button
-                aria-label="Clear search"
-                className="rounded p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                onClick={() => setSearchQuery("")}
-                type="button"
-              >
-                <X className="h-4 w-4" aria-hidden="true" />
-              </button>
-            ) : null}
+        <header className="shrink-0">
+          <div className="flex w-full flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between 2xl:mx-auto 2xl:max-w-[1708px]">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Goaltree</p>
+              <h1 className="mt-1 text-2xl font-semibold">Workspace</h1>
+            </div>
+            <div className="flex w-full items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm transition focus-within:border-primary/60 focus-within:ring-1 focus-within:ring-primary/30 lg:w-80">
+              <Search className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <input
+                aria-label="Search Goal, Plan, Task"
+                className="min-w-0 flex-1 bg-transparent text-foreground outline-none placeholder:text-muted-foreground [&::-webkit-search-cancel-button]:hidden"
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search Goal, Plan, Task"
+                type="search"
+                value={searchQuery}
+              />
+              {searchQuery ? (
+                <button
+                  aria-label="Clear search"
+                  className="rounded p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                  onClick={() => setSearchQuery("")}
+                  type="button"
+                >
+                  <X className="h-4 w-4" aria-hidden="true" />
+                </button>
+              ) : null}
+            </div>
           </div>
         </header>
 

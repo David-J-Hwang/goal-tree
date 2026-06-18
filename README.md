@@ -71,7 +71,7 @@ v1.1.0의 `/brainstorm` 계획은 [docs/README_v1_1_0.md](docs/README_v1_1_0.md)
 
 ### 버그
 
-- [ ] `/workspace` 데스크탑 전체화면 상태에서 어긋난 검색창 레이아웃 수정
+- [x] `/workspace` 데스크탑 전체화면 상태에서 어긋난 검색창 레이아웃 수정
 
 ### UI / UX
 
@@ -111,7 +111,7 @@ v1.1.0의 `/brainstorm` 계획은 [docs/README_v1_1_0.md](docs/README_v1_1_0.md)
 - [x] 테마 쿠키 동기화 및 초기 렌더링 테마 안정화
 - [x] 전체 페이지 하단 여백 조정
 - [ ] Settings Plan Categories 드래그 정렬
-- [ ] `/workspace` 검색창 레이아웃 수정
+- [x] `/workspace` 검색창 레이아웃 수정
 - [ ] `/workspace` 카드 추가 폼 외부 클릭 cancel
 - [ ] Plans / Tasks 연결 노드 교체
 - [ ] 삭제 confirm 중 입력 비활성화 QA 및 필요 시 패치
