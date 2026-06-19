@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard" },
+  { href: "/inbox", label: "Inbox" },
   { href: "/workspace", label: "Workspace" },
   { href: "/whativedone", label: "Done" },
   { href: "/timeline", label: "Timeline" },

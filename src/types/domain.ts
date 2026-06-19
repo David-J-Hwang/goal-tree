@@ -53,3 +53,20 @@ export type UserSettings = {
   userId: string;
   autoFillActualDatesOnStatusChange: boolean;
 };
+
+export type InboxCard = {
+  id: string;
+  userId: string;
+  title: string;
+  memo?: string | null;
+  status: NodeStatus;
+  plannedStartDate?: string | null;
+  plannedEndDate?: string | null;
+  actualStartDate?: string | null;
+  actualEndDate?: string | null;
+  sortOrder: number;
+  convertedNodeId?: string | null;
+  archivedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
