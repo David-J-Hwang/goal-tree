@@ -79,6 +79,7 @@ type CreateNodeInput = {
 };
 type UpdateNodeInput = {
   id: string;
+  parentId: string | null;
   title: string;
   memo: string | null;
   status: NodeStatus;
@@ -327,6 +328,30 @@ export function WorkspaceBoard({
       throw new Error("Node was not found.");
     }
 
+    if (currentNode.type === "goal" && input.parentId !== null) {
+      throw new Error("Goal cards cannot be linked to another card.");
+    }
+
+    if (currentNode.type === "plan") {
+      const nextParent = getVisibleNode(nodes, input.parentId);
+
+      if (!nextParent || nextParent.type !== "goal") {
+        throw new Error("Select a valid linked Goal.");
+      }
+    }
+
+    if (currentNode.type === "task") {
+      const nextParent = getVisibleNode(nodes, input.parentId);
+
+      if (!nextParent || nextParent.type !== "plan") {
+        throw new Error("Select a valid linked Plan.");
+      }
+    }
+
+    const isParentChanging = currentNode.parentId !== input.parentId;
+    const nextSortOrder = isParentChanging
+      ? getNextSortOrder(nodes, currentNode.type, input.parentId)
+      : currentNode.sortOrder;
     const nextDates = getDateValuesWithStatusUpdates(
       currentNode,
       input,
@@ -336,6 +361,7 @@ export function WorkspaceBoard({
     const { data, error } = await supabase
       .from("nodes")
       .update({
+        parent_id: input.parentId,
         title: input.title,
         memo: input.memo,
         status: input.status,
@@ -348,6 +374,7 @@ export function WorkspaceBoard({
         success_criteria_text:
           currentNode.type === "goal" ? input.successCriteriaText : null,
         category_id: currentNode.type === "plan" ? input.categoryId : null,
+        sort_order: nextSortOrder,
       })
       .eq("id", input.id)
       .eq("user_id", userId)
@@ -364,10 +391,19 @@ export function WorkspaceBoard({
     }
 
     const updatedNode = mapNodeRow(data);
-
-    setNodes((currentNodes) =>
-      currentNodes.map((node) => (node.id === updatedNode.id ? updatedNode : node)),
+    const nextNodes = nodes.map((node) =>
+      node.id === updatedNode.id ? updatedNode : node,
     );
+
+    setNodes(nextNodes);
+
+    if (isParentChanging) {
+      const nextSelection = getSelectionForNode(nextNodes, updatedNode.id);
+
+      setSelectedGoalId(nextSelection.goalId);
+      setSelectedPlanId(nextSelection.planId);
+      setSelectedNodeId(nextSelection.nodeId);
+    }
   }
 
   async function handleMoveNodeToTrash(nodeId: string) {
@@ -578,8 +614,6 @@ export function WorkspaceBoard({
           />
           <DetailPanel
             node={selectedNode}
-            goal={selectedGoal}
-            plan={selectedPlan}
             nodes={nodes}
             categories={planCategories}
             isSelectedTaskInTodayTodo={
@@ -1048,8 +1082,6 @@ function SortableNodeCard({
 function DetailPanel({
   autoFillActualDatesOnStatusChange,
   node,
-  goal,
-  plan,
   nodes,
   categories,
   isSelectedTaskInTodayTodo,
@@ -1061,8 +1093,6 @@ function DetailPanel({
 }: {
   autoFillActualDatesOnStatusChange: boolean;
   node?: WorkspaceNode;
-  goal?: WorkspaceNode;
-  plan?: WorkspaceNode;
   nodes: WorkspaceNode[];
   categories: PlanCategory[];
   isSelectedTaskInTodayTodo: boolean;
@@ -1095,6 +1125,7 @@ function DetailPanel({
   const [successCriteriaValue, setSuccessCriteriaValue] = useState(
     node?.successCriteriaText ?? "",
   );
+  const [parentIdValue, setParentIdValue] = useState(node?.parentId ?? "");
   const [categoryIdValue, setCategoryIdValue] = useState(node?.categoryId ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [isMovingToTrash, setIsMovingToTrash] = useState(false);
@@ -1118,6 +1149,7 @@ function DetailPanel({
     setActualEndDateValue(node.actualEndDate ?? "");
     setImportanceReasonValue(node.importanceReason ?? "");
     setSuccessCriteriaValue(node.successCriteriaText ?? "");
+    setParentIdValue(node.parentId ?? "");
     setCategoryIdValue(node.categoryId ?? "");
   }, [
     node?.actualEndDate,
@@ -1126,6 +1158,7 @@ function DetailPanel({
     node?.id,
     node?.importanceReason,
     node?.memo,
+    node?.parentId,
     node?.plannedEndDate,
     node?.plannedStartDate,
     node?.status,
@@ -1178,8 +1211,31 @@ function DetailPanel({
     const plannedEndDate = emptyStringToNull(plannedEndDateValue);
     const actualStartDate = emptyStringToNull(actualStartDateValue);
     const actualEndDate = emptyStringToNull(actualEndDateValue);
+    const parentId = node.type === "goal" ? null : parentIdValue || null;
+
+    if (node.type === "plan") {
+      const linkedGoal = getVisibleNode(nodes, parentId);
+
+      if (!linkedGoal || linkedGoal.type !== "goal") {
+        setSaveError("Select a linked Goal.");
+        setSaveMessage("");
+        return;
+      }
+    }
+
+    if (node.type === "task") {
+      const linkedPlan = getVisibleNode(nodes, parentId);
+
+      if (!linkedPlan || linkedPlan.type !== "plan") {
+        setSaveError("Select a linked Plan.");
+        setSaveMessage("");
+        return;
+      }
+    }
+
     const nextInput = {
       id: node.id,
+      parentId,
       title: trimmedTitle,
       memo: trimmedMemo || null,
       status: statusValue,
@@ -1301,8 +1357,12 @@ function DetailPanel({
 
   const status = statusMeta[statusValue];
   const StatusIcon = status.icon;
-  const parent = node.parentId ? nodes.find((item) => item.id === node.parentId) : undefined;
   const progress = getNodeProgress(node, nodes);
+  const goalOptions = getSortedChildren(nodes, "goal", null);
+  const planOptions = sortSearchNodes(
+    nodes.filter((item) => item.type === "plan" && isNodeVisible(item, nodes)),
+    nodes,
+  );
   const normalizedMemo = memoValue.trim();
   const normalizedImportanceReason = importanceReasonValue.trim();
   const normalizedSuccessCriteria = successCriteriaValue.trim();
@@ -1315,6 +1375,7 @@ function DetailPanel({
     plannedEndDateValue !== (node.plannedEndDate ?? "") ||
     actualStartDateValue !== (node.actualStartDate ?? "") ||
     actualEndDateValue !== (node.actualEndDate ?? "") ||
+    (node.type !== "goal" && parentIdValue !== (node.parentId ?? "")) ||
     (node.type === "goal" &&
       (normalizedImportanceReason !== (node.importanceReason ?? "") ||
         normalizedSuccessCriteria !== (node.successCriteriaText ?? ""))) ||
@@ -1356,13 +1417,39 @@ function DetailPanel({
         <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 pb-6 pt-3">
           {node.type === "task" ? (
             <DetailSection title="Linked Plan">
-              <DetailValue value={plan?.title ?? parent?.title ?? "-"} />
+              <select
+                className="h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+                disabled={isDetailInputDisabled}
+                onChange={(event) => setParentIdValue(event.target.value)}
+                value={parentIdValue}
+              >
+                {planOptions.map((item) => {
+                  const parentGoal = getVisibleNode(nodes, item.parentId);
+
+                  return (
+                    <option key={item.id} value={item.id}>
+                      {parentGoal ? `${parentGoal.title} / ${item.title}` : item.title}
+                    </option>
+                  );
+                })}
+              </select>
             </DetailSection>
           ) : null}
 
           {node.type === "plan" ? (
             <DetailSection title="Linked Goal">
-              <DetailValue value={goal?.title ?? parent?.title ?? "-"} />
+              <select
+                className="h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+                disabled={isDetailInputDisabled}
+                onChange={(event) => setParentIdValue(event.target.value)}
+                value={parentIdValue}
+              >
+                {goalOptions.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.title}
+                  </option>
+                ))}
+              </select>
               <label className="mt-3 block">
                 <span className="text-xs font-medium text-muted-foreground">Category</span>
                 <select
@@ -1542,14 +1629,6 @@ function DetailSection({
       <h3 className="mb-1.5 text-xs font-semibold uppercase text-muted-foreground">{title}</h3>
       {children}
     </section>
-  );
-}
-
-function DetailValue({ value }: { value: string }) {
-  return (
-    <div className="rounded-md border bg-background px-3 py-2">
-      <span className="block truncate text-sm font-medium">{value}</span>
-    </div>
   );
 }
 

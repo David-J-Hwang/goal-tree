@@ -112,7 +112,7 @@ Option B: nodes 테이블에 brainstorm 타입 추가
 - [ ] 페이지 제목 확정: `Brainstorm`, `Idea Inbox` 중 선택
 - [ ] 카드 필드 확정
 - [ ] 전환 후 원본 아이디어 처리 방식 결정
-- [ ] 기존 Plan / Task 연결 노드 교체 UX 확정
+- [x] 기존 Plan / Task 연결 노드 교체 UX 확정
 
 ### 2. 데이터 모델
 
@@ -142,8 +142,8 @@ Option B: nodes 테이블에 brainstorm 타입 추가
 - [ ] Goal로 전환 기능 구현
 - [ ] Plan으로 전환 기능 구현
 - [ ] Task로 전환 기능 구현
-- [ ] 기존 Plan 연결 Goal 교체 기능 구현
-- [ ] 기존 Task 연결 Plan 교체 기능 구현
+- [x] 기존 Plan 연결 Goal 교체 기능 구현
+- [x] 기존 Task 연결 Plan 교체 기능 구현
 - [ ] 전환 후 `/workspace` 선택 상태 복원 연결
 
 ### 5. 검증

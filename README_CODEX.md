@@ -1451,6 +1451,15 @@ v1.1.0에서 검토할 기능:
 전환된 아이디어를 converted 상태로 남길지, 숨길지 결정
 ```
 
+2026-06-19 진행 상태:
+
+```txt
+/workspace Details 패널에서 기존 Plan 카드의 Linked Goal을 수정할 수 있다.
+/workspace Details 패널에서 기존 Task 카드의 Linked Plan을 수정할 수 있다.
+연결을 바꾸면 nodes.parent_id가 업데이트되고, 해당 카드가 새 부모 목록의 마지막 sort_order로 이동한다.
+저장 후 선택 상태는 새 Goal / Plan 경로로 맞춰진다.
+```
+
 아직 미정:
 
 ```txt
