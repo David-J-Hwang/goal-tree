@@ -1360,6 +1360,28 @@ function DetailPanel({
             </DetailSection>
           ) : null}
 
+          {node.type === "plan" ? (
+            <DetailSection title="Linked Goal">
+              <DetailValue value={goal?.title ?? parent?.title ?? "-"} />
+              <label className="mt-3 block">
+                <span className="text-xs font-medium text-muted-foreground">Category</span>
+                <select
+                  className="mt-1.5 h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+                  disabled={isDetailInputDisabled}
+                  onChange={(event) => setCategoryIdValue(event.target.value)}
+                  value={categoryIdValue}
+                >
+                  <option value="">No category</option>
+                  {categories.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </DetailSection>
+          ) : null}
+
           <DetailSection title="Status">
             <select
               className="h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
@@ -1423,28 +1445,6 @@ function DetailPanel({
                 />
               </DetailSection>
             </>
-          ) : null}
-
-          {node.type === "plan" ? (
-            <DetailSection title="Linked Goal">
-              <DetailValue value={goal?.title ?? parent?.title ?? "-"} />
-              <label className="mt-3 block">
-                <span className="text-xs font-medium text-muted-foreground">Category</span>
-                <select
-                  className="mt-1.5 h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
-                  disabled={isDetailInputDisabled}
-                  onChange={(event) => setCategoryIdValue(event.target.value)}
-                  value={categoryIdValue}
-                >
-                  <option value="">No category</option>
-                  {categories.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </DetailSection>
           ) : null}
 
           <DetailSection title="Dates">
