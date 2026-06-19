@@ -5,14 +5,14 @@
 현재 루트 `README.md`는 **지금 진행 중인 버전의 개발 체크리스트**로 사용한다.
 
 ```txt
-Current: v1.0.1 patch
-Base version: v1.0.0
-Next planned version: v1.1.0
+Current: v1.1.0
+Base version: v1.0.1
 ```
 
 버전 스냅샷:
 
 - v1.0.0 완료 스냅샷: [docs/README_v1_0_0.md](docs/README_v1_0_0.md)
+- v1.0.1 완료 스냅샷: [docs/README_v1_0_1.md](docs/README_v1_0_1.md)
 - v1.1.0 계획 스냅샷: [docs/README_v1_1_0.md](docs/README_v1_1_0.md)
 
 자세한 프로젝트 맥락과 구현 인수인계는 [README_CODEX.md](README_CODEX.md)를 참고한다.
@@ -44,102 +44,105 @@ README_CODEX.md
 
 ---
 
-## v1.0.1 패치 목표
+## v1.1.0 목표
 
-v1.0.1은 v1.0.0의 안정화 패치 버전이다.
+v1.1.0의 핵심은 `/workspace`에 넣기 전의 생각을 자유롭게 모으는 `/brainstorm` 페이지다.
 
-범위:
-
-- v1.0.0 테스트 중 발견한 버그 수정
-- 작은 UI/UX 개선
-- 문구 / 레이아웃 정리
-- 기존 기능 안정화
-
-범위 밖:
-
-- `/brainstorm` 새 기능 구현
-- 새 데이터 모델의 큰 변경
-- v1.1.0 기능 개발
-
-v1.1.0의 `/brainstorm` 계획은 [docs/README_v1_1_0.md](docs/README_v1_1_0.md)에 보관한다.
+현재 v1.0.1까지는 `Goal -> Plan -> Task` 구조가 잘 정리된 상태에서 사용하기 좋다. v1.1.0에서는 아직 구조화되지 않은 아이디어, 할 일, 메모를 빠르게 적고, 필요할 때 `/workspace`의 Goal / Plan / Task로 전환하는 흐름을 만든다.
 
 ---
 
-## v1.0.1 패치 항목
+## v1.1.0 기능 초안
 
-테스트하면서 발견한 패치 항목을 이곳에 추가한다.
+### Brainstorm 카드
 
-### 버그
+- 자유 아이디어 카드 생성
+- 카드 제목 수정
+- 카드 메모 수정
+- 카드 삭제 또는 보관
+- 카드 상태 관리 검토
+- 태그 또는 간단한 분류 검토
 
-- [x] `/workspace` 데스크탑 전체화면 상태에서 어긋난 검색창 레이아웃 수정
+### Workspace 전환
 
-### UI / UX
+- 아이디어 카드를 Goal로 전환
+- 아이디어 카드를 특정 Goal 아래 Plan으로 전환
+- 아이디어 카드를 특정 Plan 아래 Task로 전환
+- 전환 후 원본 아이디어를 유지할지, 숨길지, 삭제할지 결정
+- 기존 Plan 카드를 다른 Goal 아래로 연결 변경
+- 기존 Task 카드를 다른 Plan 아래로 연결 변경
 
-- [x] `/login` 페이지 로드 시 skeleton component 표시
-- [x] 테마 쿠키 동기화로 `/login` 첫 진입 시 light -> dark 깜빡임 완화
-- [x] 모든 페이지에서 위 / 아래 여백 밸런스가 맞도록 페이지 하단 여백 조정
-- [x] `/settings` 모달의 Plan Categories 카드들을 드래그 앤 드롭으로 정렬
-- [x] `/workspace` 카드 추가 상태에서 컴포넌트 밖을 클릭하면 Cancel과 동일하게 추가 폼 닫기
+### 데이터 구조 검토
 
-### QA / 확인
+검토 후보:
 
-- [x] `/workspace` 카드 trash 이동 요청 중 다른 편집 컴포넌트가 비활성화되도록 패치
-- [x] `/trash` 카드 영구삭제 요청 중 필터 / Restore / Delete 버튼이 비활성화되도록 패치
+```txt
+Option A: 별도 brainstorm_cards 테이블
+Option B: nodes 테이블에 brainstorm 타입 추가
+```
 
-### 문서
+현재 판단:
 
-- [x] `docs/README_v1_0.md`를 `docs/README_v1_0_0.md`로 rename
-- [x] v1.1.0 계획을 `docs/README_v1_1_0.md`로 보관
-- [x] 루트 `README.md`를 v1.0.1 패치 작업판으로 전환
-- [x] `README_CODEX.md` 문서 관리 워크플로우 업데이트
+```txt
+별도 brainstorm_cards 테이블이 더 안전해 보인다.
+이유: Goal / Plan / Task 트리와 독립된 자유 카드 성격이 강하고, 전환 전 데이터와 전환 후 Node 데이터를 분리하기 쉽다.
+```
 
 ---
 
-## v1.0.1 개발 체크리스트
+## v1.1.0 개발 체크리스트
 
-### 0. 패치 준비
+### 0. 문서 / 버전 관리
 
-- [x] v1.0.0 완료 스냅샷 경로 정리
-- [x] v1.1.0 계획 스냅샷 보관
-- [x] v1.0.1 패치 작업판 생성
-- [x] v1.0.1 1차 패치 대상 목록 작성
+- [x] v1.0.1 완료 상태를 `docs/README_v1_0_1.md`로 보관
+- [x] 루트 `README.md`를 v1.1.0 진행판으로 전환
+- [x] 문서 관리 워크플로우 정리
+- [ ] v1.1.0 완료 시 `docs/README_v1_1_0.md`를 완료 스냅샷으로 갱신
 
-### 1. 패치 구현
+### 1. 기획
 
-- [x] `/login` skeleton component
-- [x] 테마 쿠키 동기화 및 초기 렌더링 테마 안정화
-- [x] 전체 페이지 하단 여백 조정
-- [x] Settings Plan Categories 드래그 정렬
-- [x] `/workspace` 검색창 레이아웃 수정
-- [x] `/workspace` 카드 추가 폼 외부 클릭 cancel
-- [x] `/workspace` 카드 trash 이동 요청 중 편집 컴포넌트 잠금
-- [x] `/trash` 카드 영구삭제 요청 중 필터 / 버튼 잠금
+- [x] 최종 라우트명 확정: `/brainstorm`
+- [ ] 페이지 제목 확정: `Brainstorm`, `Idea Inbox` 중 선택
+- [ ] 카드 필드 확정
+- [ ] 전환 후 원본 아이디어 처리 방식 결정
+- [ ] 기존 Plan / Task 연결 노드 교체 UX 확정
 
-### 2. 검증
+### 2. 데이터 모델
+
+- [ ] `brainstorm_cards` 테이블 사용 여부 결정
+- [ ] Supabase migration 작성
+- [ ] RLS 정책 작성
+- [ ] TypeScript 타입 작성
+- [ ] row mapper 작성
+
+### 3. UI / UX
+
+- [ ] `/brainstorm` 라우트 생성
+- [ ] 상단 앱바 링크 추가 여부 결정
+- [ ] 자유 카드 목록 UI 구현
+- [ ] 카드 생성 UI 구현
+- [ ] 카드 상세 / 편집 UI 구현
+- [ ] 빈 상태 UI 구현
+- [ ] 모바일 레이아웃 확인
+- [ ] 다크모드 색상 확인
+
+### 4. 기능 연결
+
+- [ ] 자유 카드 Supabase 읽기 연결
+- [ ] 자유 카드 생성 연결
+- [ ] 자유 카드 수정 연결
+- [ ] 자유 카드 삭제 / 보관 연결
+- [ ] Goal로 전환 기능 구현
+- [ ] Plan으로 전환 기능 구현
+- [ ] Task로 전환 기능 구현
+- [ ] 기존 Plan 연결 Goal 교체 기능 구현
+- [ ] 기존 Task 연결 Plan 교체 기능 구현
+- [ ] 전환 후 `/workspace` 선택 상태 복원 연결
+
+### 5. 검증
 
 - [ ] `npm run typecheck`
 - [ ] `git diff --check`
 - [ ] 데스크탑 UI 확인
 - [ ] 모바일 UI 확인
-- [ ] 주요 플로우 수동 테스트
-
-### 3. 패치 완료 후
-
-- [ ] `README.md`를 `docs/README_v1_0_1.md`로 복사
-- [ ] `README.md`를 v1.1.0 진행판으로 전환
-- [ ] 필요하면 `README_CODEX.md` 현재 구현 상태 업데이트
-
----
-
-## 다음 버전: v1.1.0
-
-v1.1.0에서는 `/brainstorm` 페이지를 추가하는 방향을 검토한다.
-
-핵심 아이디어:
-
-- 트리구조에 넣기 전 자유 카드 작성
-- 괜찮은 카드를 `/workspace`의 Goal / Plan / Task로 전환
-- Plans / Tasks 카드의 연결 노드를 다른 카드로 교체
-- 구조화되지 않은 생각을 빠르게 보관하고 나중에 정리
-
-v1.1.0 계획 상세는 [docs/README_v1_1_0.md](docs/README_v1_1_0.md)를 참고한다.
+- [ ] Supabase RLS 동작 확인
