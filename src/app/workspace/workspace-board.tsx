@@ -2,6 +2,7 @@
 
 import {
   type FormEvent,
+  type KeyboardEvent,
   type RefObject,
   useEffect,
   useMemo,
@@ -1342,6 +1343,19 @@ function DetailPanel({
     }
   }
 
+  function handleMemoKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key !== "Enter" || event.nativeEvent.isComposing) {
+      return;
+    }
+
+    if (!event.ctrlKey && !event.metaKey) {
+      return;
+    }
+
+    event.preventDefault();
+    event.currentTarget.form?.requestSubmit();
+  }
+
   if (!node) {
     return (
       <Card className="flex min-h-[34rem] flex-col overflow-hidden rounded-lg shadow-none xl:h-full xl:min-h-0">
@@ -1558,6 +1572,7 @@ function DetailPanel({
               className="flex-1"
               disabled={isDetailInputDisabled}
               onChange={setMemoValue}
+              onKeyDown={handleMemoKeyDown}
               placeholder="Add a memo"
               value={memoValue}
             />
@@ -1636,12 +1651,14 @@ function DetailTextArea({
   className,
   disabled,
   onChange,
+  onKeyDown,
   placeholder,
   value,
 }: {
   className?: string;
   disabled: boolean;
   onChange: (value: string) => void;
+  onKeyDown?: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
   placeholder: string;
   value: string;
 }) {
@@ -1653,6 +1670,7 @@ function DetailTextArea({
       )}
       disabled={disabled}
       onChange={(event) => onChange(event.target.value)}
+      onKeyDown={onKeyDown}
       placeholder={placeholder}
       value={value}
     />
