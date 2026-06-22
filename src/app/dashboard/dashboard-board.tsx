@@ -622,7 +622,7 @@ function SortableTodoRow({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "grid grid-cols-[1.75rem_2.25rem_minmax(0,1fr)_auto] items-start gap-3 rounded-lg border bg-background p-3 transition-colors",
+        "grid grid-cols-[1.75rem_2.25rem_minmax(0,1fr)] items-start gap-3 rounded-lg border bg-background p-3 transition-colors sm:grid-cols-[1.75rem_2.25rem_minmax(0,1fr)_auto]",
         todo.done && "bg-muted/45 text-muted-foreground",
         isDragging && "shadow-md ring-1 ring-primary/30",
       )}
@@ -658,10 +658,10 @@ function SortableTodoRow({
       </button>
 
       <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Link
             className={cn(
-              "text-sm font-medium leading-5 hover:text-primary",
+              "min-w-0 break-words text-sm font-medium leading-5 hover:text-primary",
               todo.done && "line-through",
             )}
             href={getWorkspaceNodeHref(todo.taskId)}
@@ -675,7 +675,7 @@ function SortableTodoRow({
         </p>
       </div>
 
-      <div className="flex items-center justify-end gap-1 self-center">
+      <div className="col-start-3 flex items-center justify-start gap-1 self-center sm:col-start-auto sm:justify-end">
         {!isToday ? (
           <Button
             className={cn(

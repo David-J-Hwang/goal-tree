@@ -1023,23 +1023,23 @@ function DateRangeFields({
   startValue: string;
 }) {
   return (
-    <div className="mb-2 rounded-md border bg-background p-2.5 last:mb-0">
+    <div className="mb-2 overflow-hidden rounded-md border bg-background p-2.5 last:mb-0">
       <div className="mb-1.5 text-xs font-medium text-muted-foreground">{label}</div>
       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-        <label className="flex min-w-0 flex-col gap-1.5">
+        <label className="flex min-w-0 max-w-full flex-col gap-1.5 overflow-hidden">
           <span className="text-xs text-muted-foreground">Start</span>
           <input
-            className="block h-8 w-full min-w-0 max-w-full rounded-md border bg-background px-2 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+            className="block h-8 w-full min-w-0 max-w-full appearance-none rounded-md border bg-background px-2 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
             disabled={disabled}
             onChange={(event) => onStartChange(event.target.value)}
             type="date"
             value={startValue}
           />
         </label>
-        <label className="flex min-w-0 flex-col gap-1.5">
+        <label className="flex min-w-0 max-w-full flex-col gap-1.5 overflow-hidden">
           <span className="text-xs text-muted-foreground">End</span>
           <input
-            className="block h-8 w-full min-w-0 max-w-full rounded-md border bg-background px-2 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+            className="block h-8 w-full min-w-0 max-w-full appearance-none rounded-md border bg-background px-2 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
             disabled={disabled}
             onChange={(event) => onEndChange(event.target.value)}
             type="date"
