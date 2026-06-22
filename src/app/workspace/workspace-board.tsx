@@ -49,6 +49,7 @@ import {
 } from "@/components/ui/card";
 import { sortableStackModifiers } from "@/lib/dnd/sortable-stack-modifier";
 import { mapNodeRow, nodeSelectColumns, type NodeRow } from "@/lib/goaltree/node-rows";
+import { syncAncestorStatuses } from "@/lib/goaltree/parent-status-sync";
 import {
   mapTodayTodoRow,
   todayTodoSelectColumns,
@@ -308,7 +309,14 @@ export function WorkspaceBoard({
 
     const createdNode = mapNodeRow(data);
 
-    setNodes((currentNodes) => [...currentNodes, createdNode]);
+    const nextNodes = await syncAncestorStatuses({
+      nodes: [...nodes, createdNode],
+      parentIds: [createdNode.parentId],
+      supabase,
+      userId,
+    });
+
+    setNodes(nextNodes);
     setSelectedNodeId(createdNode.id);
 
     if (createdNode.type === "goal") {
@@ -395,11 +403,17 @@ export function WorkspaceBoard({
     const nextNodes = nodes.map((node) =>
       node.id === updatedNode.id ? updatedNode : node,
     );
+    const syncedNodes = await syncAncestorStatuses({
+      nodes: nextNodes,
+      parentIds: [currentNode.parentId, updatedNode.parentId],
+      supabase,
+      userId,
+    });
 
-    setNodes(nextNodes);
+    setNodes(syncedNodes);
 
     if (isParentChanging) {
-      const nextSelection = getSelectionForNode(nextNodes, updatedNode.id);
+      const nextSelection = getSelectionForNode(syncedNodes, updatedNode.id);
 
       setSelectedGoalId(nextSelection.goalId);
       setSelectedPlanId(nextSelection.planId);
@@ -436,9 +450,15 @@ export function WorkspaceBoard({
     const nextNodes = nodes.map((node) =>
       node.id === trashedNode.id ? trashedNode : node,
     );
-    const nextSelection = getSelectionAfterTrash(nextNodes, trashedNode);
+    const syncedNodes = await syncAncestorStatuses({
+      nodes: nextNodes,
+      parentIds: [currentNode.parentId],
+      supabase,
+      userId,
+    });
+    const nextSelection = getSelectionAfterTrash(syncedNodes, trashedNode);
 
-    setNodes(nextNodes);
+    setNodes(syncedNodes);
     setSelectedGoalId(nextSelection.goalId);
     setSelectedPlanId(nextSelection.planId);
     setSelectedNodeId(nextSelection.nodeId);

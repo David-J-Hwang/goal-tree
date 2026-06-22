@@ -17,6 +17,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { mapNodeRow, nodeSelectColumns, type NodeRow } from "@/lib/goaltree/node-rows";
+import { syncAncestorStatuses } from "@/lib/goaltree/parent-status-sync";
 import {
   appPageContentClassName,
   appPageMainClassName,
@@ -116,36 +117,47 @@ export function TrashBoard({
     setActionError("");
     setConfirmingDeleteId("");
 
-    const supabase = createSupabaseBrowserClient();
-    const { data, error } = await supabase
-      .from("nodes")
-      .update({ trashed_at: null })
-      .eq("id", item.id)
-      .eq("user_id", userId)
-      .select(nodeSelectColumns)
-      .single()
-      .returns<NodeRow>();
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { data, error } = await supabase
+        .from("nodes")
+        .update({ trashed_at: null })
+        .eq("id", item.id)
+        .eq("user_id", userId)
+        .select(nodeSelectColumns)
+        .single()
+        .returns<NodeRow>();
 
-    if (error) {
-      setActionError(error.message);
+      if (error) {
+        setActionError(error.message);
+        return;
+      }
+
+      if (!data) {
+        setActionError("Restored node was not returned.");
+        return;
+      }
+
+      const restoredNode = mapNodeRow(data);
+      const nextNodes = nodes.map((node) =>
+        node.id === restoredNode.id ? restoredNode : node,
+      );
+      const syncedNodes = await syncAncestorStatuses({
+        nodes: nextNodes,
+        parentIds: [restoredNode.parentId],
+        supabase,
+        userId,
+      });
+
+      setNodes(syncedNodes);
+    } catch (error) {
+      setActionError(
+        error instanceof Error ? error.message : "Failed to restore card.",
+      );
+    } finally {
       setRestoringId("");
       mutationLockRef.current = false;
-      return;
     }
-
-    if (!data) {
-      setActionError("Restored node was not returned.");
-      setRestoringId("");
-      mutationLockRef.current = false;
-      return;
-    }
-
-    const restoredNode = mapNodeRow(data);
-    setNodes((currentNodes) =>
-      currentNodes.map((node) => (node.id === restoredNode.id ? restoredNode : node)),
-    );
-    setRestoringId("");
-    mutationLockRef.current = false;
   }
 
   async function handleDelete(item: TrashedItem) {

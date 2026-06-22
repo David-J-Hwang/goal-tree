@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/card";
 import { sortableStackModifiers } from "@/lib/dnd/sortable-stack-modifier";
 import { mapNodeRow, nodeSelectColumns, type NodeRow } from "@/lib/goaltree/node-rows";
+import { syncAncestorStatuses } from "@/lib/goaltree/parent-status-sync";
 import {
   mapTodayTodoRow,
   todayTodoSelectColumns,
@@ -200,15 +201,32 @@ export function DashboardBoard({
 
     const updatedTodo = mapTodayTodoRow(todoRow);
     const updatedTask = mapNodeRow(nodeRow);
+    const nextNodes = nodes.map((node) =>
+      node.id === updatedTask.id ? updatedTask : node,
+    );
+    let syncedNodes = nextNodes;
+
+    try {
+      syncedNodes = await syncAncestorStatuses({
+        nodes: nextNodes,
+        parentIds: [updatedTask.parentId],
+        supabase,
+        userId,
+      });
+    } catch (error) {
+      setTodoError(
+        error instanceof Error
+          ? error.message
+          : "Failed to sync parent card status.",
+      );
+    }
 
     setTodayTodos((currentTodos) =>
       currentTodos.map((currentTodo) =>
         currentTodo.id === updatedTodo.id ? updatedTodo : currentTodo,
       ),
     );
-    setNodes((currentNodes) =>
-      currentNodes.map((node) => (node.id === updatedTask.id ? updatedTask : node)),
-    );
+    setNodes(syncedNodes);
     setUpdatingTodoId("");
   }
 

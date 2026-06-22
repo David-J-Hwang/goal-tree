@@ -37,6 +37,7 @@ import {
   nodeSelectColumns,
   type NodeRow,
 } from "@/lib/goaltree/node-rows";
+import { syncAncestorStatuses } from "@/lib/goaltree/parent-status-sync";
 import { getWorkspaceNodeHref } from "@/lib/goaltree/workspace-links";
 import {
   appPageContentClassName,
@@ -302,8 +303,14 @@ export function InboxBoard({
     }
 
     const convertedCard = mapInboxCardRow(cardRow);
+    const syncedNodes = await syncAncestorStatuses({
+      nodes: [...nodes, createdNode],
+      parentIds: [createdNode.parentId],
+      supabase,
+      userId,
+    });
 
-    setNodes((currentNodes) => [...currentNodes, createdNode]);
+    setNodes(syncedNodes);
     setCards((currentCards) =>
       currentCards.map((card) =>
         card.id === convertedCard.id ? convertedCard : card,
