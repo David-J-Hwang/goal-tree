@@ -1725,7 +1725,7 @@ function DateRangeFields({
         <label className="flex min-w-0 max-w-full flex-col gap-1.5 overflow-hidden">
           <span className="text-xs text-muted-foreground">Start</span>
           <input
-            className="block h-8 w-full min-w-0 max-w-full appearance-none rounded-md border bg-background px-2 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+            className="goaltree-date-input block h-8 w-full min-w-0 max-w-full appearance-none rounded-md border bg-background px-2 text-sm leading-[2rem] outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
             disabled={disabled}
             onChange={(event) => onStartChange(event.target.value)}
             type="date"
@@ -1735,7 +1735,7 @@ function DateRangeFields({
         <label className="flex min-w-0 max-w-full flex-col gap-1.5 overflow-hidden">
           <span className="text-xs text-muted-foreground">End</span>
           <input
-            className="block h-8 w-full min-w-0 max-w-full appearance-none rounded-md border bg-background px-2 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+            className="goaltree-date-input block h-8 w-full min-w-0 max-w-full appearance-none rounded-md border bg-background px-2 text-sm leading-[2rem] outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
             disabled={disabled}
             onChange={(event) => onEndChange(event.target.value)}
             type="date"

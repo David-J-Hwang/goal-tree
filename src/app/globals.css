@@ -82,3 +82,17 @@
     min-height: 100dvh;
   }
 }
+
+@layer components {
+  .goaltree-date-input::-webkit-date-and-time-value {
+    display: flex;
+    min-height: 100%;
+    align-items: center;
+  }
+
+  .goaltree-date-input::-webkit-datetime-edit {
+    display: flex;
+    min-height: 100%;
+    align-items: center;
+  }
+}
