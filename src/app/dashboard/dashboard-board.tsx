@@ -130,8 +130,8 @@ export function DashboardBoard({
   const summaryItems = useMemo(
     () => [
       { label: "Today", value: String(todayTodoItems.length) },
-      { label: "Remaining", value: String(openCount) },
       { label: "Done", value: String(completedCount) },
+      { label: "Remaining", value: String(openCount) },
       { label: "Blocked", value: String(blockedCount) },
     ],
     [blockedCount, completedCount, openCount, todayTodoItems.length],
