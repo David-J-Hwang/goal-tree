@@ -94,6 +94,7 @@ const statusMeta: Record<
     label: string;
     icon: ComponentType<{ className?: string }>;
     className: string;
+    iconClassName: string;
   }
 > = {
   not_started: {
@@ -101,30 +102,35 @@ const statusMeta: Record<
     icon: Circle,
     className:
       "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700/55 dark:bg-slate-800/45 dark:text-slate-400",
+    iconClassName: "text-slate-600 dark:text-slate-400",
   },
   in_progress: {
     label: "진행중",
     icon: Clock3,
     className:
       "border-blue-300/70 bg-blue-50 text-blue-700 dark:border-blue-600/55 dark:bg-blue-900/25 dark:text-blue-300/90",
+    iconClassName: "text-blue-700 dark:text-blue-300/90",
   },
   blocked: {
     label: "막힘",
     icon: Ban,
     className:
       "border-red-200 bg-red-50 text-red-700 dark:border-red-800/40 dark:bg-red-950/25 dark:text-red-300/80",
+    iconClassName: "text-red-700 dark:text-red-300/80",
   },
   done: {
     label: "완료",
     icon: CheckCircle2,
     className:
       "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-950/25 dark:text-emerald-300/80",
+    iconClassName: "text-emerald-700 dark:text-emerald-300/80",
   },
   paused: {
     label: "보류",
     icon: PauseCircle,
     className:
       "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800/40 dark:bg-amber-950/25 dark:text-amber-300/80",
+    iconClassName: "text-amber-700 dark:text-amber-300/80",
   },
 };
 
@@ -817,29 +823,38 @@ function InboxDetailPanel({
         </CardHeader>
 
         <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 pb-6 pt-3">
-          <section>
-            <h3 className="mb-1.5 text-xs font-semibold uppercase text-muted-foreground">
+          <section className="rounded-lg border border-secondary/70 bg-secondary/35 p-3 dark:border-secondary/60 dark:bg-secondary/25">
+            <h3 className="text-xs font-semibold uppercase text-secondary-foreground/80">
               Status
             </h3>
             {!hasWorkspaceFields ? (
-              <p className="mb-2 rounded-md border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+              <p className="mt-3 rounded-md border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
                 Run migration 005 to edit status and dates.
               </p>
             ) : null}
-            <select
-              className="h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
-              disabled={isWorkspaceFieldDisabled}
-              onChange={(event) =>
-                setStatusValue(event.target.value as NodeStatus)
-              }
-              value={statusValue}
-            >
-              {statusOptions.map((option) => (
-                <option key={option} value={option}>
-                  {statusMeta[option].label}
-                </option>
-              ))}
-            </select>
+            <div className="relative mt-3">
+              <StatusIcon
+                className={cn(
+                  "pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2",
+                  status.iconClassName,
+                )}
+                aria-hidden="true"
+              />
+              <select
+                className="h-10 w-full rounded-md border bg-background px-3 pl-9 text-sm outline-none transition focus:border-secondary-foreground/40 focus:ring-1 focus:ring-secondary-foreground/20"
+                disabled={isWorkspaceFieldDisabled}
+                onChange={(event) =>
+                  setStatusValue(event.target.value as NodeStatus)
+                }
+                value={statusValue}
+              >
+                {statusOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {statusMeta[option].label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </section>
 
           <section>
