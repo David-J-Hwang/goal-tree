@@ -849,7 +849,7 @@ function InboxDetailPanel({
                       className={cn(
                         "h-9 rounded-md border px-3 text-sm text-muted-foreground transition",
                         convertType === type
-                          ? "border-primary bg-primary text-primary-foreground"
+                          ? "border-primary/50 bg-primary/10 text-primary hover:bg-primary/15"
                           : "bg-card hover:bg-muted hover:text-foreground",
                       )}
                       disabled={isLocked}
