@@ -841,18 +841,6 @@ function InboxDetailPanel({
                       Convert this Inbox card into a structured card.
                     </p>
                   </div>
-                  <Button
-                    disabled={
-                      isLocked ||
-                      !hasWorkspaceFields ||
-                      !isConvertTargetReady
-                    }
-                    onClick={handleConvert}
-                    size="sm"
-                    type="button"
-                  >
-                    {isConverting ? "Adding" : `Add as ${columnLabels[convertType]}`}
-                  </Button>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2">
@@ -874,79 +862,102 @@ function InboxDetailPanel({
                   ))}
                 </div>
 
-                {convertType === "plan" ? (
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <label className="block">
-                      <span className="text-xs font-medium text-muted-foreground">
-                        Linked Goal
-                      </span>
-                      <select
-                        className="mt-1.5 h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
-                        disabled={isLocked || goalOptions.length === 0}
-                        onChange={(event) => setConvertGoalId(event.target.value)}
-                        value={convertGoalId}
-                      >
-                        {goalOptions.length === 0 ? (
-                          <option value="">Create a Goal first</option>
-                        ) : null}
-                        {goalOptions.map((goal) => (
-                          <option key={goal.id} value={goal.id}>
-                            {goal.title}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="block">
-                      <span className="text-xs font-medium text-muted-foreground">
-                        Category
-                      </span>
-                      <select
-                        className="mt-1.5 h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
-                        disabled={isLocked}
-                        onChange={(event) =>
-                          setConvertCategoryId(event.target.value)
-                        }
-                        value={convertCategoryId}
-                      >
-                        <option value="">No category</option>
-                        {categories.map((category) => (
-                          <option key={category.id} value={category.id}>
-                            {category.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                <div className="flex h-[8.25rem] flex-col rounded-md border bg-card/40 p-3">
+                  <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
+                    Target
                   </div>
-                ) : null}
+                  {convertType === "goal" ? (
+                    <div className="flex min-h-0 flex-1 items-center rounded-md border bg-background px-3 text-sm text-muted-foreground">
+                      Will be added as a top-level Goal.
+                    </div>
+                  ) : null}
 
-                {convertType === "task" ? (
-                  <label className="block">
-                    <span className="text-xs font-medium text-muted-foreground">
-                      Linked Plan
-                    </span>
-                    <select
-                      className="mt-1.5 h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
-                      disabled={isLocked || planOptions.length === 0}
-                      onChange={(event) => setConvertPlanId(event.target.value)}
-                      value={convertPlanId}
-                    >
-                      {planOptions.length === 0 ? (
-                        <option value="">Create a Plan first</option>
-                      ) : null}
-                      {planOptions.map((plan) => {
-                        const parentGoal = getVisibleNode(nodes, plan.parentId);
+                  {convertType === "plan" ? (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <label className="block">
+                        <span className="text-xs font-medium text-muted-foreground">
+                          Linked Goal
+                        </span>
+                        <select
+                          className="mt-1.5 h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+                          disabled={isLocked || goalOptions.length === 0}
+                          onChange={(event) => setConvertGoalId(event.target.value)}
+                          value={convertGoalId}
+                        >
+                          {goalOptions.length === 0 ? (
+                            <option value="">Create a Goal first</option>
+                          ) : null}
+                          {goalOptions.map((goal) => (
+                            <option key={goal.id} value={goal.id}>
+                              {goal.title}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="block">
+                        <span className="text-xs font-medium text-muted-foreground">
+                          Category
+                        </span>
+                        <select
+                          className="mt-1.5 h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+                          disabled={isLocked}
+                          onChange={(event) =>
+                            setConvertCategoryId(event.target.value)
+                          }
+                          value={convertCategoryId}
+                        >
+                          <option value="">No category</option>
+                          {categories.map((category) => (
+                            <option key={category.id} value={category.id}>
+                              {category.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                  ) : null}
 
-                        return (
-                          <option key={plan.id} value={plan.id}>
-                            {parentGoal
-                              ? `${parentGoal.title} / ${plan.title}`
-                              : plan.title}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </label>
-                ) : null}
+                  {convertType === "task" ? (
+                    <label className="block">
+                      <span className="text-xs font-medium text-muted-foreground">
+                        Linked Plan
+                      </span>
+                      <select
+                        className="mt-1.5 h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+                        disabled={isLocked || planOptions.length === 0}
+                        onChange={(event) => setConvertPlanId(event.target.value)}
+                        value={convertPlanId}
+                      >
+                        {planOptions.length === 0 ? (
+                          <option value="">Create a Plan first</option>
+                        ) : null}
+                        {planOptions.map((plan) => {
+                          const parentGoal = getVisibleNode(nodes, plan.parentId);
+
+                          return (
+                            <option key={plan.id} value={plan.id}>
+                              {parentGoal
+                                ? `${parentGoal.title} / ${plan.title}`
+                                : plan.title}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </label>
+                  ) : null}
+                </div>
+                <Button
+                  className="w-full"
+                  disabled={
+                    isLocked ||
+                    !hasWorkspaceFields ||
+                    !isConvertTargetReady
+                  }
+                  onClick={handleConvert}
+                  type="button"
+                >
+                  {isConverting ? "Adding" : `Add as ${columnLabels[convertType]}`}
+                </Button>
               </div>
             </section>
           ) : null}
