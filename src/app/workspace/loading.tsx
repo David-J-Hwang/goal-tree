@@ -10,6 +10,8 @@ export default function WorkspaceLoading() {
   return (
     <PageLoadingShell
       headerAction={<HeaderPillSkeleton />}
+      headerActionWrapperClassName="w-full lg:w-auto"
+      headerContentClassName="2xl:mx-auto 2xl:max-w-[1708px]"
       maxWidth="max-w-[1800px]"
       title="Workspace"
     >

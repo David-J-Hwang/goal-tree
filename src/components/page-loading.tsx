@@ -10,11 +10,15 @@ import { cn } from "@/lib/utils";
 export function PageLoadingShell({
   children,
   headerAction,
+  headerActionWrapperClassName,
+  headerContentClassName,
   maxWidth = "max-w-[1440px]",
   title,
 }: {
   children: ReactNode;
   headerAction?: ReactNode;
+  headerActionWrapperClassName?: string;
+  headerContentClassName?: string;
   maxWidth?: string;
   title: string;
 }) {
@@ -22,12 +26,23 @@ export function PageLoadingShell({
     <main className={appPageMainClassName}>
       <span className="sr-only">Loading {title}</span>
       <div className={cn(appPageContentClassName, maxWidth)}>
-        <header className="flex shrink-0 flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Goaltree</p>
-            <h1 className="mt-1 text-2xl font-semibold">{title}</h1>
+        <header className="shrink-0">
+          <div
+            className={cn(
+              "flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between",
+              headerContentClassName,
+            )}
+          >
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Goaltree</p>
+              <h1 className="mt-1 text-2xl font-semibold">{title}</h1>
+            </div>
+            {headerAction ? (
+              <div className={cn("shrink-0", headerActionWrapperClassName)}>
+                {headerAction}
+              </div>
+            ) : null}
           </div>
-          {headerAction ? <div className="shrink-0">{headerAction}</div> : null}
         </header>
 
         {children}
