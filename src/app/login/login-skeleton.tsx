@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export function LoginSkeleton() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-8 text-foreground sm:px-6 lg:px-8">
+    <main className="flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-background px-4 py-6 text-foreground sm:px-6 md:h-[100dvh] md:min-h-0 md:overflow-hidden md:py-4 lg:px-8">
       <span className="sr-only">Loading login</span>
       <Card className="w-full max-w-[420px] overflow-hidden rounded-lg shadow-none">
         <CardHeader className="border-b p-4">

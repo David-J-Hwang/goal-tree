@@ -77,6 +77,8 @@
   }
 
   body {
-    @apply min-h-screen bg-background text-foreground antialiased;
+    @apply bg-background text-foreground antialiased;
+    min-height: 100vh;
+    min-height: 100dvh;
   }
 }

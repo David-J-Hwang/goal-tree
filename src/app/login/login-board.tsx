@@ -106,7 +106,7 @@ export function LoginBoard() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-8 text-foreground sm:px-6 lg:px-8">
+    <main className="flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-background px-4 py-6 text-foreground sm:px-6 md:h-[100dvh] md:min-h-0 md:overflow-hidden md:py-4 lg:px-8">
       <section className="w-full max-w-[420px]">
         <Card className="rounded-lg shadow-none">
           <CardHeader className="border-b p-4">
