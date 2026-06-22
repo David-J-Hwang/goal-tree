@@ -1461,6 +1461,35 @@ function DetailPanel({
           </div>
         </CardHeader>
         <CardContent className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-3 pb-6 pt-3">
+          <section className="rounded-lg border border-secondary/70 bg-secondary/35 p-3 dark:border-secondary/60 dark:bg-secondary/25">
+            <h3 className="text-xs font-semibold uppercase text-secondary-foreground/80">
+              Status
+            </h3>
+            <div className="relative mt-3">
+              <StatusIcon
+                className={cn(
+                  "pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2",
+                  status.iconClassName,
+                )}
+                aria-hidden="true"
+              />
+              <select
+                className="h-10 w-full rounded-md border bg-background px-3 pl-9 text-sm outline-none transition focus:border-secondary-foreground/40 focus:ring-1 focus:ring-secondary-foreground/20"
+                disabled={isDetailInputDisabled}
+                onChange={(event) =>
+                  setStatusValue(event.target.value as NodeStatus)
+                }
+                value={statusValue}
+              >
+                {statusOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {statusMeta[option].label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </section>
+
           {node.type === "task" ? (
             <DetailSection title="Linked Plan">
               <select
@@ -1514,35 +1543,6 @@ function DetailPanel({
               </label>
             </DetailSection>
           ) : null}
-
-          <section className="rounded-lg border border-secondary/70 bg-secondary/35 p-3 dark:border-secondary/60 dark:bg-secondary/25">
-            <h3 className="text-xs font-semibold uppercase text-secondary-foreground/80">
-              Status
-            </h3>
-            <div className="relative mt-3">
-              <StatusIcon
-                className={cn(
-                  "pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2",
-                  status.iconClassName,
-                )}
-                aria-hidden="true"
-              />
-              <select
-                className="h-10 w-full rounded-md border bg-background px-3 pl-9 text-sm outline-none transition focus:border-secondary-foreground/40 focus:ring-1 focus:ring-secondary-foreground/20"
-                disabled={isDetailInputDisabled}
-                onChange={(event) =>
-                  setStatusValue(event.target.value as NodeStatus)
-                }
-                value={statusValue}
-              >
-                {statusOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {statusMeta[option].label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </section>
 
           <DetailSection title="Progress">
             <div className="flex items-center gap-3">
