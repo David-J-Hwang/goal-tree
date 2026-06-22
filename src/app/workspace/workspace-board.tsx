@@ -1719,23 +1719,23 @@ function DateRangeFields({
   startValue: string;
 }) {
   return (
-    <div className="mb-2 rounded-md border bg-background px-2.5 py-2 last:mb-0">
-      <div className="mb-1.5 text-xs font-medium text-muted-foreground">{label}</div>
-      <div className="grid grid-cols-2 gap-2">
-        <label className="block">
+    <div className="mb-2 rounded-md border bg-background p-3 last:mb-0">
+      <div className="mb-2 text-xs font-medium text-muted-foreground">{label}</div>
+      <div className="grid grid-cols-2 gap-3">
+        <label className="flex min-w-0 flex-col gap-1.5">
           <span className="text-xs text-muted-foreground">Start</span>
           <input
-            className="mt-1 h-8 w-full rounded-md border bg-background px-2 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+            className="block h-9 w-full rounded-md border bg-background px-2 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
             disabled={disabled}
             onChange={(event) => onStartChange(event.target.value)}
             type="date"
             value={startValue}
           />
         </label>
-        <label className="block">
+        <label className="flex min-w-0 flex-col gap-1.5">
           <span className="text-xs text-muted-foreground">End</span>
           <input
-            className="mt-1 h-8 w-full rounded-md border bg-background px-2 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+            className="block h-9 w-full rounded-md border bg-background px-2 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
             disabled={disabled}
             onChange={(event) => onEndChange(event.target.value)}
             type="date"
