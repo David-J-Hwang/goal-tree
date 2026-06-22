@@ -1011,31 +1011,42 @@ function getDueLabel(node: GoalTreeNode) {
   return node.plannedEndDate;
 }
 
-function getNodeProgress(node: GoalTreeNode, nodes: GoalTreeNode[]) {
-  const tasks =
-    node.type === "plan"
-      ? nodes.filter(
-          (item) =>
-            item.type === "task" &&
-            item.parentId === node.id &&
-            isNodeVisible(item, nodes),
-        )
-      : nodes.filter((item) => {
-          if (item.type !== "task" || !isNodeVisible(item, nodes)) {
-            return false;
-          }
-          const parentPlan = nodes.find((plan) => plan.id === item.parentId);
-          return parentPlan?.parentId === node.id;
-        });
-
-  const calculableTasks = tasks.filter((task) => task.status !== "paused");
-
-  if (calculableTasks.length === 0) {
-    return 0;
+function getNodeProgress(node: GoalTreeNode, nodes: GoalTreeNode[]): number {
+  if (node.type === "task") {
+    return getStatusProgress(node.status);
   }
 
-  const doneTasks = calculableTasks.filter((task) => task.status === "done");
-  return Math.round((doneTasks.length / calculableTasks.length) * 100);
+  const childType = node.type === "goal" ? "plan" : "task";
+  const calculableChildren = nodes.filter(
+    (item) =>
+      item.type === childType &&
+      item.parentId === node.id &&
+      item.status !== "paused" &&
+      isNodeVisible(item, nodes),
+  );
+
+  if (calculableChildren.length === 0) {
+    return getStatusProgress(node.status);
+  }
+
+  const totalProgress = calculableChildren.reduce(
+    (sum, child) => sum + getNodeProgress(child, nodes),
+    0,
+  );
+
+  return Math.round(totalProgress / calculableChildren.length);
+}
+
+function getStatusProgress(status: NodeStatus): number {
+  if (status === "done") {
+    return 100;
+  }
+
+  if (status === "in_progress") {
+    return 50;
+  }
+
+  return 0;
 }
 
 function isNodeVisible(node: GoalTreeNode, nodes: GoalTreeNode[]): boolean {

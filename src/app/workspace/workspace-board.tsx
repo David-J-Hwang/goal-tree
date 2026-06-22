@@ -1891,37 +1891,42 @@ function getNextTodoSortOrder(todos: TodayTodo[], date: string) {
   return maxSortOrder + 1;
 }
 
-function getNodeProgress(node: WorkspaceNode, nodes: WorkspaceNode[]) {
+function getNodeProgress(node: WorkspaceNode, nodes: WorkspaceNode[]): number {
   if (node.type === "task") {
-    return node.status === "done" ? 100 : node.status === "in_progress" ? 50 : 0;
+    return getStatusProgress(node.status);
   }
 
-  const tasks =
-    node.type === "plan"
-      ? nodes.filter(
-          (item) =>
-            item.type === "task" &&
-            item.parentId === node.id &&
-            isNodeVisible(item, nodes),
-        )
-      : nodes.filter((item) => {
-          if (item.type !== "task" || !isNodeVisible(item, nodes)) {
-            return false;
-          }
-          const parentPlan = nodes.find((plan) => plan.id === item.parentId);
-          return parentPlan?.parentId === node.id;
-        });
-
-  const calculableTasks = tasks.filter(
-    (task) => task.status !== "paused" && !task.trashedAt,
+  const childType = node.type === "goal" ? "plan" : "task";
+  const calculableChildren = nodes.filter(
+    (item) =>
+      item.type === childType &&
+      item.parentId === node.id &&
+      item.status !== "paused" &&
+      isNodeVisible(item, nodes),
   );
 
-  if (calculableTasks.length === 0) {
-    return 0;
+  if (calculableChildren.length === 0) {
+    return getStatusProgress(node.status);
   }
 
-  const doneTasks = calculableTasks.filter((task) => task.status === "done");
-  return Math.round((doneTasks.length / calculableTasks.length) * 100);
+  const totalProgress = calculableChildren.reduce(
+    (sum, child) => sum + getNodeProgress(child, nodes),
+    0,
+  );
+
+  return Math.round(totalProgress / calculableChildren.length);
+}
+
+function getStatusProgress(status: NodeStatus): number {
+  if (status === "done") {
+    return 100;
+  }
+
+  if (status === "in_progress") {
+    return 50;
+  }
+
+  return 0;
 }
 
 function isNodeVisible(node: WorkspaceNode, nodes: WorkspaceNode[]): boolean {
