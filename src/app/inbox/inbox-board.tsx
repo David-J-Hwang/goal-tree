@@ -828,12 +828,12 @@ function InboxDetailPanel({
             />
           </section>
 
-          <section className="flex min-h-0 flex-1 flex-col">
+          <section className="flex min-h-36 flex-none flex-col">
             <h3 className="mb-1.5 text-xs font-semibold uppercase text-muted-foreground">
               Memo
             </h3>
             <textarea
-              className="min-h-40 flex-1 resize-y rounded-md border bg-background px-3 py-2 text-sm leading-5 outline-none transition placeholder:text-muted-foreground focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+              className="min-h-32 flex-1 resize-y rounded-md border bg-background px-3 py-2 text-sm leading-5 outline-none transition placeholder:text-muted-foreground focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
               disabled={isLocked}
               onChange={(event) => setMemoValue(event.target.value)}
               placeholder="Add a memo"
@@ -1023,13 +1023,13 @@ function DateRangeFields({
   startValue: string;
 }) {
   return (
-    <div className="mb-2 rounded-md border bg-background p-3 last:mb-0">
-      <div className="mb-2 text-xs font-medium text-muted-foreground">{label}</div>
-      <div className="grid grid-cols-2 gap-3">
+    <div className="mb-2 rounded-md border bg-background p-2.5 last:mb-0">
+      <div className="mb-1.5 text-xs font-medium text-muted-foreground">{label}</div>
+      <div className="grid grid-cols-2 gap-2.5">
         <label className="flex min-w-0 flex-col gap-1.5">
           <span className="text-xs text-muted-foreground">Start</span>
           <input
-            className="block h-9 w-full rounded-md border bg-background px-2 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+            className="block h-8 w-full rounded-md border bg-background px-2 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
             disabled={disabled}
             onChange={(event) => onStartChange(event.target.value)}
             type="date"
@@ -1039,7 +1039,7 @@ function DateRangeFields({
         <label className="flex min-w-0 flex-col gap-1.5">
           <span className="text-xs text-muted-foreground">End</span>
           <input
-            className="block h-9 w-full rounded-md border bg-background px-2 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+            className="block h-8 w-full rounded-md border bg-background px-2 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
             disabled={disabled}
             onChange={(event) => onEndChange(event.target.value)}
             type="date"
