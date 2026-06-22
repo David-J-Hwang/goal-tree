@@ -25,6 +25,7 @@ export default async function InboxPage() {
       initialCategories={workspaceData.categories}
       initialCards={inboxData.cards}
       initialNodes={workspaceData.nodes}
+      initialSettings={workspaceData.settings}
       userId={user.id}
     />
   );

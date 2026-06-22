@@ -20,6 +20,7 @@ export default async function DashboardPage() {
   return (
     <DashboardBoard
       initialNodes={dashboardData.nodes}
+      initialSettings={dashboardData.settings}
       initialTodayDate={dashboardData.todayDate}
       initialTodayTodos={dashboardData.todayTodos}
       userId={user.id}

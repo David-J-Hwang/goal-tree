@@ -52,7 +52,7 @@ import {
 } from "@/lib/page-layout";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import type { GoalTreeNode, NodeStatus, TodayTodo } from "@/types/domain";
+import type { GoalTreeNode, NodeStatus, TodayTodo, UserSettings } from "@/types/domain";
 
 type TodoItem = {
   id: string;
@@ -84,11 +84,13 @@ const showOptionalPanels = true;
 
 export function DashboardBoard({
   initialNodes,
+  initialSettings,
   initialTodayDate,
   initialTodayTodos,
   userId,
 }: {
   initialNodes: GoalTreeNode[];
+  initialSettings: UserSettings;
   initialTodayDate: string;
   initialTodayTodos: TodayTodo[];
   userId: string;
@@ -208,6 +210,8 @@ export function DashboardBoard({
 
     try {
       syncedNodes = await syncAncestorStatuses({
+        autoFillActualDatesOnStatusChange:
+          initialSettings.autoFillActualDatesOnStatusChange,
         nodes: nextNodes,
         parentIds: [updatedTask.parentId],
         supabase,

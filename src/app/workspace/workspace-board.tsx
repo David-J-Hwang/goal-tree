@@ -310,6 +310,8 @@ export function WorkspaceBoard({
     const createdNode = mapNodeRow(data);
 
     const nextNodes = await syncAncestorStatuses({
+      autoFillActualDatesOnStatusChange:
+        userSettings.autoFillActualDatesOnStatusChange,
       nodes: [...nodes, createdNode],
       parentIds: [createdNode.parentId],
       supabase,
@@ -404,6 +406,8 @@ export function WorkspaceBoard({
       node.id === updatedNode.id ? updatedNode : node,
     );
     const syncedNodes = await syncAncestorStatuses({
+      autoFillActualDatesOnStatusChange:
+        userSettings.autoFillActualDatesOnStatusChange,
       nodes: nextNodes,
       parentIds: [currentNode.parentId, updatedNode.parentId],
       supabase,
@@ -451,6 +455,8 @@ export function WorkspaceBoard({
       node.id === trashedNode.id ? trashedNode : node,
     );
     const syncedNodes = await syncAncestorStatuses({
+      autoFillActualDatesOnStatusChange:
+        userSettings.autoFillActualDatesOnStatusChange,
       nodes: nextNodes,
       parentIds: [currentNode.parentId],
       supabase,

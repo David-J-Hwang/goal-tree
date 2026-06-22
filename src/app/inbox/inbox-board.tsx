@@ -51,6 +51,7 @@ import type {
   NodeStatus,
   NodeType,
   PlanCategory,
+  UserSettings,
 } from "@/types/domain";
 
 type CreateInboxCardInput = {
@@ -132,12 +133,14 @@ export function InboxBoard({
   initialCategories,
   initialCards,
   initialNodes,
+  initialSettings,
   userId,
 }: {
   hasWorkspaceFields: boolean;
   initialCategories: PlanCategory[];
   initialCards: InboxCard[];
   initialNodes: GoalTreeNode[];
+  initialSettings: UserSettings;
   userId: string;
 }) {
   const router = useRouter();
@@ -304,6 +307,8 @@ export function InboxBoard({
 
     const convertedCard = mapInboxCardRow(cardRow);
     const syncedNodes = await syncAncestorStatuses({
+      autoFillActualDatesOnStatusChange:
+        initialSettings.autoFillActualDatesOnStatusChange,
       nodes: [...nodes, createdNode],
       parentIds: [createdNode.parentId],
       supabase,

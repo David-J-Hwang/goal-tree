@@ -24,7 +24,7 @@ import {
 } from "@/lib/page-layout";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import type { GoalTreeNode, NodeStatus, NodeType } from "@/types/domain";
+import type { GoalTreeNode, NodeStatus, NodeType, UserSettings } from "@/types/domain";
 
 type TrashFilter = "all" | NodeType;
 
@@ -53,9 +53,11 @@ const nodeTypeLabels: Record<NodeType, string> = {
 
 export function TrashBoard({
   initialNodes,
+  initialSettings,
   userId,
 }: {
   initialNodes: GoalTreeNode[];
+  initialSettings: UserSettings;
   userId: string;
 }) {
   const [nodes, setNodes] = useState(initialNodes);
@@ -143,6 +145,8 @@ export function TrashBoard({
         node.id === restoredNode.id ? restoredNode : node,
       );
       const syncedNodes = await syncAncestorStatuses({
+        autoFillActualDatesOnStatusChange:
+          initialSettings.autoFillActualDatesOnStatusChange,
         nodes: nextNodes,
         parentIds: [restoredNode.parentId],
         supabase,

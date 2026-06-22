@@ -17,5 +17,11 @@ export default async function TrashPage() {
 
   const trashData = await getWorkspaceData(supabase, user.id);
 
-  return <TrashBoard initialNodes={trashData.nodes} userId={user.id} />;
+  return (
+    <TrashBoard
+      initialNodes={trashData.nodes}
+      initialSettings={trashData.settings}
+      userId={user.id}
+    />
+  );
 }

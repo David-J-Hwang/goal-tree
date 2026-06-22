@@ -5,6 +5,7 @@ import type { GoalTreeNode, NodeStatus, NodeType } from "@/types/domain";
 import { mapNodeRow, nodeSelectColumns, type NodeRow } from "./node-rows";
 
 type SyncAncestorStatusesInput = {
+  autoFillActualDatesOnStatusChange?: boolean;
   nodes: GoalTreeNode[];
   parentIds?: Array<string | null | undefined>;
   nodeIds?: Array<string | null | undefined>;
@@ -13,6 +14,7 @@ type SyncAncestorStatusesInput = {
 };
 
 export async function syncAncestorStatuses({
+  autoFillActualDatesOnStatusChange = false,
   nodes,
   parentIds = [],
   nodeIds = [],
@@ -53,16 +55,41 @@ export async function syncAncestorStatuses({
       continue;
     }
 
-    const nextStatus = getDerivedParentStatus(parentNode, nextNodes);
+    const calculableChildren = getCalculableChildren(parentNode, nextNodes);
 
-    if (!nextStatus) {
+    if (calculableChildren.length === 0) {
       continue;
     }
 
+    const nextStatus = getDerivedParentStatus(calculableChildren);
+    const nextDates = autoFillActualDatesOnStatusChange
+      ? getDerivedParentActualDates(parentNode, calculableChildren, nextStatus)
+      : {
+          actualStartDate: parentNode.actualStartDate ?? null,
+          actualEndDate: parentNode.actualEndDate ?? null,
+        };
+    const updatePayload: {
+      actual_end_date?: string | null;
+      actual_start_date?: string | null;
+      status?: NodeStatus;
+    } = {};
+
     if (nextStatus !== parentNode.status) {
+      updatePayload.status = nextStatus;
+    }
+
+    if ((parentNode.actualStartDate ?? null) !== nextDates.actualStartDate) {
+      updatePayload.actual_start_date = nextDates.actualStartDate;
+    }
+
+    if ((parentNode.actualEndDate ?? null) !== nextDates.actualEndDate) {
+      updatePayload.actual_end_date = nextDates.actualEndDate;
+    }
+
+    if (Object.keys(updatePayload).length > 0) {
       const { data, error } = await supabase
         .from("nodes")
-        .update({ status: nextStatus })
+        .update(updatePayload)
         .eq("id", parentNode.id)
         .eq("user_id", userId)
         .select(nodeSelectColumns)
@@ -94,28 +121,28 @@ export async function syncAncestorStatuses({
   return nextNodes;
 }
 
-function getDerivedParentStatus(
+function getCalculableChildren(
   parentNode: GoalTreeNode,
   nodes: GoalTreeNode[],
-): NodeStatus | null {
+): GoalTreeNode[] {
   const childType = getChildType(parentNode.type);
 
   if (!childType) {
-    return null;
+    return [];
   }
 
-  const calculableChildren = nodes.filter(
+  return nodes.filter(
     (node) =>
       node.type === childType &&
       node.parentId === parentNode.id &&
       node.status !== "paused" &&
       isNodeVisible(node, nodes),
   );
+}
 
-  if (calculableChildren.length === 0) {
-    return null;
-  }
-
+function getDerivedParentStatus(
+  calculableChildren: GoalTreeNode[],
+): NodeStatus {
   if (calculableChildren.every((node) => node.status === "done")) {
     return "done";
   }
@@ -136,7 +163,41 @@ function getDerivedParentStatus(
     return "not_started";
   }
 
-  return null;
+  return "not_started";
+}
+
+function getDerivedParentActualDates(
+  parentNode: GoalTreeNode,
+  calculableChildren: GoalTreeNode[],
+  nextStatus: NodeStatus,
+) {
+  const hasOnlyNotStartedChildren = calculableChildren.every(
+    (node) => node.status === "not_started",
+  );
+
+  if (hasOnlyNotStartedChildren) {
+    return {
+      actualStartDate: null,
+      actualEndDate: null,
+    };
+  }
+
+  const startDates = calculableChildren
+    .map((node) => node.actualStartDate)
+    .filter((date): date is string => Boolean(date))
+    .sort();
+  const endDates = calculableChildren
+    .map((node) => node.actualEndDate)
+    .filter((date): date is string => Boolean(date))
+    .sort();
+
+  return {
+    actualStartDate: startDates[0] ?? parentNode.actualStartDate ?? null,
+    actualEndDate:
+      nextStatus === "done"
+        ? endDates.at(-1) ?? parentNode.actualEndDate ?? null
+        : null,
+  };
 }
 
 function getChildType(nodeType: NodeType): NodeType | null {
