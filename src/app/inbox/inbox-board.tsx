@@ -562,6 +562,10 @@ function InboxDetailPanel({
     () => getSortedNodeOptions(nodes, "plan"),
     [nodes],
   );
+  const selectedGoalPlanOptions = useMemo(
+    () => planOptions.filter((plan) => plan.parentId === convertGoalId),
+    [convertGoalId, planOptions],
+  );
 
   useEffect(() => {
     setConvertGoalId((currentGoalId) =>
@@ -578,6 +582,34 @@ function InboxDetailPanel({
         : planOptions[0]?.id ?? "",
     );
   }, [planOptions]);
+
+  useEffect(() => {
+    if (convertType !== "task") {
+      return;
+    }
+
+    const currentPlan = planOptions.find((plan) => plan.id === convertPlanId);
+
+    if (currentPlan) {
+      if (currentPlan.parentId !== convertGoalId) {
+        setConvertGoalId(currentPlan.parentId ?? "");
+      }
+
+      return;
+    }
+
+    const fallbackGoalId = convertGoalId || goalOptions[0]?.id || "";
+    const fallbackPlanId =
+      planOptions.find((plan) => plan.parentId === fallbackGoalId)?.id ?? "";
+
+    if (fallbackGoalId !== convertGoalId) {
+      setConvertGoalId(fallbackGoalId);
+    }
+
+    if (fallbackPlanId !== convertPlanId) {
+      setConvertPlanId(fallbackPlanId);
+    }
+  }, [convertGoalId, convertPlanId, convertType, goalOptions, planOptions]);
 
   useEffect(() => {
     setConvertCategoryId((currentCategoryId) =>
@@ -614,6 +646,7 @@ function InboxDetailPanel({
     actualEndDateValue !== (currentCard.actualEndDate ?? "");
   const isLocked = isSaving || isConverting;
   const isWorkspaceFieldDisabled = isLocked || !hasWorkspaceFields;
+  const selectedTaskPlan = planOptions.find((plan) => plan.id === convertPlanId);
   const targetParentId =
     convertType === "goal"
       ? null
@@ -623,7 +656,10 @@ function InboxDetailPanel({
   const isConvertTargetReady =
     convertType === "goal" ||
     (convertType === "plan" && Boolean(convertGoalId)) ||
-    (convertType === "task" && Boolean(convertPlanId));
+    (convertType === "task" &&
+      Boolean(convertGoalId) &&
+      Boolean(convertPlanId) &&
+      selectedTaskPlan?.parentId === convertGoalId);
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -874,7 +910,7 @@ function InboxDetailPanel({
                   ))}
                 </div>
 
-                <div className="flex h-[8.25rem] flex-col rounded-md border bg-card/40 p-3">
+                <div className="flex min-h-[8.25rem] flex-col rounded-md border bg-card/40 p-3">
                   <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
                     Target
                   </div>
@@ -930,32 +966,61 @@ function InboxDetailPanel({
                   ) : null}
 
                   {convertType === "task" ? (
-                    <label className="block">
-                      <span className="text-xs font-medium text-muted-foreground">
-                        Linked Plan
-                      </span>
-                      <select
-                        className="mt-1.5 h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
-                        disabled={isLocked || planOptions.length === 0}
-                        onChange={(event) => setConvertPlanId(event.target.value)}
-                        value={convertPlanId}
-                      >
-                        {planOptions.length === 0 ? (
-                          <option value="">Create a Plan first</option>
-                        ) : null}
-                        {planOptions.map((plan) => {
-                          const parentGoal = getVisibleNode(nodes, plan.parentId);
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <label className="block">
+                        <span className="text-xs font-medium text-muted-foreground">
+                          Linked Goal
+                        </span>
+                        <select
+                          className="mt-1.5 h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+                          disabled={isLocked || goalOptions.length === 0}
+                          onChange={(event) => {
+                            const nextGoalId = event.target.value;
 
-                          return (
-                            <option key={plan.id} value={plan.id}>
-                              {parentGoal
-                                ? `${parentGoal.title} / ${plan.title}`
-                                : plan.title}
+                            setConvertGoalId(nextGoalId);
+                            setConvertPlanId(
+                              planOptions.find(
+                                (plan) => plan.parentId === nextGoalId,
+                              )?.id ?? "",
+                            );
+                          }}
+                          value={convertGoalId}
+                        >
+                          {goalOptions.length === 0 ? (
+                            <option value="">Create a Goal first</option>
+                          ) : null}
+                          {goalOptions.map((goal) => (
+                            <option key={goal.id} value={goal.id}>
+                              {goal.title}
                             </option>
-                          );
-                        })}
-                      </select>
-                    </label>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="block">
+                        <span className="text-xs font-medium text-muted-foreground">
+                          Linked Plan
+                        </span>
+                        <select
+                          className="mt-1.5 h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+                          disabled={
+                            isLocked ||
+                            !convertGoalId ||
+                            selectedGoalPlanOptions.length === 0
+                          }
+                          onChange={(event) => setConvertPlanId(event.target.value)}
+                          value={convertPlanId}
+                        >
+                          {selectedGoalPlanOptions.length === 0 ? (
+                            <option value="">Create a Plan for this Goal first</option>
+                          ) : null}
+                          {selectedGoalPlanOptions.map((plan) => (
+                            <option key={plan.id} value={plan.id}>
+                              {plan.title}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
                   ) : null}
                 </div>
                 <Button
@@ -1116,13 +1181,6 @@ function isNodeVisible(node: GoalTreeNode, nodes: GoalTreeNode[]): boolean {
   return parent ? isNodeVisible(parent, nodes) : false;
 }
 
-function getVisibleNode(nodes: GoalTreeNode[], id?: string | null) {
-  if (!id) {
-    return undefined;
-  }
-
-  return nodes.find((node) => node.id === id && isNodeVisible(node, nodes));
-}
 
 function getConvertTargetErrorMessage(type: NodeType) {
   if (type === "plan") {
@@ -1130,7 +1188,7 @@ function getConvertTargetErrorMessage(type: NodeType) {
   }
 
   if (type === "task") {
-    return "Create or select a linked Plan first.";
+    return "Create or select a linked Goal and Plan first.";
   }
 
   return "Select a Workspace target.";
