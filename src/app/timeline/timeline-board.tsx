@@ -169,7 +169,7 @@ export function TimelineBoard({ initialNodes }: { initialNodes: GoalTreeNode[] }
                     onNext={() => handleMovePeriod(1)}
                     onPrevious={() => handleMovePeriod(-1)}
                   />
-                  <div className="grid grid-cols-2 gap-2 sm:contents">
+                  <div className="grid gap-2 sm:contents">
                     <SegmentedControl
                       buttonClassName="flex-1 px-2 sm:flex-none sm:px-3"
                       className="w-full sm:w-fit"

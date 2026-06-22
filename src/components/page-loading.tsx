@@ -78,9 +78,9 @@ export function SummarySkeletonGrid() {
   return (
     <section className="mt-5 grid shrink-0 grid-cols-4 gap-2 sm:gap-3">
       {Array.from({ length: 4 }, (_, index) => (
-        <Card className="min-w-0 rounded-lg shadow-none" key={index}>
-          <CardContent className="flex min-w-0 flex-col gap-1 p-3 sm:p-4">
-            <SkeletonBlock className="h-3 w-14 sm:w-20" />
+        <Card className="min-w-0 overflow-hidden rounded-lg shadow-none" key={index}>
+          <CardContent className="flex min-w-0 flex-col gap-1 overflow-hidden p-3 sm:p-4">
+            <SkeletonBlock className="h-3 w-3/4 max-w-12 sm:max-w-20" />
             <SkeletonBlock className="mt-1 h-6 w-8 sm:mt-2" />
           </CardContent>
         </Card>
