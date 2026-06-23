@@ -1465,16 +1465,17 @@ function DetailPanel({
             <h3 className="text-xs font-semibold uppercase text-secondary-foreground/80">
               Status
             </h3>
-            <div className="relative mt-3">
-              <StatusIcon
-                className={cn(
-                  "pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2",
-                  status.iconClassName,
-                )}
+            <div className="mt-3 grid grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-2">
+              <span
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border bg-background"
                 aria-hidden="true"
-              />
+              >
+                <StatusIcon
+                  className={cn("h-4 w-4", status.iconClassName)}
+                />
+              </span>
               <select
-                className="h-10 w-full rounded-md border bg-background px-3 pl-9 text-sm outline-none transition focus:border-secondary-foreground/40 focus:ring-1 focus:ring-secondary-foreground/20"
+                className="h-10 min-w-0 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-secondary-foreground/40 focus:ring-1 focus:ring-secondary-foreground/20"
                 disabled={isDetailInputDisabled}
                 onChange={(event) =>
                   setStatusValue(event.target.value as NodeStatus)
