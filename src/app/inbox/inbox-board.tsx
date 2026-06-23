@@ -157,6 +157,7 @@ export function InboxBoard({
   const [categories, setCategories] = useState<PlanCategory[]>(initialCategories);
   const [selectedCardId, setSelectedCardId] = useState(initialCards[0]?.id ?? "");
   const [isCreating, setIsCreating] = useState(false);
+  const [isDeletingCard, setIsDeletingCard] = useState(false);
   const [createError, setCreateError] = useState("");
 
   const activeCards = useMemo(
@@ -381,6 +382,10 @@ export function InboxBoard({
   async function handleCreateSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    if (isDeletingCard) {
+      return;
+    }
+
     const form = event.currentTarget;
     const formData = new FormData(form);
     const title = String(formData.get("title") ?? "").trim();
@@ -431,7 +436,7 @@ export function InboxBoard({
                 </div>
                 <Button
                   className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
-                  disabled={isCreating}
+                  disabled={isCreating || isDeletingCard}
                   size="icon"
                   type="submit"
                   form="inbox-create-form"
@@ -448,11 +453,11 @@ export function InboxBoard({
               >
                 <input
                   className="h-10 min-w-0 flex-1 rounded-md border bg-background px-3 text-sm outline-none transition placeholder:text-muted-foreground focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
-                  disabled={isCreating}
+                  disabled={isCreating || isDeletingCard}
                   name="title"
                   placeholder="New inbox card"
                 />
-                <Button disabled={isCreating} type="submit">
+                <Button disabled={isCreating || isDeletingCard} type="submit">
                   {isCreating ? "Adding" : "Add"}
                 </Button>
               </form>
@@ -471,6 +476,7 @@ export function InboxBoard({
                   {activeCards.map((card) => (
                     <InboxCardItem
                       card={card}
+                      disabled={isDeletingCard}
                       key={card.id}
                       onSelect={() => setSelectedCardId(card.id)}
                       selected={card.id === selectedCard?.id}
@@ -485,9 +491,11 @@ export function InboxBoard({
             card={selectedCard}
             categories={categories}
             hasWorkspaceFields={hasWorkspaceFields}
+            isBoardLocked={isDeletingCard}
             nodes={nodes}
             onConvert={handleConvertCard}
             onDelete={handleDeleteCard}
+            onDeleteInProgressChange={setIsDeletingCard}
             onUpdate={handleUpdateCard}
           />
         </section>
@@ -498,10 +506,12 @@ export function InboxBoard({
 
 function InboxCardItem({
   card,
+  disabled,
   onSelect,
   selected,
 }: {
   card: InboxCard;
+  disabled: boolean;
   onSelect: () => void;
   selected: boolean;
 }) {
@@ -513,7 +523,9 @@ function InboxCardItem({
       className={cn(
         "w-full rounded-lg border bg-background p-3 text-left shadow-sm transition-colors",
         selected && "border-primary bg-primary/5 ring-1 ring-primary/30",
+        "disabled:cursor-not-allowed disabled:opacity-60",
       )}
+      disabled={disabled}
       onClick={onSelect}
       type="button"
     >
@@ -546,17 +558,21 @@ function InboxDetailPanel({
   card,
   categories,
   hasWorkspaceFields,
+  isBoardLocked,
   nodes,
   onConvert,
   onDelete,
+  onDeleteInProgressChange,
   onUpdate,
 }: {
   card?: InboxCard;
   categories: PlanCategory[];
   hasWorkspaceFields: boolean;
+  isBoardLocked: boolean;
   nodes: GoalTreeNode[];
   onConvert: (input: ConvertInboxCardInput) => Promise<void>;
   onDelete: (cardId: string) => Promise<void>;
+  onDeleteInProgressChange: (isInProgress: boolean) => void;
   onUpdate: (input: UpdateInboxCardInput) => Promise<void>;
 }) {
   const [titleValue, setTitleValue] = useState(card?.title ?? "");
@@ -682,7 +698,7 @@ function InboxDetailPanel({
   }, [categories]);
 
   useEffect(() => {
-    if (!isConfirmingDelete) {
+    if (!isConfirmingDelete || isDeleting) {
       return;
     }
 
@@ -705,7 +721,7 @@ function InboxDetailPanel({
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [isConfirmingDelete]);
+  }, [isConfirmingDelete, isDeleting]);
 
   if (!card) {
     return (
@@ -732,7 +748,7 @@ function InboxDetailPanel({
     plannedEndDateValue !== (currentCard.plannedEndDate ?? "") ||
     actualStartDateValue !== (currentCard.actualStartDate ?? "") ||
     actualEndDateValue !== (currentCard.actualEndDate ?? "");
-  const isLocked = isSaving || isConverting || isDeleting;
+  const isLocked = isSaving || isConverting || isDeleting || isBoardLocked;
   const isWorkspaceFieldDisabled = isLocked || !hasWorkspaceFields;
   const selectedTaskPlan = planOptions.find((plan) => plan.id === convertPlanId);
   const targetParentId =
@@ -751,6 +767,10 @@ function InboxDetailPanel({
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (isLocked) {
+      return;
+    }
 
     const title = titleValue.trim();
     const plannedStartDate = emptyStringToNull(plannedStartDateValue);
@@ -802,6 +822,10 @@ function InboxDetailPanel({
   }
 
   async function handleConvert() {
+    if (isLocked) {
+      return;
+    }
+
     const title = titleValue.trim();
     const plannedStartDate = emptyStringToNull(plannedStartDateValue);
     const plannedEndDate = emptyStringToNull(plannedEndDateValue);
@@ -866,6 +890,10 @@ function InboxDetailPanel({
   }
 
   function handleDiscardChanges() {
+    if (isLocked) {
+      return;
+    }
+
     setTitleValue(currentCard.title);
     setMemoValue(currentCard.memo ?? "");
     setStatusValue(currentCard.status);
@@ -878,6 +906,10 @@ function InboxDetailPanel({
   }
 
   async function handleDelete() {
+    if (isDeleting) {
+      return;
+    }
+
     if (!isConfirmingDelete) {
       setIsConfirmingDelete(true);
       setMessage("");
@@ -886,6 +918,7 @@ function InboxDetailPanel({
     }
 
     setIsDeleting(true);
+    onDeleteInProgressChange(true);
     setMessage("");
     setErrorMessage("");
 
@@ -893,12 +926,14 @@ function InboxDetailPanel({
       await onDelete(currentCard.id);
       setIsDeleting(false);
       setIsConfirmingDelete(false);
+      onDeleteInProgressChange(false);
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "Failed to delete card.",
       );
       setIsConfirmingDelete(false);
       setIsDeleting(false);
+      onDeleteInProgressChange(false);
     }
   }
 
