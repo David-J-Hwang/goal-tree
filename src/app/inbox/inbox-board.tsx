@@ -5,6 +5,7 @@ import {
   type FormEvent,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
@@ -15,6 +16,7 @@ import {
   Inbox,
   PauseCircle,
   Plus,
+  Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -252,6 +254,65 @@ export function InboxBoard({
     );
   }
 
+  async function handleDeleteCard(cardId: string) {
+    const nextSelectedCardId =
+      activeCards.find((card) => card.id !== cardId)?.id ?? "";
+    const supabase = createSupabaseBrowserClient();
+    const abortController = new AbortController();
+    const timeoutId = window.setTimeout(() => abortController.abort(), 10_000);
+
+    let deleteResult: {
+      data: { id: string } | null;
+      error: { message: string; name?: string } | null;
+    };
+
+    try {
+      deleteResult = await supabase
+        .from("inbox_cards")
+        .delete()
+        .eq("id", cardId)
+        .eq("user_id", userId)
+        .select("id")
+        .abortSignal(abortController.signal)
+        .maybeSingle();
+    } catch (error) {
+      throw new Error(
+        error instanceof DOMException && error.name === "AbortError"
+          ? "Inbox card delete request timed out."
+          : error instanceof Error
+            ? error.message
+            : "Failed to delete inbox card.",
+      );
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
+
+    const { data, error } = deleteResult;
+
+    if (error) {
+      throw new Error(
+        error.name === "AbortError"
+          ? "Inbox card delete request timed out."
+          : error.message,
+      );
+    }
+
+    if (!data) {
+      throw new Error(
+        "Inbox card was not deleted. Check the inbox_cards DELETE policy in Supabase.",
+      );
+    }
+
+    setCards((currentCards) =>
+      currentCards.filter((card) => card.id !== cardId),
+    );
+    setSelectedCardId((currentSelectedCardId) =>
+      currentSelectedCardId === cardId
+        ? nextSelectedCardId
+        : currentSelectedCardId,
+    );
+  }
+
   async function handleConvertCard(input: ConvertInboxCardInput) {
     const sortOrder = getNextNodeSortOrder(nodes, input.type, input.parentId);
     const supabase = createSupabaseBrowserClient();
@@ -439,6 +500,7 @@ export function InboxBoard({
             hasWorkspaceFields={hasWorkspaceFields}
             nodes={nodes}
             onConvert={handleConvertCard}
+            onDelete={handleDeleteCard}
             onUpdate={handleUpdateCard}
           />
         </section>
@@ -499,6 +561,7 @@ function InboxDetailPanel({
   hasWorkspaceFields,
   nodes,
   onConvert,
+  onDelete,
   onUpdate,
 }: {
   card?: InboxCard;
@@ -506,6 +569,7 @@ function InboxDetailPanel({
   hasWorkspaceFields: boolean;
   nodes: GoalTreeNode[];
   onConvert: (input: ConvertInboxCardInput) => Promise<void>;
+  onDelete: (cardId: string) => Promise<void>;
   onUpdate: (input: UpdateInboxCardInput) => Promise<void>;
 }) {
   const [titleValue, setTitleValue] = useState(card?.title ?? "");
@@ -531,8 +595,11 @@ function InboxDetailPanel({
   const [convertCategoryId, setConvertCategoryId] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const deleteButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!card) {
@@ -546,6 +613,8 @@ function InboxDetailPanel({
     setPlannedEndDateValue(card.plannedEndDate ?? "");
     setActualStartDateValue(card.actualStartDate ?? "");
     setActualEndDateValue(card.actualEndDate ?? "");
+    setIsDeleting(false);
+    setIsConfirmingDelete(false);
     setMessage("");
     setErrorMessage("");
   }, [
@@ -625,6 +694,32 @@ function InboxDetailPanel({
     );
   }, [categories]);
 
+  useEffect(() => {
+    if (!isConfirmingDelete) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      const target = event.target;
+
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      if (deleteButtonRef.current?.contains(target)) {
+        return;
+      }
+
+      setIsConfirmingDelete(false);
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [isConfirmingDelete]);
+
   if (!card) {
     return (
       <Card className="flex min-h-[34rem] flex-col overflow-hidden rounded-lg shadow-none xl:h-full xl:min-h-0">
@@ -650,7 +745,7 @@ function InboxDetailPanel({
     plannedEndDateValue !== (currentCard.plannedEndDate ?? "") ||
     actualStartDateValue !== (currentCard.actualStartDate ?? "") ||
     actualEndDateValue !== (currentCard.actualEndDate ?? "");
-  const isLocked = isSaving || isConverting;
+  const isLocked = isSaving || isConverting || isDeleting;
   const isWorkspaceFieldDisabled = isLocked || !hasWorkspaceFields;
   const selectedTaskPlan = planOptions.find((plan) => plan.id === convertPlanId);
   const targetParentId =
@@ -793,6 +888,31 @@ function InboxDetailPanel({
     setActualEndDateValue(currentCard.actualEndDate ?? "");
     setMessage("");
     setErrorMessage("");
+  }
+
+  async function handleDelete() {
+    if (!isConfirmingDelete) {
+      setIsConfirmingDelete(true);
+      setMessage("");
+      setErrorMessage("");
+      return;
+    }
+
+    setIsDeleting(true);
+    setMessage("");
+    setErrorMessage("");
+
+    try {
+      await onDelete(currentCard.id);
+      setIsDeleting(false);
+      setIsConfirmingDelete(false);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Failed to delete card.",
+      );
+      setIsConfirmingDelete(false);
+      setIsDeleting(false);
+    }
   }
 
   return (
@@ -1066,22 +1186,49 @@ function InboxDetailPanel({
           ) : null}
         </CardContent>
 
-        {hasChanges ? (
-          <div className="flex shrink-0 justify-center gap-2 border-t p-3">
-            <Button
-              disabled={isLocked}
-              onClick={handleDiscardChanges}
-              size="sm"
-              type="button"
-              variant="outline"
-            >
-              Discard changes
-            </Button>
-            <Button disabled={isLocked} size="sm" type="submit">
-              {isSaving ? "Saving" : "Save changes"}
-            </Button>
-          </div>
-        ) : null}
+        <div
+          className={cn(
+            "flex shrink-0 flex-wrap items-center gap-2 border-t p-3",
+            hasChanges ? "justify-between" : "justify-center",
+          )}
+        >
+          <Button
+            className={cn(
+              isConfirmingDelete
+                ? "border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground"
+                : "border-destructive/35 text-destructive hover:bg-destructive/10 hover:text-destructive",
+            )}
+            disabled={isSaving || isConverting || isDeleting}
+            onClick={handleDelete}
+            ref={deleteButtonRef}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
+            {isDeleting
+              ? "Deleting"
+              : isConfirmingDelete
+                ? "Confirm delete"
+                : "Delete card"}
+          </Button>
+          {hasChanges ? (
+            <div className="flex items-center gap-2">
+              <Button
+                disabled={isLocked}
+                onClick={handleDiscardChanges}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                Discard changes
+              </Button>
+              <Button disabled={isLocked} size="sm" type="submit">
+                {isSaving ? "Saving" : "Save changes"}
+              </Button>
+            </div>
+          ) : null}
+        </div>
       </form>
     </Card>
   );
