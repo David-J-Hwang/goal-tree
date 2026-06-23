@@ -1107,14 +1107,14 @@ docs/README_v1_0_1.md
 -> v1.0.1 완료 상태
 
 docs/README_v1_1_0.md
--> v1.1.0 계획 상태
+-> v1.1.0 완료 상태
 ```
 
 현재 루트 README 상태:
 
 ```txt
 README.md
--> v1.1.0 작업판
+-> v1.1.0 완료판
 ```
 
 새로운 Codex 세션은 우선 `README.md`와 `README_CODEX.md`를 함께 읽는다.
@@ -1142,7 +1142,9 @@ v1.0.0은 로그인, Supabase 데이터 연결, `Goal -> Plan -> Task` Workspace
 
 2026-06-19 기준 v1.0.1 patch는 완료되어 `docs/README_v1_0_1.md`에 스냅샷으로 보관했다.
 
-2026-06-19 기준 현재 루트 `README.md`는 v1.1.0 작업판이다.
+2026-06-23 기준 v1.1.0은 완료되어 `docs/README_v1_1_0.md`에 스냅샷으로 보관했다.
+
+현재 루트 `README.md`도 v1.1.0 완료 상태를 담고 있다. 다음 버전을 시작하면 루트 `README.md`를 새 버전 진행판으로 전환한다.
 
 v1.0.1은 v1.1.0의 `/inbox` 기능으로 넘어가기 전, v1.0.0 테스트 중 발견한 작은 버그와 UI/UX를 정리한 안정화 패치다.
 
@@ -1430,14 +1432,14 @@ v1.0.1 이후 첫 후속 기능은 자유 아이디어 수집 페이지다.
 /inbox
 ```
 
-현재 판단:
+최종 판단:
 
 ```txt
-Route는 /inbox로 진행한다.
-페이지 제목은 Inbox로 진행한다.
+Route는 /inbox다.
+페이지 제목은 Inbox다.
 ```
 
-v1.1.0에서 검토할 기능:
+v1.1.0 최종 구현 범위:
 
 ```txt
 자유 아이디어 카드 생성
@@ -1452,7 +1454,7 @@ Archive 기능 및 archived_at 필드 제거
 전환된 Inbox 원본 카드는 삭제
 ```
 
-2026-06-19 진행 상태:
+2026-06-23 완료 상태:
 
 ```txt
 /workspace Details 패널에서 기존 Plan 카드의 Linked Goal을 수정할 수 있다.
@@ -1460,24 +1462,32 @@ Archive 기능 및 archived_at 필드 제거
 연결을 바꾸면 nodes.parent_id가 업데이트되고, 해당 카드가 새 부모 목록의 마지막 sort_order로 이동한다.
 저장 후 선택 상태는 새 Goal / Plan 경로로 맞춰진다.
 
-/inbox 기본 페이지가 생성되었다.
+/inbox 페이지가 구현되었다.
 inbox_cards 테이블 migration, RLS, 타입, row mapper, data loader가 추가되었다.
 /inbox는 왼쪽 Inbox 카드 목록, 오른쪽 Details 패널 구조다.
 카드 생성, Supabase 읽기, 제목/메모/상태/예정기간/실제 진행기간 수정이 연결되어 있다.
+Inbox 카드는 왼쪽 drag handle로 정렬할 수 있고, 순서는 inbox_cards.sort_order에 저장한다.
+Inbox Details 패널에는 삭제 버튼이 있다.
+Delete card를 한 번 누르면 Confirm delete 상태가 되고, 외부 클릭 시 다시 초기화된다.
+Confirm delete를 눌러 실제 삭제 요청이 진행되는 동안에는 다른 입력과 버튼을 잠근다.
 Archive 버튼과 archived_at 의존성은 제거했다.
 Workspace 전환 기능이 추가되었다.
 Details 패널의 Add to Workspace 섹션에서 Inbox 카드를 Goal / Plan / Task로 전환할 수 있다.
 Goal 전환은 parent_id 없이 nodes에 추가한다.
 Plan 전환은 연결할 Goal과 Plan category를 선택한 뒤 nodes에 추가한다.
-Task 전환은 연결할 Plan을 선택한 뒤 nodes에 추가한다.
+Task 전환은 먼저 Goal을 선택하고, 그 Goal에 연결된 Plan을 선택한 뒤 nodes에 추가한다.
 전환 시 Inbox 카드의 title, memo, status, planned date, actual date를 새 Workspace node로 복사한다.
 전환된 Inbox 카드는 inbox_cards에서 삭제한다.
-Inbox 활성 목록은 converted_node_id가 없는 카드만 보여준다.
 전환이 끝나면 /workspace?nodeId=<createdNodeId>로 이동해서 생성된 카드를 바로 선택 복원한다.
-```
 
-아직 미정:
+/workspace와 /inbox Details의 Status 컨트롤은 secondary color 배경으로 강조한다.
+Status select의 아이콘은 select 내부 absolute 배치가 아니라 별도 아이콘 칸으로 분리했다.
+이유는 iPad Safari에서 select 텍스트와 아이콘이 겹치는 문제를 피하기 위해서다.
 
-```txt
-전환된 Inbox 카드를 별도 보기로 다시 보여줄지 여부
+/workspace와 /inbox Details의 DateRangeFields는 데스크탑, 패드, 모바일 Safari에서 입력 필드가 겹치거나 넘치지 않도록 반응형 폭을 조정했다.
+/inbox Details는 데스크탑에서 Add to Workspace 영역까지 아래쪽이 안정적으로 채워지도록 높이와 flex 구성을 조정했다.
+
+데스크탑 / 패드 / 모바일 UI 확인을 완료했다.
+다크모드 색상 확인을 완료했다.
+새 계정으로 로그인했을 때 다른 계정 데이터가 보이지 않는 것을 확인해 Supabase RLS 동작 확인을 완료했다.
 ```

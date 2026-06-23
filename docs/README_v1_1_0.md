@@ -2,17 +2,20 @@
 
 ## 현재 작업 버전
 
-현재 루트 `README.md`는 **진행 중인 버전의 개발 체크리스트**로 사용한다.
+현재 루트 `README.md`는 **지금 진행 중인 버전의 개발 체크리스트**로 사용한다.
 
 ```txt
 Current: v1.1.0
 Base version: v1.0.1
 ```
 
-v1.0.0 완료 스냅샷은 [README_v1_0_0.md](README_v1_0_0.md)에 보관한다.
-v1.0.1 완료 스냅샷은 [README_v1_0_1.md](README_v1_0_1.md)에 보관한다.
+버전 스냅샷:
 
-자세한 프로젝트 맥락과 구현 인수인계는 [README_CODEX.md](../README_CODEX.md)를 참고한다.
+- v1.0.0 완료 스냅샷: [docs/README_v1_0_0.md](docs/README_v1_0_0.md)
+- v1.0.1 완료 스냅샷: [docs/README_v1_0_1.md](docs/README_v1_0_1.md)
+- v1.1.0 완료 스냅샷: [docs/README_v1_1_0.md](docs/README_v1_1_0.md)
+
+자세한 프로젝트 맥락과 구현 인수인계는 [README_CODEX.md](README_CODEX.md)를 참고한다.
 
 ---
 
@@ -25,7 +28,7 @@ README.md
 -> 현재 작업 중인 버전의 진행판
 
 docs/README_vX_Y_Z.md
--> 완료된 버전의 스냅샷
+-> 완료된 버전 또는 보관할 계획의 스냅샷
 
 README_CODEX.md
 -> Codex 인수인계용 현재 전체 맥락
@@ -33,10 +36,10 @@ README_CODEX.md
 
 작업 흐름:
 
-1. 버전 개발을 시작하면 `README.md`에 해당 버전의 목표와 체크리스트를 작성한다.
+1. 현재 작업할 버전의 목표와 체크리스트를 `README.md`에 작성한다.
 2. 개발 중에는 `README.md`만 계속 업데이트한다.
 3. 버전이 완료되면 현재 `README.md`를 `docs/README_vX_Y_Z.md`로 복사해 보관한다.
-4. 다음 버전을 시작할 때 `README.md`를 새 버전 진행판으로 정리한다.
+4. 다음 버전을 시작할 때 `README.md`를 다음 버전 진행판으로 정리한다.
 5. `README_CODEX.md`는 버전별 일지보다 현재 구조, 핵심 결정, 구현 상태 중심으로 최신화한다.
 
 ---
@@ -46,15 +49,6 @@ README_CODEX.md
 v1.1.0의 핵심은 `/workspace`에 넣기 전의 생각을 자유롭게 모으는 `/inbox` 페이지다.
 
 현재 v1.0.1까지는 `Goal -> Plan -> Task` 구조가 잘 정리된 상태에서 사용하기 좋다. v1.1.0에서는 아직 구조화되지 않은 아이디어, 할 일, 메모를 빠르게 적고, 필요할 때 `/workspace`의 Goal / Plan / Task로 전환하는 흐름을 만든다.
-
----
-
-## 라우트
-
-```txt
-Route: /inbox
-Page title: Inbox
-```
 
 ---
 
@@ -101,18 +95,17 @@ Option B: nodes 테이블에 inbox 타입 추가
 
 ### 0. 문서 / 버전 관리
 
-- [x] v1.0.0 완료 상태를 `docs/README_v1_0_0.md`로 보관
 - [x] v1.0.1 완료 상태를 `docs/README_v1_0_1.md`로 보관
 - [x] 루트 `README.md`를 v1.1.0 진행판으로 전환
 - [x] 문서 관리 워크플로우 정리
-- [ ] v1.1.0 완료 시 `docs/README_v1_1_0.md`를 완료 스냅샷으로 갱신
+- [x] v1.1.0 완료 시 `docs/README_v1_1_0.md`를 완료 스냅샷으로 갱신
 
 ### 1. 기획
 
 - [x] 최종 라우트명 확정: `/inbox`
 - [x] 페이지 제목 확정: `Inbox`
 - [x] 카드 필드 확정: 제목, 진행상태, 예정기간, 실제 진행기간, 메모
-- [x] 전환 후 원본 아이디어 처리 방식 결정: `converted_node_id`를 남기고 Inbox 활성 목록에서는 숨김
+- [x] 전환 후 원본 아이디어 처리 방식 결정: Workspace 전환 후 원본 Inbox 카드 삭제
 - [x] 기존 Plan / Task 연결 노드 교체 UX 확정
 
 ### 2. 데이터 모델
@@ -132,8 +125,8 @@ Option B: nodes 테이블에 inbox 타입 추가
 - [x] 카드 상세 / 편집 UI 구현
 - [x] 빈 상태 UI 구현
 - [x] Archive 버튼 및 `archived_at` 의존성 제거
-- [ ] 모바일 레이아웃 확인
-- [ ] 다크모드 색상 확인
+- [x] 모바일 레이아웃 확인
+- [x] 다크모드 색상 확인
 
 ### 4. 기능 연결
 
@@ -153,6 +146,6 @@ Option B: nodes 테이블에 inbox 타입 추가
 
 - [x] `npm run typecheck`
 - [x] `git diff --check`
-- [ ] 데스크탑 UI 확인
-- [ ] 모바일 UI 확인
-- [ ] Supabase RLS 동작 확인
+- [x] 데스크탑 UI 확인
+- [x] 모바일 UI 확인
+- [x] Supabase RLS 동작 확인
