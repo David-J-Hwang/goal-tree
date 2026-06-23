@@ -1442,14 +1442,14 @@ v1.1.0에서 검토할 기능:
 ```txt
 자유 아이디어 카드 생성
 아이디어 카드 제목 / 메모 수정
-Archive 기능 제거
+Archive 기능 및 archived_at 필드 제거
 아이디어 카드 상태: not_started, in_progress, blocked, done, paused
 예정기간 / 실제 진행기간 입력
 괜찮은 아이디어를 /workspace의 Goal / Plan / Task로 전환
 전환 시 연결할 parent 선택: Goal로 만들기, 특정 Goal 아래 Plan으로 만들기, 특정 Plan 아래 Task로 만들기
 기존 Plan 카드의 연결 Goal 교체
 기존 Task 카드의 연결 Plan 교체
-전환된 아이디어를 어떻게 숨기거나 표시할지 결정
+전환된 Inbox 원본 카드는 삭제
 ```
 
 2026-06-19 진행 상태:
@@ -1464,15 +1464,15 @@ Archive 기능 제거
 inbox_cards 테이블 migration, RLS, 타입, row mapper, data loader가 추가되었다.
 /inbox는 왼쪽 Inbox 카드 목록, 오른쪽 Details 패널 구조다.
 카드 생성, Supabase 읽기, 제목/메모/상태/예정기간/실제 진행기간 수정이 연결되어 있다.
-Archive 버튼은 제거했다.
+Archive 버튼과 archived_at 의존성은 제거했다.
 Workspace 전환 기능이 추가되었다.
 Details 패널의 Add to Workspace 섹션에서 Inbox 카드를 Goal / Plan / Task로 전환할 수 있다.
 Goal 전환은 parent_id 없이 nodes에 추가한다.
 Plan 전환은 연결할 Goal과 Plan category를 선택한 뒤 nodes에 추가한다.
 Task 전환은 연결할 Plan을 선택한 뒤 nodes에 추가한다.
 전환 시 Inbox 카드의 title, memo, status, planned date, actual date를 새 Workspace node로 복사한다.
-전환된 Inbox 카드는 삭제하지 않고 inbox_cards.converted_node_id에 생성된 node id를 저장한다.
-Inbox 활성 목록은 archived_at이 없고 converted_node_id도 없는 카드만 보여준다.
+전환된 Inbox 카드는 inbox_cards에서 삭제한다.
+Inbox 활성 목록은 converted_node_id가 없는 카드만 보여준다.
 전환이 끝나면 /workspace?nodeId=<createdNodeId>로 이동해서 생성된 카드를 바로 선택 복원한다.
 ```
 

@@ -65,7 +65,7 @@ Page title: Inbox
 - 자유 아이디어 카드 생성
 - 카드 제목 수정
 - 카드 메모 수정
-- Archive 기능 제거
+- Archive 기능 및 `archived_at` 필드 제거
 - 카드 상태 관리: `not_started`, `in_progress`, `blocked`, `done`, `paused`
 - 예정기간 / 실제 진행기간 입력
 - 태그 또는 간단한 분류 검토
@@ -75,7 +75,7 @@ Page title: Inbox
 - 아이디어 카드를 Goal로 전환
 - 아이디어 카드를 특정 Goal 아래 Plan으로 전환
 - 아이디어 카드를 특정 Plan 아래 Task로 전환
-- 전환 후 원본 아이디어를 유지할지, 숨길지, 삭제할지 결정
+- 전환 후 원본 Inbox 카드 삭제
 - 기존 Plan 카드를 다른 Goal 아래로 연결 변경
 - 기존 Task 카드를 다른 Plan 아래로 연결 변경
 
@@ -131,7 +131,7 @@ Option B: nodes 테이블에 inbox 타입 추가
 - [x] 카드 생성 UI 구현
 - [x] 카드 상세 / 편집 UI 구현
 - [x] 빈 상태 UI 구현
-- [x] Archive 버튼 제거
+- [x] Archive 버튼 및 `archived_at` 의존성 제거
 - [ ] 모바일 레이아웃 확인
 - [ ] 다크모드 색상 확인
 
@@ -144,6 +144,7 @@ Option B: nodes 테이블에 inbox 타입 추가
 - [x] Goal로 전환 기능 구현
 - [x] Plan으로 전환 기능 구현
 - [x] Task로 전환 기능 구현
+- [x] Workspace 전환 후 원본 Inbox 카드 삭제
 - [x] 기존 Plan 연결 Goal 교체 기능 구현
 - [x] 기존 Task 연결 Plan 교체 기능 구현
 - [x] 전환 후 `/workspace` 선택 상태 복원 연결

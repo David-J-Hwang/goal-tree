@@ -12,7 +12,6 @@ export type InboxCardRow = {
   actual_end_date?: string | null;
   sort_order: number;
   converted_node_id: string | null;
-  archived_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -37,7 +36,6 @@ export const inboxCardSelectColumns = [
   "actual_end_date",
   "sort_order",
   "converted_node_id",
-  "archived_at",
   "created_at",
   "updated_at",
 ].join(",");
@@ -50,7 +48,6 @@ export const legacyInboxCardSelectColumns = [
   "status",
   "sort_order",
   "converted_node_id",
-  "archived_at",
   "created_at",
   "updated_at",
 ].join(",");
@@ -68,7 +65,6 @@ export function mapInboxCardRow(row: InboxCardRow): InboxCard {
     actualEndDate: row.actual_end_date ?? null,
     sortOrder: row.sort_order,
     convertedNodeId: row.converted_node_id,
-    archivedAt: row.archived_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

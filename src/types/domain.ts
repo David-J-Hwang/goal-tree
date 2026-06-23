@@ -66,7 +66,6 @@ export type InboxCard = {
   actualEndDate?: string | null;
   sortOrder: number;
   convertedNodeId?: string | null;
-  archivedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 };

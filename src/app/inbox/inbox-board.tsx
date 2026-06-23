@@ -160,7 +160,7 @@ export function InboxBoard({
   const [createError, setCreateError] = useState("");
 
   const activeCards = useMemo(
-    () => cards.filter((card) => !card.archivedAt && !card.convertedNodeId),
+    () => cards.filter((card) => !card.convertedNodeId),
     [cards],
   );
   const selectedCard =
@@ -346,33 +346,22 @@ export function InboxBoard({
     }
 
     const createdNode = mapNodeRow(nodeRow);
-    const { data: cardRow, error: cardError } = await supabase
+    const { data: deletedCardRow, error: cardError } = await supabase
       .from("inbox_cards")
-      .update({
-        title: input.title,
-        memo: input.memo,
-        status: input.status,
-        planned_start_date: input.plannedStartDate,
-        planned_end_date: input.plannedEndDate,
-        actual_start_date: input.actualStartDate,
-        actual_end_date: input.actualEndDate,
-        converted_node_id: createdNode.id,
-      })
+      .delete()
       .eq("id", input.id)
       .eq("user_id", userId)
-      .select(inboxCardSelectColumns)
-      .single()
-      .returns<InboxCardRow>();
+      .select("id")
+      .maybeSingle();
 
     if (cardError) {
       throw new Error(cardError.message);
     }
 
-    if (!cardRow) {
-      throw new Error("Converted inbox card was not returned.");
+    if (!deletedCardRow) {
+      throw new Error("Converted inbox card was not deleted.");
     }
 
-    const convertedCard = mapInboxCardRow(cardRow);
     const syncedNodes = await syncAncestorStatuses({
       autoFillActualDatesOnStatusChange:
         initialSettings.autoFillActualDatesOnStatusChange,
@@ -384,9 +373,7 @@ export function InboxBoard({
 
     setNodes(syncedNodes);
     setCards((currentCards) =>
-      currentCards.map((card) =>
-        card.id === convertedCard.id ? convertedCard : card,
-      ),
+      currentCards.filter((card) => card.id !== input.id),
     );
     router.push(getWorkspaceNodeHref(createdNode.id));
   }
