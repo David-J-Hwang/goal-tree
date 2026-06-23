@@ -9,10 +9,27 @@ import {
   useState,
 } from "react";
 import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import {
   Ban,
   CheckCircle2,
   Circle,
   Clock3,
+  GripVertical,
   Inbox,
   PauseCircle,
   Plus,
@@ -28,6 +45,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { sortableStackModifiers } from "@/lib/dnd/sortable-stack-modifier";
 import {
   inboxCardSelectColumns,
   legacyInboxCardSelectColumns,
@@ -158,7 +176,21 @@ export function InboxBoard({
   const [selectedCardId, setSelectedCardId] = useState(initialCards[0]?.id ?? "");
   const [isCreating, setIsCreating] = useState(false);
   const [isDeletingCard, setIsDeletingCard] = useState(false);
+  const [isReorderingCards, setIsReorderingCards] = useState(false);
   const [createError, setCreateError] = useState("");
+  const [reorderErrorMessage, setReorderErrorMessage] = useState("");
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 2,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+  const isInboxCardMutationInProgress =
+    isCreating || isDeletingCard || isReorderingCards;
 
   const activeCards = useMemo(
     () => cards.filter((card) => !card.convertedNodeId),
@@ -314,6 +346,80 @@ export function InboxBoard({
     );
   }
 
+  async function handleReorderCards(orderedIds: string[]) {
+    const previousCards = cards;
+    const orderedActiveCards = orderedIds
+      .map((id, index) => {
+        const card = activeCards.find((currentCard) => currentCard.id === id);
+
+        return card ? { ...card, sortOrder: index + 1 } : null;
+      })
+      .filter((card): card is InboxCard => Boolean(card));
+    const orderedActiveCardsById = new Map(
+      orderedActiveCards.map((card) => [card.id, card]),
+    );
+    const orderedActiveCardIds = new Set(orderedIds);
+
+    setCards((currentCards) =>
+      [
+        ...orderedActiveCards,
+        ...currentCards.filter((card) => !orderedActiveCardIds.has(card.id)),
+      ].map((card) => orderedActiveCardsById.get(card.id) ?? card),
+    );
+
+    const supabase = createSupabaseBrowserClient();
+    const updates = orderedActiveCards.map((card) =>
+      supabase
+        .from("inbox_cards")
+        .update({ sort_order: card.sortOrder })
+        .eq("id", card.id)
+        .eq("user_id", userId),
+    );
+    const results = await Promise.all(updates);
+    const failedResult = results.find((result) => result.error);
+
+    if (failedResult?.error) {
+      setCards(previousCards);
+      throw new Error(failedResult.error.message);
+    }
+  }
+
+  async function handleCardDragEnd(event: DragEndEvent) {
+    if (isInboxCardMutationInProgress) {
+      return;
+    }
+
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const oldIndex = activeCards.findIndex((card) => card.id === active.id);
+    const newIndex = activeCards.findIndex((card) => card.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) {
+      return;
+    }
+
+    const orderedIds = arrayMove(activeCards, oldIndex, newIndex).map(
+      (card) => card.id,
+    );
+
+    setIsReorderingCards(true);
+    setReorderErrorMessage("");
+
+    try {
+      await handleReorderCards(orderedIds);
+    } catch (error) {
+      setReorderErrorMessage(
+        error instanceof Error ? error.message : "Failed to save card order.",
+      );
+    } finally {
+      setIsReorderingCards(false);
+    }
+  }
+
   async function handleConvertCard(input: ConvertInboxCardInput) {
     const sortOrder = getNextNodeSortOrder(nodes, input.type, input.parentId);
     const supabase = createSupabaseBrowserClient();
@@ -382,7 +488,7 @@ export function InboxBoard({
   async function handleCreateSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (isDeletingCard) {
+    if (isInboxCardMutationInProgress) {
       return;
     }
 
@@ -436,7 +542,7 @@ export function InboxBoard({
                 </div>
                 <Button
                   className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
-                  disabled={isCreating || isDeletingCard}
+                  disabled={isInboxCardMutationInProgress}
                   size="icon"
                   type="submit"
                   form="inbox-create-form"
@@ -453,11 +559,11 @@ export function InboxBoard({
               >
                 <input
                   className="h-10 min-w-0 flex-1 rounded-md border bg-background px-3 text-sm outline-none transition placeholder:text-muted-foreground focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
-                  disabled={isCreating || isDeletingCard}
+                  disabled={isInboxCardMutationInProgress}
                   name="title"
                   placeholder="New inbox card"
                 />
-                <Button disabled={isCreating || isDeletingCard} type="submit">
+                <Button disabled={isInboxCardMutationInProgress} type="submit">
                   {isCreating ? "Adding" : "Add"}
                 </Button>
               </form>
@@ -467,22 +573,40 @@ export function InboxBoard({
             </CardHeader>
 
             <CardContent className="min-h-0 flex-1 overflow-y-auto p-3">
+              {reorderErrorMessage ? (
+                <p className="mb-3 rounded-md border border-destructive/25 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+                  {reorderErrorMessage}
+                </p>
+              ) : null}
               {activeCards.length === 0 ? (
                 <div className="flex min-h-40 items-center justify-center rounded-md border border-dashed px-4 text-center text-sm text-muted-foreground">
                   No Inbox cards yet
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {activeCards.map((card) => (
-                    <InboxCardItem
-                      card={card}
-                      disabled={isDeletingCard}
-                      key={card.id}
-                      onSelect={() => setSelectedCardId(card.id)}
-                      selected={card.id === selectedCard?.id}
-                    />
-                  ))}
-                </div>
+                <DndContext
+                  id="inbox-cards"
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  modifiers={sortableStackModifiers}
+                  onDragEnd={handleCardDragEnd}
+                >
+                  <SortableContext
+                    items={activeCards.map((card) => card.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-3">
+                      {activeCards.map((card) => (
+                        <SortableInboxCardItem
+                          card={card}
+                          isReorderDisabled={isInboxCardMutationInProgress}
+                          key={card.id}
+                          onSelect={() => setSelectedCardId(card.id)}
+                          selected={card.id === selectedCard?.id}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
               )}
             </CardContent>
           </Card>
@@ -491,7 +615,7 @@ export function InboxBoard({
             card={selectedCard}
             categories={categories}
             hasWorkspaceFields={hasWorkspaceFields}
-            isBoardLocked={isDeletingCard}
+            isBoardLocked={isDeletingCard || isReorderingCards}
             nodes={nodes}
             onConvert={handleConvertCard}
             onDelete={handleDeleteCard}
@@ -504,53 +628,92 @@ export function InboxBoard({
   );
 }
 
-function InboxCardItem({
+function SortableInboxCardItem({
   card,
-  disabled,
+  isReorderDisabled,
   onSelect,
   selected,
 }: {
   card: InboxCard;
-  disabled: boolean;
+  isReorderDisabled: boolean;
   onSelect: () => void;
   selected: boolean;
 }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({
+      id: card.id,
+      disabled: isReorderDisabled,
+      transition: {
+        duration: 120,
+        easing: "cubic-bezier(0.2, 0, 0, 1)",
+      },
+    });
   const status = statusMeta[card.status];
   const StatusIcon = status.icon;
+  const style = {
+    position: "relative" as const,
+    transform: transform ? `translate3d(0, ${Math.round(transform.y)}px, 0)` : undefined,
+    transition: isDragging ? "none" : transition,
+    zIndex: isDragging ? 50 : undefined,
+    willChange: "transform",
+  };
 
   return (
-    <button
+    <article
+      ref={setNodeRef}
+      style={style}
       className={cn(
-        "w-full rounded-lg border bg-background p-3 text-left shadow-sm transition-colors",
+        "group select-none rounded-lg border bg-background p-3 shadow-sm transition-colors",
         selected && "border-primary bg-primary/5 ring-1 ring-primary/30",
-        "disabled:cursor-not-allowed disabled:opacity-60",
+        isDragging && "shadow-md ring-1 ring-primary/30",
       )}
-      disabled={disabled}
-      onClick={onSelect}
-      type="button"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="line-clamp-2 text-sm font-medium leading-5">
-            {card.title}
-          </h3>
-          {card.memo ? (
-            <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
-              {card.memo}
-            </p>
-          ) : null}
-        </div>
-        <span
+      <div className="flex items-start gap-2">
+        <button
           className={cn(
-            "inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium",
-            status.className,
+            "mt-0.5 touch-none rounded p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground",
+            isReorderDisabled
+              ? "cursor-default opacity-50 hover:bg-transparent hover:text-muted-foreground"
+              : "cursor-grab active:cursor-grabbing",
           )}
+          aria-label={`Reorder ${card.title}`}
+          disabled={isReorderDisabled}
+          type="button"
+          {...attributes}
+          {...listeners}
         >
-          <StatusIcon className="h-3 w-3" aria-hidden="true" />
-          {status.label}
-        </span>
+          <GripVertical className="h-4 w-4" aria-hidden="true" />
+        </button>
+        <button
+          className="min-w-0 flex-1 text-left disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={isReorderDisabled}
+          onClick={onSelect}
+          type="button"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="line-clamp-2 text-sm font-medium leading-5">
+                {card.title}
+              </h3>
+              {card.memo ? (
+                <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                  {card.memo}
+                </p>
+              ) : null}
+            </div>
+            <span
+              className={cn(
+                "inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium",
+                status.className,
+              )}
+            >
+              <StatusIcon className="h-3 w-3" aria-hidden="true" />
+              {status.label}
+            </span>
+          </div>
+        </button>
       </div>
-    </button>
+    </article>
   );
 }
 
