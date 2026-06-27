@@ -1518,6 +1518,25 @@ Plan 설명 / 목적 필드
 Task 세부 체크리스트
 Inbox 카드 태그 추가
 Inbox 카드 간단 분류 기능
+Workspace에 있는 Task 카드를 Inbox로 이동시키는 기능
 ```
 
-현재 v1.1.1에 포함할 새 기능 후보는 남아있지 않다. 루트 `README.md`도 이 기준으로 정리되어 있다.
+현재 v1.1.1에 포함된 주요 작업:
+
+```txt
+/inbox -> /workspace 전환 후 자동 리디렉션 제거
+/workspace Task Details의 Linked Plan 선택을 Linked Goal + Linked Plan으로 분리
+상단 앱바 Sign out hover 상태를 붉은 액션 버튼처럼 강조
+상단 앱바 Settings hover 상태를 파란 액션 버튼처럼 강조
+```
+
+v1.1.1 마무리 단계에서는 모바일 UI/UX 안정화를 추가로 점검한다.
+
+```txt
+/trash 모바일 버튼 레이아웃 깨짐 확인 및 수정
+/inbox 카드 높이와 텍스트 세로 정렬 확인
+/inbox Details에서 수정사항이 있을 때 하단 버튼 레이아웃 깨짐 확인 및 수정
+모바일 환경 전체 페이지의 주요 컴포넌트 높이 고정 여부 확인
+```
+
+따라서 현재 루트 `README.md`는 v1.1.1 진행판이며, 남은 작업은 `/inbox` 완료 상태가 기록 페이지에 반영되는지 확인하는 기능 의미 점검과 모바일 UI/UX 폴리싱 중심이다.
