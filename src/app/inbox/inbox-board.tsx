@@ -35,7 +35,6 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -58,7 +57,6 @@ import {
   type NodeRow,
 } from "@/lib/goaltree/node-rows";
 import { syncAncestorStatuses } from "@/lib/goaltree/parent-status-sync";
-import { getWorkspaceNodeHref } from "@/lib/goaltree/workspace-links";
 import {
   appPageContentClassName,
   appPageMainClassName,
@@ -169,7 +167,6 @@ export function InboxBoard({
   initialSettings: UserSettings;
   userId: string;
 }) {
-  const router = useRouter();
   const [cards, setCards] = useState<InboxCard[]>(initialCards);
   const [nodes, setNodes] = useState<GoalTreeNode[]>(initialNodes);
   const [categories, setCategories] = useState<PlanCategory[]>(initialCategories);
@@ -421,6 +418,8 @@ export function InboxBoard({
   }
 
   async function handleConvertCard(input: ConvertInboxCardInput) {
+    const nextSelectedCardId =
+      activeCards.find((card) => card.id !== input.id)?.id ?? "";
     const sortOrder = getNextNodeSortOrder(nodes, input.type, input.parentId);
     const supabase = createSupabaseBrowserClient();
 
@@ -482,7 +481,11 @@ export function InboxBoard({
     setCards((currentCards) =>
       currentCards.filter((card) => card.id !== input.id),
     );
-    router.push(getWorkspaceNodeHref(createdNode.id));
+    setSelectedCardId((currentSelectedCardId) =>
+      currentSelectedCardId === input.id
+        ? nextSelectedCardId
+        : currentSelectedCardId,
+    );
   }
 
   async function handleCreateSubmit(event: FormEvent<HTMLFormElement>) {
@@ -1043,11 +1046,12 @@ function InboxDetailPanel({
         actualStartDate,
         actualEndDate,
       });
-      setMessage("Added to Workspace.");
+      setMessage("");
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "Failed to add to Workspace.",
       );
+    } finally {
       setIsConverting(false);
     }
   }
