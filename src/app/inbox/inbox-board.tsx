@@ -671,10 +671,10 @@ function SortableInboxCardItem({
         isDragging && "shadow-md ring-1 ring-primary/30",
       )}
     >
-      <div className="flex items-start gap-2">
+      <div className="flex items-center gap-2">
         <button
           className={cn(
-            "mt-0.5 touch-none rounded p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground",
+            "touch-none rounded p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground",
             isReorderDisabled
               ? "cursor-default opacity-50 hover:bg-transparent hover:text-muted-foreground"
               : "cursor-grab active:cursor-grabbing",
@@ -693,16 +693,11 @@ function SortableInboxCardItem({
           onClick={onSelect}
           type="button"
         >
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex min-h-8 items-center justify-between gap-3">
             <div className="min-w-0">
               <h3 className="line-clamp-2 text-sm font-medium leading-5">
                 {card.title}
               </h3>
-              {card.memo ? (
-                <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
-                  {card.memo}
-                </p>
-              ) : null}
             </div>
             <span
               className={cn(
