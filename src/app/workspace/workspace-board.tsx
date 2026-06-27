@@ -1409,6 +1409,12 @@ function DetailPanel({
     nodes.filter((item) => item.type === "plan" && isNodeVisible(item, nodes)),
     nodes,
   );
+  const taskLinkedPlan = node.type === "task" ? getVisibleNode(nodes, parentIdValue) : undefined;
+  const taskLinkedGoalId =
+    taskLinkedPlan?.type === "plan" ? taskLinkedPlan.parentId ?? "" : "";
+  const taskPlanOptions = planOptions.filter(
+    (item) => item.parentId === taskLinkedGoalId,
+  );
   const normalizedMemo = memoValue.trim();
   const normalizedImportanceReason = importanceReasonValue.trim();
   const normalizedSuccessCriteria = successCriteriaValue.trim();
@@ -1493,22 +1499,59 @@ function DetailPanel({
 
           {node.type === "task" ? (
             <DetailSection title="Linked Plan">
-              <select
-                className="h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
-                disabled={isDetailInputDisabled}
-                onChange={(event) => setParentIdValue(event.target.value)}
-                value={parentIdValue}
-              >
-                {planOptions.map((item) => {
-                  const parentGoal = getVisibleNode(nodes, item.parentId);
+              <div className="grid gap-2 sm:grid-cols-2">
+                <label className="block min-w-0">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Linked Goal
+                  </span>
+                  <select
+                    className="mt-1.5 h-10 w-full min-w-0 rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+                    disabled={isDetailInputDisabled || goalOptions.length === 0}
+                    onChange={(event) => {
+                      const nextGoalId = event.target.value;
 
-                  return (
-                    <option key={item.id} value={item.id}>
-                      {parentGoal ? `${parentGoal.title} / ${item.title}` : item.title}
-                    </option>
-                  );
-                })}
-              </select>
+                      setParentIdValue(
+                        planOptions.find((item) => item.parentId === nextGoalId)?.id ??
+                          "",
+                      );
+                    }}
+                    value={taskLinkedGoalId}
+                  >
+                    {!taskLinkedGoalId ? (
+                      <option value="">Select a Goal</option>
+                    ) : null}
+                    {goalOptions.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block min-w-0">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Linked Plan
+                  </span>
+                  <select
+                    className="mt-1.5 h-10 w-full min-w-0 rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary/60 focus:ring-1 focus:ring-primary/30"
+                    disabled={
+                      isDetailInputDisabled ||
+                      !taskLinkedGoalId ||
+                      taskPlanOptions.length === 0
+                    }
+                    onChange={(event) => setParentIdValue(event.target.value)}
+                    value={parentIdValue}
+                  >
+                    {taskPlanOptions.length === 0 ? (
+                      <option value="">Create a Plan for this Goal first</option>
+                    ) : null}
+                    {taskPlanOptions.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
             </DetailSection>
           ) : null}
 
