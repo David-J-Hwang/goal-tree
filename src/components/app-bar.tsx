@@ -24,6 +24,10 @@ const navItems = [
 
 const mobileMenuItemClassName =
   "flex h-9 cursor-pointer items-center rounded-md px-3 text-sm font-medium text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground";
+const signOutActionClassName =
+  "text-muted-foreground hover:bg-destructive hover:text-destructive-foreground focus-visible:bg-destructive focus-visible:text-destructive-foreground";
+const mobileSignOutActionClassName =
+  "gap-2 text-muted-foreground hover:bg-destructive hover:text-destructive-foreground focus:bg-destructive focus:text-destructive-foreground";
 
 export function AppBar() {
   const pathname = usePathname();
@@ -53,7 +57,7 @@ export function AppBar() {
           <MobileNavigationMenu onSignOut={handleSignOut} pathname={pathname} />
           <Button
             aria-label="Sign out"
-            className="hidden text-muted-foreground hover:text-foreground md:inline-flex"
+            className={cn("hidden md:inline-flex", signOutActionClassName)}
             onClick={handleSignOut}
             size="sm"
             type="button"
@@ -140,7 +144,7 @@ function MobileNavigationMenu({
           })}
           <DropdownMenu.Separator className="my-1 h-px bg-border" />
           <DropdownMenu.Item
-            className={cn(mobileMenuItemClassName, "gap-2 text-destructive")}
+            className={cn(mobileMenuItemClassName, mobileSignOutActionClassName)}
             onSelect={() => {
               void onSignOut();
             }}

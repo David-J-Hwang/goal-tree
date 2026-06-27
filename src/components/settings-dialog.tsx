@@ -714,7 +714,7 @@ export function SettingsDialog() {
     <>
       <Button
         aria-label="Open settings"
-        className="text-muted-foreground hover:text-foreground"
+        className="text-muted-foreground hover:bg-blue-600 hover:text-white focus-visible:bg-blue-600 focus-visible:text-white"
         onClick={() => setIsOpen(true)}
         size="sm"
         type="button"
