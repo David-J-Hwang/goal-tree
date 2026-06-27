@@ -846,7 +846,7 @@ function WorkspaceColumn({
   }
 
   return (
-    <Card className="flex min-h-[34rem] flex-col overflow-hidden rounded-lg shadow-none xl:h-full xl:min-h-0">
+    <Card className="flex h-[34rem] min-h-0 flex-col overflow-hidden rounded-lg shadow-none sm:h-[36rem] lg:h-[38rem] xl:h-full">
       <CardHeader className="shrink-0 border-b p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
