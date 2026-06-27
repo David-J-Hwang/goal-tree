@@ -1068,6 +1068,7 @@ function InboxDetailPanel({
     setPlannedEndDateValue(currentCard.plannedEndDate ?? "");
     setActualStartDateValue(currentCard.actualStartDate ?? "");
     setActualEndDateValue(currentCard.actualEndDate ?? "");
+    setIsConfirmingDelete(false);
     setMessage("");
     setErrorMessage("");
   }
@@ -1376,35 +1377,11 @@ function InboxDetailPanel({
           ) : null}
         </CardContent>
 
-        <div
-          className={cn(
-            "flex shrink-0 flex-wrap items-center gap-2 border-t p-3",
-            hasChanges ? "justify-between" : "justify-center",
-          )}
-        >
-          <Button
-            className={cn(
-              isConfirmingDelete
-                ? "border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground"
-                : "border-destructive/35 text-destructive hover:bg-destructive/10 hover:text-destructive",
-            )}
-            disabled={isSaving || isConverting || isDeleting}
-            onClick={handleDelete}
-            ref={deleteButtonRef}
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
-            {isDeleting
-              ? "Deleting"
-              : isConfirmingDelete
-                ? "Confirm delete"
-                : "Delete card"}
-          </Button>
+        <div className="shrink-0 border-t p-3">
           {hasChanges ? (
-            <div className="flex items-center gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <Button
+                className="min-w-0"
                 disabled={isLocked}
                 onClick={handleDiscardChanges}
                 size="sm"
@@ -1413,11 +1390,35 @@ function InboxDetailPanel({
               >
                 Discard changes
               </Button>
-              <Button disabled={isLocked} size="sm" type="submit">
+              <Button className="min-w-0" disabled={isLocked} size="sm" type="submit">
                 {isSaving ? "Saving" : "Save changes"}
               </Button>
             </div>
-          ) : null}
+          ) : (
+            <div className="flex justify-center">
+              <Button
+                className={cn(
+                  "min-w-0",
+                  isConfirmingDelete
+                    ? "border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground"
+                    : "border-destructive/35 text-destructive hover:bg-destructive/10 hover:text-destructive",
+                )}
+                disabled={isSaving || isConverting || isDeleting}
+                onClick={handleDelete}
+                ref={deleteButtonRef}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
+                {isDeleting
+                  ? "Deleting"
+                  : isConfirmingDelete
+                    ? "Confirm delete"
+                    : "Delete card"}
+              </Button>
+            </div>
+          )}
         </div>
       </form>
     </Card>
