@@ -34,6 +34,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getAppDateString } from "@/lib/date";
 import { getWorkspaceNodeHref } from "@/lib/goaltree/workspace-links";
 import {
   appPageContentClassName,
@@ -89,7 +90,7 @@ export function TimelineBoard({ initialNodes }: { initialNodes: GoalTreeNode[] }
   const [timelineMode, setTimelineMode] = useState<TimelineMode>("upcoming");
   const [nodeType, setNodeType] = useState<TimelineNodeType>("task");
   const [rangeView, setRangeView] = useState<RangeView>("month");
-  const [periodCursor, setPeriodCursor] = useState(() => getLocalDateString(new Date()));
+  const [periodCursor, setPeriodCursor] = useState(() => getAppDateString());
   const timelineItems = useMemo(() => getTimelineItems(initialNodes), [initialNodes]);
   const periodRange = useMemo(
     () => getPeriodRange(periodCursor, rangeView),

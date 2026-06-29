@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { addDaysToDateString, getAppDateString } from "@/lib/date";
 import {
   mapNodeRow,
   mapPlanCategoryRow,
@@ -53,7 +54,7 @@ export async function getWorkspaceData(
     await createDefaultPlanCategories(supabase, userId);
   }
 
-  const today = getLocalDateString(new Date());
+  const today = getAppDateString();
   const recentTodoStartDate = addDaysToDateString(today, -6);
   await cleanupExpiredTodayTodos(supabase, userId, recentTodoStartDate);
 
@@ -195,25 +196,4 @@ async function cleanupExpiredTodayTodos(
   if (error) {
     console.error(`Failed to cleanup expired today todos: ${error.message}`);
   }
-}
-
-function getLocalDateString(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
-
-function addDaysToDateString(dateValue: string, amount: number) {
-  const [year, month, day] = dateValue.split("-").map(Number);
-
-  if (!year || !month || !day) {
-    return dateValue;
-  }
-
-  const date = new Date(year, month - 1, day);
-  date.setDate(date.getDate() + amount);
-
-  return getLocalDateString(date);
 }
