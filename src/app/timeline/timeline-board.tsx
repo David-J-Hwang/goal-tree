@@ -368,7 +368,7 @@ function TimelineItemCard({ item, mode }: { item: TimelineItem; mode: TimelineMo
           </p>
 
           <div className="mt-3">
-            <RangeBar item={item} mode={mode} />
+            <RangeText item={item} mode={mode} />
           </div>
 
           {item.type !== "task" ? (
@@ -382,7 +382,7 @@ function TimelineItemCard({ item, mode }: { item: TimelineItem; mode: TimelineMo
   );
 }
 
-function RangeBar({ item, mode }: { item: TimelineItem; mode: TimelineMode }) {
+function RangeText({ item, mode }: { item: TimelineItem; mode: TimelineMode }) {
   const range = getTimelineRange(item, mode);
 
   if (!range) {
@@ -390,24 +390,14 @@ function RangeBar({ item, mode }: { item: TimelineItem; mode: TimelineMode }) {
   }
 
   const rangeLength = getRangeLength(item, mode);
-  const width = Math.min(100, Math.max(28, rangeLength * 16));
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <CalendarDaysIcon className="h-3.5 w-3.5" aria-hidden="true" />
-        <span>{formatRangeLabel(range.start, range.end)}</span>
-        {rangeLength > 1 ? <span>{rangeLength} days</span> : <span>1 day</span>}
-      </div>
-      <div className="h-2 overflow-hidden rounded-full bg-muted">
-        <div
-          className={cn(
-            "h-full rounded-full",
-            mode === "done" ? "bg-primary" : "bg-accent",
-          )}
-          style={{ width: `${width}%` }}
-        />
-      </div>
+    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+      <CalendarDaysIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+      <span>
+        {formatRangeLabel(range.start, range.end)},{" "}
+        {rangeLength > 1 ? `${rangeLength} days` : "1 day"}
+      </span>
     </div>
   );
 }
@@ -502,7 +492,7 @@ function LegendPanel() {
       <CardContent className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4 text-sm text-muted-foreground">
         <LegendRow label="Done" value="Uses actual date range" />
         <LegendRow label="Upcoming" value="Uses planned date range" />
-        <LegendRow label="Range bar" value="Shows multi-day span" />
+        <LegendRow label="Date range" value="Shows planned or actual span" />
       </CardContent>
     </Card>
   );
@@ -790,8 +780,8 @@ function nullToUndefined(value?: string | null) {
 
 function formatRangeLabel(start: string, end: string) {
   if (start === end) {
-    return format(parseISO(start), "MMM d");
+    return format(parseISO(start), "yyyy.MM.dd");
   }
 
-  return `${format(parseISO(start), "MMM d")} - ${format(parseISO(end), "MMM d")}`;
+  return `${format(parseISO(start), "yyyy.MM.dd")} - ${format(parseISO(end), "yyyy.MM.dd")}`;
 }
