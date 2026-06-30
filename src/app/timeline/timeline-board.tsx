@@ -365,7 +365,7 @@ function TimelineItemCard({ item, mode }: { item: TimelineItem; mode: TimelineMo
             <RangeText item={item} mode={mode} />
           </div>
 
-          {mode === "upcoming" && item.type !== "task" ? (
+          {mode === "upcoming" ? (
             <div className="mt-3">
               <ProgressBar value={item.progress ?? 0} />
             </div>
@@ -528,7 +528,7 @@ function getTimelineItems(nodes: GoalTreeNode[]): TimelineItem[] {
               ? parentPlan?.title ?? "Plan"
               : undefined,
         status: getTimelineStatus(node.status),
-        progress: node.type === "task" ? undefined : getNodeProgress(node, nodes),
+        progress: getNodeProgress(node, nodes),
         plannedStartDate: nullToUndefined(node.plannedStartDate),
         plannedEndDate: nullToUndefined(node.plannedEndDate),
         actualStartDate: nullToUndefined(node.actualStartDate),
