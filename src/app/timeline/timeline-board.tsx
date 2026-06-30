@@ -365,7 +365,7 @@ function TimelineItemCard({ item, mode }: { item: TimelineItem; mode: TimelineMo
             <RangeText item={item} mode={mode} />
           </div>
 
-          {item.type !== "task" ? (
+          {mode === "upcoming" && item.type !== "task" ? (
             <div className="mt-3">
               <ProgressBar value={item.progress ?? 0} />
             </div>
