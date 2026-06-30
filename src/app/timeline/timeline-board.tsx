@@ -338,15 +338,9 @@ function TimelineGroup({
 }
 
 function TimelineItemCard({ item, mode }: { item: TimelineItem; mode: TimelineMode }) {
-  const rangeLength = getRangeLength(item, mode);
-  const isRange = rangeLength > 1;
-
   return (
     <Link
-      className={cn(
-        "relative block rounded-lg border bg-background p-3 transition-colors hover:border-primary/50 hover:bg-primary/5",
-        isRange && "bg-primary/5",
-      )}
+      className="relative block rounded-lg border bg-background p-3 transition-colors hover:border-primary/50 hover:bg-primary/5"
       href={getWorkspaceNodeHref(item.id)}
     >
       <span className="absolute -left-[1.34rem] top-4 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary" />
