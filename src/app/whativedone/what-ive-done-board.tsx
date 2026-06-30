@@ -70,13 +70,17 @@ export function WhatIveDoneBoard({
     () => getCurrentPeriodCompletionGroups(completions, viewMode, initialTodayDate),
     [completions, initialTodayDate, viewMode],
   );
+  const currentPeriodCompletions = useMemo(
+    () => groupedCompletions.flatMap((group) => group.items),
+    [groupedCompletions],
+  );
   const goalContributions = useMemo(
-    () => getContributions(completions, "goal"),
-    [completions],
+    () => getContributions(currentPeriodCompletions, "goal"),
+    [currentPeriodCompletions],
   );
   const planContributions = useMemo(
-    () => getContributions(completions, "plan"),
-    [completions],
+    () => getContributions(currentPeriodCompletions, "plan"),
+    [currentPeriodCompletions],
   );
   const summaryItems = useMemo(
     () => getSummaryItems(completions, initialTodayDate),
